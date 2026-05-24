@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mibeko Python - Ingestion Juridique</title>
+    <!-- Tailwind CSS (via CDN pour la simplicité) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- HTMX (pour la réactivité sans React) -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <!-- Alpine.js (pour la gestion des états de l'interface) -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        [x-cloak] { display: none !important; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans" x-data="{
+    toasts: [],
+    addToast(message, type = 'info') {
+        const id = Date.now();
+        this.toasts.push({ id, message, type });
+        setTimeout(() => {
+            this.toasts = this.toasts.filter(t => t.id !== id);
+        }, 5000);
+    }
+}" @notify.window="addToast($event.detail.message, $event.detail.type)">
+
+    <!-- Toasts Container -->
+    <div class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2">
+        <template x-for="toast in toasts" :key="toast.id">
+            <div x-show="true"
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0 transform translate-y-4"
+                 x-transition:enter-end="opacity-100 transform translate-y-0"
+                 x-transition:leave="transition ease-in duration-200"
+                 x-transition:leave-start="opacity-100 transform translate-y-0"
+                 x-transition:leave-end="opacity-0 transform translate-y-4"
+                 class="px-4 py-3 rounded shadow-lg flex items-center space-x-3 max-w-sm text-sm"
+                 :class="{
+                    'bg-green-100 text-green-800 border-l-4 border-green-500': toast.type === 'success',
+                    'bg-red-100 text-red-800 border-l-4 border-red-500': toast.type === 'error',
+                    'bg-blue-100 text-blue-800 border-l-4 border-blue-500': toast.type === 'info',
+                    'bg-yellow-100 text-yellow-800 border-l-4 border-yellow-500': toast.type === 'warning'
+                 }">
+                <div class="flex-1" x-text="toast.message"></div>
+                <button @click="toasts = toasts.filter(t => t.id !== toast.id)" class="text-gray-400 hover:text-gray-600 focus:outline-none">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+        </template>
+    </div>
+
+    <!-- Confirm Modal -->
+    <div x-data="{
+        isOpen: false,
+        message: '',
+        docId: null,
+        format: null,
+        openConfirm(msg, dId, fmt) {
+            this.message = msg;
+            this.docId = dId;
+            this.format = fmt;
+            this.isOpen = true;
+        },
+        confirm() {
+            this.isOpen = false;
+            submitParse(this.docId, this.format);
+        }
+    }" @confirm-parse.window="openConfirm($event.detail.message, $event.detail.docId, $event.detail.format)">
+        <div x-show="isOpen" class="fixed z-50 inset-0 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+            <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                <div x-show="isOpen" x-transition.opacity class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+                <div x-show="isOpen"
+                     x-transition:enter="ease-out duration-300"
+                     x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                     x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                     x-transition:leave="ease-in duration-200"
+                     x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                     x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                     class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                        <div class="sm:flex sm:items-start">
+                            <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10">
+                                <svg class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                                <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">Confirmer l'extraction</h3>
+                                <div class="mt-2">
+                                    <p class="text-sm text-gray-500" x-text="message"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                        <button @click="confirm()" type="button" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
+                            Confirmer
+                        </button>
+                        <button @click="isOpen = false" type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                            Annuler
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navbar -->
+    <nav class="bg-indigo-600 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-3">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                    <span class="font-bold text-xl tracking-wider">Mibeko Ingestion Pipeline</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" x-data="{ uploadTab: 'STOCK' }">
+
+        <!-- Header Section -->
+        <div class="mb-8 flex justify-between items-end">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Tableau de Bord d'Ingestion</h1>
+                <p class="mt-2 text-sm text-gray-600">Pipeline de traitement PDF vers Base de données avec MinerU OCR.</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+            <!-- Colonne Upload -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                    <div class="border-b border-gray-200">
+                        <nav class="-mb-px flex" aria-label="Tabs">
+                            <button @click="uploadTab = 'STOCK'" :class="uploadTab === 'STOCK' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'" class="w-1/2 py-4 px-1 text-center border-b-2 font-medium text-sm">
+                                STOCK (Code/Loi)
+                            </button>
+                            <button @click="uploadTab = 'FLUX'" :class="uploadTab === 'FLUX' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'" class="w-1/2 py-4 px-1 text-center border-b-2 font-medium text-sm">
+                                FLUX (Journal Officiel)
+                            </button>
+                        </nav>
+                    </div>
+
+                    <div class="p-6">
+                        <form id="uploadForm" hx-post="/api/documents/upload" hx-encoding="multipart/form-data" hx-on::after-request="handleUploadResponse(event)">
+
+                            <input type="hidden" name="document_role" x-model="uploadTab">
+
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Titre Officiel <span class="text-red-500">*</span></label>
+                                    <input type="text" name="titre_officiel" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2">
+                                </div>
+
+                                <div x-show="uploadTab === 'STOCK'">
+                                    <label class="block text-sm font-medium text-gray-700">Code du stock <span class="text-red-500">*</span></label>
+                                    <input type="text" name="stock_code" :required="uploadTab === 'STOCK'" placeholder="ex: congo-code-1975-travail" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2">
+                                    <p class="mt-1 text-xs text-gray-500">Identifiant metier stable du code pour le rangement Domino et l'unicite en base.</p>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Fichier PDF <span class="text-red-500">*</span></label>
+                                    <input type="file" name="pdf_file" accept=".pdf" required class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 border border-gray-200 rounded-md p-1">
+                                    <p class="mt-1 text-xs text-gray-500">Le PDF sera envoye a MinerU si les fichiers .md et .json ne sont pas fournis.</p>
+                                </div>
+
+                                <div class="pt-4 border-t border-gray-100">
+                                    <h4 class="text-sm font-semibold text-gray-900 mb-2">Options (Bypass MinerU)</h4>
+                                    <div class="space-y-3">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">Fichier .md</label>
+                                            <input type="file" name="md_file" accept=".md" class="mt-1 block w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-gray-100 file:text-gray-700 border border-gray-200 rounded p-1">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">Fichier .json</label>
+                                            <input type="file" name="json_file" accept=".json" class="mt-1 block w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-gray-100 file:text-gray-700 border border-gray-200 rounded p-1">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 mt-6">
+                                    Soumettre le Document
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Colonne Liste / Status -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                    <div class="px-6 py-5 border-b border-gray-200 flex justify-between items-center">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900">Documents Recents</h3>
+                        <button hx-get="/api/documents" hx-target="#docs-tbody" class="text-sm text-indigo-600 hover:text-indigo-900 flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                            Actualiser
+                        </button>
+                    </div>
+
+                    <div class="overflow-x-auto" id="docs-table" hx-get="/api/documents" hx-trigger="load, reload from:body" hx-target="#docs-tbody">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Titre</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut OCR</th>
+                                    <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="docs-tbody" class="bg-white divide-y divide-gray-200">
+                        <!-- Les lignes seront injectees ici par HTMX via JSON. -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Remplacement du tbody par un composant Alpine pour gérer le JSON -->
+                    <div x-data="{ docs: [], loadDocs() { fetch('/api/documents').then(r => r.json()).then(d => this.docs = d) } }" x-init="loadDocs(); window.addEventListener('reload', () => loadDocs())" class="hidden overflow-x-auto pb-32" id="alpine-table">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Document</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut OCR & Fichiers</th>
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut Parsing</th>
+                                    <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <template x-for="doc in docs" :key="doc.id">
+                                    <tr class="hover:bg-gray-50 transition-colors">
+                                        <td class="px-4 py-4 whitespace-nowrap">
+                                            <div class="flex flex-col">
+                                                <span class="text-sm font-bold text-gray-900" x-text="doc.titre_officiel.length > 50 ? doc.titre_officiel.substring(0,50) + '...' : doc.titre_officiel"></span>
+                                                <div class="flex items-center space-x-2 mt-1">
+                                                    <span class="px-2 inline-flex text-[10px] leading-4 font-semibold rounded-full" :class="doc.document_role === 'STOCK' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'" x-text="doc.document_role"></span>
+                                                    <span class="text-xs text-gray-500 font-mono" x-show="doc.stock_code" x-text="doc.stock_code"></span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-4 py-4 whitespace-nowrap">
+                                            <div class="flex flex-col space-y-1">
+                                                <div>
+                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
+                                                        :class="{
+                                                            'bg-yellow-100 text-yellow-800': doc.extraction_status === 'pending',
+                                                            'bg-blue-100 text-blue-800': doc.extraction_status === 'partial',
+                                                            'bg-green-100 text-green-800': doc.extraction_status === 'completed',
+                                                            'bg-red-100 text-red-800': doc.extraction_status === 'failed'
+                                                        }" x-text="doc.extraction_status || 'N/A'"></span>
+                                                </div>
+                                                <div class="flex space-x-1 mt-1">
+                                                    <span class="px-2 inline-flex text-[10px] leading-4 font-semibold rounded"
+                                                        :class="doc.has_md ? 'bg-indigo-100 text-indigo-800 border border-indigo-200' : 'bg-gray-50 text-gray-400 border border-gray-200'">MD</span>
+                                                    <span class="px-2 inline-flex text-[10px] leading-4 font-semibold rounded"
+                                                        :class="doc.has_json ? 'bg-purple-100 text-purple-800 border border-purple-200' : 'bg-gray-50 text-gray-400 border border-gray-200'">JSON</span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-4 py-4 whitespace-nowrap">
+                                            <div class="flex flex-col space-y-1">
+                                                <div>
+                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
+                                                        :class="{
+                                                            'bg-gray-100 text-gray-800': doc.curation_status === 'draft',
+                                                            'bg-green-100 text-green-800': doc.curation_status === 'parsed'
+                                                        }" x-text="doc.curation_status || 'draft'"></span>
+                                                </div>
+                                                <div class="text-[10px] text-gray-500 mt-1">
+                                                    <span x-text="doc.latest_run_source || 'Aucun run'"></span>
+                                                    <span x-show="doc.latest_run_status" :class="{
+                                                        'text-green-600 font-medium': doc.latest_run_status === 'succeeded',
+                                                        'text-red-600 font-medium': doc.latest_run_status === 'failed',
+                                                        'text-yellow-600 font-medium': doc.latest_run_status === 'running'
+                                                    }" x-text="' (' + doc.latest_run_status + ')'"></span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-4 py-4 whitespace-nowrap text-right text-sm font-medium" x-data="{ open: false }">
+                                            <div class="relative inline-block text-left" x-show="doc.has_md || doc.has_json">
+                                                <button @click="open = !open" @click.away="open = false" type="button" class="inline-flex justify-center items-center w-full rounded-md border border-indigo-600 shadow-sm px-3 py-1.5 bg-indigo-600 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                                                    Parser
+                                                    <svg class="-mr-1 ml-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                                                </button>
+                                                <div x-show="open"
+                                                     x-transition:enter="transition ease-out duration-100"
+                                                     x-transition:enter-start="transform opacity-0 scale-95"
+                                                     x-transition:enter-end="transform opacity-100 scale-100"
+                                                     x-transition:leave="transition ease-in duration-75"
+                                                     x-transition:leave-start="transform opacity-100 scale-100"
+                                                     x-transition:leave-end="transform opacity-0 scale-95"
+                                                     class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-xl bg-white ring-1 ring-black ring-opacity-5 z-50" style="display: none;">
+                                                    <div class="py-1" role="menu" aria-orientation="vertical">
+                                                        <div class="px-4 py-2 text-xs text-gray-500 font-semibold uppercase tracking-wider bg-gray-50 border-b border-gray-100">Lancer l'extraction</div>
+                                                        <a href="#" @click.prevent="$dispatch('confirm-parse', { message: 'Voulez-vous vraiment lancer le parsing depuis le fichier Markdown ? Cela va générer la structure et les articles.', docId: doc.id, format: 'md' }); open = false" x-show="doc.has_md" class="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-900 transition-colors" role="menuitem">Depuis Markdown (.md)</a>
+                                                        <a href="#" @click.prevent="$dispatch('confirm-parse', { message: 'Voulez-vous vraiment lancer le parsing depuis le fichier JSON ? Cela va générer la structure et les articles.', docId: doc.id, format: 'json' }); open = false" x-show="doc.has_json" class="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-900 transition-colors" role="menuitem">Depuis JSON MinerU</a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <span x-show="!doc.has_md && !doc.has_json" class="text-xs text-gray-400 italic bg-gray-50 px-2 py-1 rounded">En attente OCR</span>
+                                        </td>
+                                    </tr>
+                                </template>
+                                <tr x-show="docs.length === 0" x-cloak>
+                                    <td colspan="4" class="px-4 py-8 text-center text-sm text-gray-500">
+                                        <svg class="mx-auto h-12 w-12 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path></svg>
+                                        Aucun document trouvé.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script pour SSE, Alpine JSON parsing et helpers -->
+    <script>
+        // Affiche le tableau pilote par Alpine.
+        document.getElementById('alpine-table').classList.remove('hidden');
+        document.getElementById('docs-table').style.display = 'none';
+
+        // Connexion SSE (Server-Sent Events) pour le temps réel
+        const evtSource = new EventSource("/api/stream");
+
+        evtSource.addEventListener("update", function(event) {
+            window.dispatchEvent(new Event('reload'));
+        });
+
+        evtSource.addEventListener("notification", function(event) {
+            try {
+                const data = JSON.parse(event.data);
+                window.dispatchEvent(new CustomEvent('notify', { detail: { message: data.message, type: data.type } }));
+            } catch (e) {
+                console.error("Erreur parsing notification", e);
+            }
+        });
+
+        // Helper global pour envoyer la requête de Parsing
+        function submitParse(docId, format) {
+            const formData = new FormData();
+            formData.append('source_format', format);
+
+            fetch(`/api/documents/${docId}/parse`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(r => r.json())
+            .then(data => {
+                window.dispatchEvent(new CustomEvent('notify', { detail: { message: data.message, type: 'info' } }));
+            })
+            .catch(err => {
+                window.dispatchEvent(new CustomEvent('notify', { detail: { message: "Erreur: " + err, type: 'error' } }));
+            });
+        }
+
+        // Gestion de la reponse HTMX apres soumission du formulaire d'upload
+        function handleUploadResponse(event) {
+            const xhr = event.detail.xhr;
+            if (!xhr) return;
+            if (xhr.status >= 200 && xhr.status < 300) {
+                if (event.target instanceof HTMLFormElement) {
+                    event.target.reset();
+                }
+                window.dispatchEvent(new Event('reload'));
+                window.dispatchEvent(new CustomEvent('notify', { detail: { message: "Document envoyé avec succès !", type: 'success' } }));
+            } else {
+                let message = "Erreur lors de l'envoi.";
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    if (response.message) message = response.message;
+                } catch (_) {}
+                window.dispatchEvent(new CustomEvent('notify', { detail: { message: message, type: 'error' } }));
+            }
+        }
+    </script>
+</body>
+</html>
