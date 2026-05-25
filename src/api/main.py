@@ -7,12 +7,15 @@ import uuid
 from typing import Optional
 
 from fastapi import BackgroundTasks, Depends, FastAPI, File, Form, Request, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from src.api.routers import documents as documents_router
+from src.api.schemas import GlobalStatsOut, HealthOut
 from src.db.database import SessionLocal, get_db, init_db
 from src.db.models import ExtractionRun, LegalDocument, MediaFile, StructureNode, Article, ArticleVersion
 from src.services.mineru_service import mineru_service
@@ -30,6 +33,27 @@ MEDIA_CATEGORY_BY_FORMAT = {
 }
 
 app = FastAPI(title="Mibeko Python API", description="Interface d'ingestion et d'extraction de documents juridiques")
+
+# ---------------------------------------------------------------------------
+# CORS — autorise le frontend React (dev :5173 et prod)
+# ---------------------------------------------------------------------------
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "http://127.0.0.1:5173",
+        "http://localhost:3000",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# ---------------------------------------------------------------------------
+# Routeurs
+# ---------------------------------------------------------------------------
+app.include_router(documents_router.router)
 
 templates_dir = os.path.join(os.path.dirname(__file__), "templates")
 app.mount("/static", StaticFiles(directory=os.path.join(os.path.dirname(__file__), "static")), name="static")
@@ -151,6 +175,24 @@ async def on_shutdown() -> None:
     """Ferme proprement les connexions SSE pour éviter que le serveur ne reste bloqué lors de l'arrêt."""
     for queue in list(event_queues):
         await queue.put((None, None))
+
+
+@app.get("/api/health", response_model=HealthOut, tags=["health"])
+def health_check(db: Session = Depends(get_db)):
+    """Health check de l'API et de la connexion base de données."""
+    try:
+        db.execute(text("SELECT 1"))
+        db_status = "ok"
+    except Exception:
+        db_status = "error"
+
+    return HealthOut(
+        status="ok",
+        service="mibeko-python",
+        version="1.0.0",
+        db=db_status,
+        timestamp=datetime.datetime.utcnow(),
+    )
 
 
 @app.get("/", response_class=HTMLResponse)
