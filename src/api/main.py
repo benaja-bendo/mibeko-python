@@ -63,7 +63,9 @@ app.add_middleware(
 app.include_router(documents_router.router)
 
 templates_dir = os.path.join(os.path.dirname(__file__), "templates")
-app.mount("/static", StaticFiles(directory=os.path.join(os.path.dirname(__file__), "static")), name="static")
+static_dir = os.path.join(os.path.dirname(__file__), "static")
+os.makedirs(static_dir, exist_ok=True)
+app.mount("/static", StaticFiles(directory=static_dir), name="static")
 templates = Jinja2Templates(directory=templates_dir)
 
 
