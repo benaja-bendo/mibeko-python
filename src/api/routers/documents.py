@@ -33,7 +33,7 @@ from src.db.models import (
     StructureNode,
 )
 
-router = APIRouter(prefix="/api/documents", tags=["documents"])
+router = APIRouter(prefix="/api/v1/documents", tags=["documents"])
 
 
 def _build_summary(document: LegalDocument, latest_run: Optional[ExtractionRun] = None) -> dict:

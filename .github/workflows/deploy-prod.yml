@@ -1,0 +1,126 @@
+name: 🚀 Deploy Production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push:
+    name: Build & Push Docker Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata (tags & labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest
+            type=sha,prefix=sha-,format=short
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    name: Deploy to VPS
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Lowercase repository name
+        run: echo "REPO_LC=${GITHUB_REPOSITORY,,}" >> ${GITHUB_ENV}
+
+      - name: Copy deployment files to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_KEY }}
+          passphrase: ${{ secrets.VPS_PASSPHRASE }}
+          source: ".deploy/*"
+          target: "/opt/docker/mibeko-python"
+          strip_components: 1
+
+      - name: Deploy to VPS via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_KEY }}
+          passphrase: ${{ secrets.VPS_PASSPHRASE }}
+          envs: REPO_LC
+          script: |
+            set -e
+            APP_DIR="/opt/docker/mibeko-python"
+            cd "$APP_DIR"
+
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io \
+              -u "${{ github.actor }}" --password-stdin
+
+            cat > .env <<EOF
+            MIBEKO_FRONT_HOST=${{ secrets.MIBEKO_FRONT_HOST }}
+            MIBEKO_PY_HOST=${{ secrets.MIBEKO_PY_HOST }}
+
+            DB_HOST=postgres
+            DB_PORT=5432
+            DB_DATABASE=${{ secrets.DB_DATABASE }}
+            DB_USERNAME=${{ secrets.DB_USERNAME }}
+            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+
+            MINIO_HOST=minio
+            MINIO_PORT=9000
+            MINIO_ACCESS_KEY=${{ secrets.MINIO_ACCESS_KEY }}
+            MINIO_SECRET_KEY=${{ secrets.MINIO_SECRET_KEY }}
+            MINIO_SECURE=false
+
+            MINERU_API_URL=${{ secrets.MINERU_API_URL || 'https://mineru.net/api/v4' }}
+            MINERU_API_KEY=${{ secrets.MINERU_API_KEY }}
+
+            GITHUB_REPOSITORY=$REPO_LC
+            EOF
+
+            MAX_RETRIES=3
+            RETRY_COUNT=0
+            until docker compose pull; do
+              RETRY_COUNT=$((RETRY_COUNT+1))
+              if [ $RETRY_COUNT -ge $MAX_RETRIES ]; then
+                echo "❌ Failed to pull images after $MAX_RETRIES attempts."
+                exit 1
+              fi
+              echo "⚠️ Pull failed, retrying in 10 seconds... ($RETRY_COUNT/$MAX_RETRIES)"
+              sleep 10
+            done
+
+            docker compose up -d --remove-orphans
+            docker image prune -f
+

@@ -32,7 +32,14 @@ MEDIA_CATEGORY_BY_FORMAT = {
     "json": "EXTRACTION_JSON",
 }
 
-app = FastAPI(title="Mibeko Python API", description="Interface d'ingestion et d'extraction de documents juridiques")
+app = FastAPI(
+    title="Mibeko Python API",
+    description="Interface d'ingestion et d'extraction de documents juridiques",
+    version="1.0.0",
+    docs_url="/api/v1/docs",
+    redoc_url="/api/v1/redoc",
+    openapi_url="/api/v1/openapi.json"
+)
 
 # ---------------------------------------------------------------------------
 # CORS — autorise le frontend React (dev :5173 et prod)
@@ -177,7 +184,7 @@ async def on_shutdown() -> None:
         await queue.put((None, None))
 
 
-@app.get("/api/health", response_model=HealthOut, tags=["health"])
+@app.get("/api/v1/health", response_model=HealthOut, tags=["health"])
 def health_check(db: Session = Depends(get_db)):
     """Health check de l'API et de la connexion base de données."""
     try:
@@ -339,7 +346,7 @@ async def process_mineru_extraction(
         await notify_clients("update", "{}")
 
 
-@app.post("/api/documents/upload")
+@app.post("/api/v1/documents/upload", tags=["documents"])
 async def upload_document(
     background_tasks: BackgroundTasks,
     titre_officiel: str = Form(...),
@@ -532,7 +539,7 @@ async def upload_document(
     return JSONResponse(content={"message": "Document depose avec succes", "document_id": str(doc_id)})
 
 
-@app.get("/api/documents")
+@app.get("/api/v1/documents", tags=["documents"])
 def list_documents(db: Session = Depends(get_db)):
     """Retourne la liste des documents avec disponibilite des artefacts et dernier run."""
 
@@ -564,7 +571,7 @@ def list_documents(db: Session = Depends(get_db)):
     return result
 
 
-@app.get("/api/stream")
+@app.get("/api/v1/stream", tags=["stream"])
 async def stream_events():
     """Expose un flux SSE pour recharger le tableau en temps reel."""
 
@@ -724,7 +731,7 @@ async def execute_parsing_task(run_id: uuid.UUID, doc_id: uuid.UUID, media_id: u
         db.close()
         await notify_clients("update", "{}")
 
-@app.post("/api/documents/{doc_id}/parse")
+@app.post("/api/v1/documents/{doc_id}/parse", tags=["documents"])
 def parse_document(doc_id: str, background_tasks: BackgroundTasks, source_format: str = Form(...), db: Session = Depends(get_db)):
     """Enregistre une demande de parsing structurel a partir d'un artefact disponible."""
 

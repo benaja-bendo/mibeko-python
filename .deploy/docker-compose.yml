@@ -1,0 +1,46 @@
+services:
+  api:
+    image: ghcr.io/${GITHUB_REPOSITORY}:latest
+    container_name: mibeko-python
+    restart: unless-stopped
+    env_file: [.env]
+    environment:
+      PORT: "8000"
+    networks: [proxy, db_internal]
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+
+      - "traefik.http.services.mibeko-python.loadbalancer.server.port=8000"
+      - "traefik.http.services.mibeko-python.loadbalancer.responseforwarding.flushinterval=0"
+
+      - "traefik.http.routers.mibeko-python.rule=Host(`${MIBEKO_PY_HOST:-python.mibeko.fr}`)"
+      - "traefik.http.routers.mibeko-python.entrypoints=websecure"
+      - "traefik.http.routers.mibeko-python.tls.certresolver=myresolver"
+      # - "traefik.http.routers.mibeko-python.priority=50"
+      - "traefik.http.routers.mibeko-python.service=mibeko-python"
+
+      - "traefik.http.middlewares.mibeko-python-strip.stripprefix.prefixes=/py"
+      - "traefik.http.middlewares.mibeko-python-sse.headers.customResponseHeaders.X-Accel-Buffering=no"
+
+      # - "traefik.http.routers.mibeko-python-from-front.rule=Host(`${MIBEKO_FRONT_HOST}`) && PathPrefix(`/py`)"
+      # - "traefik.http.routers.mibeko-python-from-front.entrypoints=websecure"
+      # - "traefik.http.routers.mibeko-python-from-front.tls.certresolver=myresolver"
+      # - "traefik.http.routers.mibeko-python-from-front.priority=90"
+      # - "traefik.http.routers.mibeko-python-from-front.service=mibeko-python"
+      - "traefik.http.routers.mibeko-python-from-front.middlewares=mibeko-python-strip@docker,mibeko-python-sse@docker"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -fsS http://localhost:8000/api/v1/health >/dev/null",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+networks:
+  proxy:
+    external: true
+  db_internal:
+    external: true

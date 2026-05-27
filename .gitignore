@@ -123,3 +123,8 @@ env/
 # Application storage and documents
 storage/documents/
 storage/tmp/
+
+# Data directory
+data/*
+!data/.keep
+

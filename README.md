@@ -69,8 +69,9 @@ Pour démarrer l'interface graphique permettant d'uploader et de suivre les docu
 python main.py serve --port 8004
 ```
 
-- Ouvrez votre navigateur sur **<http://localhost:8000>**
-- Le serveur utilise `uvicorn` avec rechargement à chaud.
+- Ouvrez votre navigateur sur **<http://localhost:8001>**
+- La documentation API interactive est disponible sur **<http://localhost:8001/api/v1/docs>** (Swagger UI) et **<http://localhost:8001/api/v1/redoc>** (ReDoc).
+- Voir la [Documentation détaillée de l'API](docs/API.md) pour plus d'informations.
 - L'interface utilise les Server-Sent Events (SSE) pour rafraîchir le tableau automatiquement dès qu'un document est uploadé ou que MinerU a terminé son extraction.
 
 ### 2. Flux de l'Interface Web
