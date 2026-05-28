@@ -53,6 +53,8 @@ app.add_middleware(
         "http://localhost:3000",
         "https://mibeko.fr",
         "https://www.mibeko.fr",
+        "https://app.mibeko.fr",
+        "https://www.app.mibeko.fr",
     ],
     allow_credentials=True,
     allow_methods=["*"],
