@@ -17,18 +17,11 @@ services:
       - "traefik.http.routers.mibeko-python.rule=Host(`${MIBEKO_PY_HOST:-python.mibeko.fr}`)"
       - "traefik.http.routers.mibeko-python.entrypoints=websecure"
       - "traefik.http.routers.mibeko-python.tls.certresolver=myresolver"
-      # - "traefik.http.routers.mibeko-python.priority=50"
       - "traefik.http.routers.mibeko-python.service=mibeko-python"
 
-      - "traefik.http.middlewares.mibeko-python-strip.stripprefix.prefixes=/py"
+      # Attachement du middleware SSE au routeur principal
+      - "traefik.http.routers.mibeko-python.middlewares=mibeko-python-sse@docker"
       - "traefik.http.middlewares.mibeko-python-sse.headers.customResponseHeaders.X-Accel-Buffering=no"
-
-      # - "traefik.http.routers.mibeko-python-from-front.rule=Host(`${MIBEKO_FRONT_HOST}`) && PathPrefix(`/py`)"
-      # - "traefik.http.routers.mibeko-python-from-front.entrypoints=websecure"
-      # - "traefik.http.routers.mibeko-python-from-front.tls.certresolver=myresolver"
-      # - "traefik.http.routers.mibeko-python-from-front.priority=90"
-      # - "traefik.http.routers.mibeko-python-from-front.service=mibeko-python"
-      - "traefik.http.routers.mibeko-python-from-front.middlewares=mibeko-python-strip@docker,mibeko-python-sse@docker"
     healthcheck:
       test:
         [
