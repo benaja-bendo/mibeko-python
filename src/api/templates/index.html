@@ -146,28 +146,24 @@
                     </div>
 
                     <div class="p-6">
-                        <form id="uploadForm" hx-post="/api/v1/documents/upload" hx-encoding="multipart/form-data" hx-on::after-request="handleUploadResponse(event)">
-
-                            <input type="hidden" name="document_role" x-model="uploadTab">
-
+                        <!-- Formulaire STOCK -->
+                        <form x-show="uploadTab === 'STOCK'" id="uploadFormStock" hx-post="/api/v1/documents/upload" hx-encoding="multipart/form-data" hx-on::after-request="handleUploadResponse(event)">
+                            <input type="hidden" name="document_role" value="STOCK">
                             <div class="space-y-4">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Titre Officiel <span class="text-red-500">*</span></label>
-                                    <input type="text" name="titre_officiel" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2">
+                                    <input type="text" name="titre_officiel" :required="uploadTab === 'STOCK'" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2">
                                 </div>
-
-                                <div x-show="uploadTab === 'STOCK'">
+                                <div>
                                     <label class="block text-sm font-medium text-gray-700">Code du stock <span class="text-red-500">*</span></label>
                                     <input type="text" name="stock_code" :required="uploadTab === 'STOCK'" placeholder="ex: congo-code-1975-travail" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2">
                                     <p class="mt-1 text-xs text-gray-500">Identifiant metier stable du code pour le rangement Domino et l'unicite en base.</p>
                                 </div>
-
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Fichier PDF <span class="text-red-500">*</span></label>
-                                    <input type="file" name="pdf_file" accept=".pdf" required class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 border border-gray-200 rounded-md p-1">
+                                    <input type="file" name="pdf_file" accept=".pdf" :required="uploadTab === 'STOCK'" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 border border-gray-200 rounded-md p-1">
                                     <p class="mt-1 text-xs text-gray-500">Le PDF sera envoye a MinerU si les fichiers .md et .json ne sont pas fournis.</p>
                                 </div>
-
                                 <div class="pt-4 border-t border-gray-100">
                                     <h4 class="text-sm font-semibold text-gray-900 mb-2">Options (Bypass MinerU)</h4>
                                     <div class="space-y-3">
@@ -181,9 +177,47 @@
                                         </div>
                                     </div>
                                 </div>
-
                                 <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 mt-6">
                                     Soumettre le Document
+                                </button>
+                            </div>
+                        </form>
+
+                        <!-- Formulaire FLUX -->
+                        <form x-show="uploadTab === 'FLUX'" id="uploadFormFlux" x-cloak hx-post="/api/v1/official-journals/upload" hx-encoding="multipart/form-data" hx-on::after-request="handleUploadResponse(event)">
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Titre du Journal Officiel <span class="text-red-500">*</span></label>
+                                    <input type="text" name="title" :required="uploadTab === 'FLUX'" placeholder="ex: Journal Officiel - République du Congo - 1958 - n° 1" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Date de publication <span class="text-red-500">*</span></label>
+                                    <input type="date" name="publication_date" :required="uploadTab === 'FLUX'" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Numéro du JO</label>
+                                    <input type="text" name="number" placeholder="ex: 1" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Fichier PDF <span class="text-red-500">*</span></label>
+                                    <input type="file" name="pdf_file" accept=".pdf" :required="uploadTab === 'FLUX'" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 border border-gray-200 rounded-md p-1">
+                                    <p class="mt-1 text-xs text-gray-500">Si le PDF seul est fourni, MinerU sera lancé pour extraire les lois et décrets du JO.</p>
+                                </div>
+                                <div class="pt-4 border-t border-gray-100">
+                                    <h4 class="text-sm font-semibold text-gray-900 mb-2">Options (Bypass MinerU)</h4>
+                                    <div class="space-y-3">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">Fichier .md</label>
+                                            <input type="file" name="md_file" accept=".md" class="mt-1 block w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-gray-100 file:text-gray-700 border border-gray-200 rounded p-1">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">Fichier .json</label>
+                                            <input type="file" name="json_file" accept=".json" class="mt-1 block w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-gray-100 file:text-gray-700 border border-gray-200 rounded p-1">
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 mt-6">
+                                    Soumettre le Journal Officiel
                                 </button>
                             </div>
                         </form>

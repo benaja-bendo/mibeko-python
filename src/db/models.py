@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import BigInteger, Column, Date, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import BigInteger, Boolean, Column, Date, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import DATERANGE, JSONB, UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy_utils import LtreeType
@@ -23,6 +23,25 @@ class Institution(Base):
     documents = relationship("LegalDocument", back_populates="institution")
 
 
+class OfficialJournal(Base):
+    """Represente un Journal Officiel et sert de parent aux textes FLUX extraits."""
+
+    __tablename__ = "official_journals"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    title = Column(String(255), nullable=False)
+    publication_date = Column(Date, nullable=False)
+    file_path = Column(String(255), nullable=False)
+    transcription_status = Column(String(255), nullable=True)
+    is_published = Column(Boolean, default=False)
+    number = Column(String(255), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    deleted_at = Column(DateTime, nullable=True)
+
+    legal_documents = relationship("LegalDocument", back_populates="official_journal")
+
+
 class LegalDocument(Base):
     """Represente l'identite metier minimale d'un document legal."""
 
@@ -31,7 +50,7 @@ class LegalDocument(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     type_code = Column(String(10), nullable=True)
     institution_id = Column(UUID(as_uuid=True), ForeignKey("institutions.id"), nullable=True)
-    official_journal_id = Column(UUID(as_uuid=True), nullable=True)
+    official_journal_id = Column(UUID(as_uuid=True), ForeignKey("official_journals.id"), nullable=True)
     document_key = Column(Text, nullable=True)
     document_role = Column(String(20), default="FLUX")
     consolidation_as_of = Column(Date, nullable=True)
@@ -50,6 +69,7 @@ class LegalDocument(Base):
     deleted_at = Column(DateTime, nullable=True)
 
     institution = relationship("Institution", back_populates="documents")
+    official_journal = relationship("OfficialJournal", back_populates="legal_documents")
     files = relationship("MediaFile", back_populates="document", cascade="all, delete-orphan")
     extraction_runs = relationship("ExtractionRun", back_populates="document", cascade="all, delete-orphan")
     structure_nodes = relationship("StructureNode", back_populates="document", cascade="all, delete-orphan")
