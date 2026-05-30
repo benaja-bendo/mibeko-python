@@ -16,6 +16,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from src.api.routers import documents as documents_router
+from src.api.auth import AuthenticatedUser, require_editor
 from src.api.schemas import GlobalStatsOut, HealthOut
 from src.db.database import SessionLocal, get_db, init_db
 from src.db.models import Article, ArticleVersion, ExtractionRun, Institution, LegalDocument, MediaFile, OfficialJournal, StructureNode
@@ -1063,6 +1064,7 @@ async def upload_official_journal(
     md_file: Optional[UploadFile] = File(None),
     json_file: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db),
+    _user: AuthenticatedUser = Depends(require_editor),
 ):
     """Crée un Journal Officiel puis charge les actes qu’il contient en `legal_documents`."""
 
@@ -1280,7 +1282,7 @@ async def execute_parsing_task(run_id: uuid.UUID, doc_id: uuid.UUID, media_id: u
         await notify_clients("update", "{}")
 
 @app.post("/api/v1/documents/{doc_id}/parse", tags=["documents"])
-def parse_document(doc_id: str, background_tasks: BackgroundTasks, source_format: str = Form(...), db: Session = Depends(get_db)):
+def parse_document(doc_id: str, background_tasks: BackgroundTasks, source_format: str = Form(...), db: Session = Depends(get_db), _user: AuthenticatedUser = Depends(require_editor)):
     """Enregistre une demande de parsing structurel a partir d'un artefact disponible."""
 
     document = db.query(LegalDocument).filter(LegalDocument.id == doc_id).first()

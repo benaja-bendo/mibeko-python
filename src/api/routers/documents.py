@@ -9,6 +9,7 @@ from math import ceil
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from src.api.auth import AuthenticatedUser, require_editor
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -268,7 +269,7 @@ def get_document_articles(
 # ---------------------------------------------------------------------------
 
 @router.delete("/{doc_id}", status_code=204)
-def delete_document(doc_id: str, db: Session = Depends(get_db)):
+def delete_document(doc_id: str, db: Session = Depends(get_db), _user: AuthenticatedUser = Depends(require_editor)):
     """Supprime un document et toutes ses données associées (cascade)."""
     document = db.query(LegalDocument).filter(LegalDocument.id == doc_id).first()
     if not document:
