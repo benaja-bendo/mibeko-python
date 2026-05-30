@@ -141,8 +141,9 @@ def simulate_code_du_travail(path, title, publication_date, institution_sigle, d
                 current_order = start_order
                 for node_data in nodes_list:
                     # Générer un ID UUID et sa version formatée pour ltree (sans tirets)
+                    # Ltree labels must start with a letter. We prefix with 'n' (node)
                     node_id = uuid.uuid4()
-                    node_ltree_id = str(node_id).replace("-", "_")
+                    node_ltree_id = f"n_{str(node_id).replace('-', '_')}"
 
                     current_tree_path = f"{parent_tree_path}.{node_ltree_id}" if parent_tree_path else node_ltree_id
                     ltree_obj = Ltree(current_tree_path)

@@ -66,7 +66,7 @@ Pour démarrer l'interface graphique permettant d'uploader et de suivre les docu
 
 ```bash
 # Dans le dossier mibeko-python, avec l'environnement virtuel activé
-python main.py serve --port 8004
+python main.py serve --port 8001
 ```
 
 - Ouvrez votre navigateur sur **<http://localhost:8001>**
