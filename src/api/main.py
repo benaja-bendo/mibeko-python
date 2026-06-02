@@ -1202,7 +1202,7 @@ def list_documents(db: Session = Depends(get_db)):
 
 @app.get("/api/v1/stream", tags=["stream"])
 async def stream_events():
-    """Expose un flux SSE pour recharger le tableau en temps reel."""
+    """Expose un flux SSE pour recharger le tableau en temps reel, avec heartbeat pour eviter les timeouts."""
 
     queue = asyncio.Queue()
     event_queues.append(queue)
@@ -1210,7 +1210,11 @@ async def stream_events():
     async def event_generator():
         try:
             while True:
-                event_name, payload = await queue.get()
+                try:
+                    event_name, payload = await asyncio.wait_for(queue.get(), timeout=15.0)
+                except asyncio.TimeoutError:
+                    yield ": ping\n\n"
+                    continue
                 if event_name is None:
                     break
                 if event_name:
@@ -1222,7 +1226,15 @@ async def stream_events():
             if queue in event_queues:
                 event_queues.remove(queue)
 
-    return StreamingResponse(event_generator(), media_type="text/event-stream")
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 async def execute_parsing_task(run_id: uuid.UUID, doc_id: uuid.UUID, media_id: uuid.UUID, format_type: str):
