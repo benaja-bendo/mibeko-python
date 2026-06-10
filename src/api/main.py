@@ -248,6 +248,23 @@ def sanitize_legal_text(content: str) -> str:
     return result
 
 
+VALID_LEGAL_SCOPES = {"national", "ohada", "communautaire"}
+
+
+def resolve_legal_scope(title: str, requested_scope: Optional[str] = None) -> str:
+    """Résout le périmètre juridique : valeur explicite sinon détection depuis le titre."""
+
+    if requested_scope and requested_scope.strip().lower() in VALID_LEGAL_SCOPES:
+        return requested_scope.strip().lower()
+
+    normalized = title.upper()
+    if "OHADA" in normalized or "ACTE UNIFORME" in normalized:
+        return "ohada"
+    if "CEMAC" in normalized or "UNION AFRICAINE" in normalized or "COMMUNAUTAIRE" in normalized:
+        return "communautaire"
+    return "national"
+
+
 def detect_texte_type(title: str) -> str:
     """Déduit le type métier d’un acte juridique à partir de son titre."""
 
@@ -392,38 +409,44 @@ def split_official_journal_markdown(markdown_text: str) -> List[Dict[str, str]]:
     current_lines: List[str] = []
     current_title: Optional[str] = None
     title_regex = re.compile(
-        r"^(?:#+\s*)?(PROCLAIMATION|PROCLAMATION|DISCOURS|ALLOCUTION|ALLOCATION|DELIBERATION|LOI|D[ÉE]CRET|ARR[ÊE]T[ÉE]|ORDONNANCE|D[ÉE]CISION|CIRCULAIRE|AVIS|COMMUNIQU[ÉE]|RAPPORT|NOTE)\b.*$",
+        r"^(PROCLAIMATION|PROCLAMATION|DISCOURS|ALLOCUTION|ALLOCATION|DELIBERATION|LOI|D[ÉE]CRET|ARR[ÊE]T[ÉE]|ORDONNANCE|D[ÉE]CISION|CIRCULAIRE|AVIS|COMMUNIQU[ÉE]|RAPPORT|NOTE)\b.*$",
         flags=re.IGNORECASE,
     )
+    # Entrées du sommaire : « Loi n° 1/58 du ... (page 25). » — à ne pas
+    # confondre avec le début réel d'un acte plus loin dans le document.
+    toc_entry_regex = re.compile(r"\(\s*p(?:age)?\.?\s*\d+\s*\)\s*\.?\s*$", flags=re.IGNORECASE)
+
+    def flush() -> None:
+        if current_title:
+            texts.append(
+                {
+                    "titre": current_title,
+                    "contenu": "\n".join(current_lines),
+                    "type": detect_texte_type(current_title),
+                }
+            )
 
     for raw_line in lines:
         line = raw_line.strip()
-        if title_regex.match(line):
-            if current_title:
-                texts.append(
-                    {
-                        "titre": current_title,
-                        "contenu": "\n".join(current_lines),
-                        "type": detect_texte_type(current_title),
-                    }
-                )
+        # Retire les décorations markdown (#, gras) avant détection du titre.
+        cleaned = re.sub(r"^[#>\s]*[*_]{0,3}\s*", "", line)
+        cleaned = re.sub(r"\s*[*_]{1,3}$", "", cleaned)
 
-            current_title = re.sub(r"^#+\s*", "", line).strip()
+        title_match = title_regex.match(cleaned)
+        # Un vrai titre d'acte porte une suite (numéro, date, objet). Une ligne
+        # réduite au mot-clé (« Arrête : », « Décrète : ») est le verbe du
+        # dispositif, pas un nouvel acte.
+        has_substance = title_match and re.search(r"[0-9A-Za-zÀ-ÿ]", cleaned[title_match.end(1):])
+        if title_match and has_substance and not toc_entry_regex.search(cleaned):
+            flush()
+            current_title = cleaned
             current_lines = [raw_line]
             continue
 
         if current_title:
             current_lines.append(raw_line)
 
-    if current_title:
-        texts.append(
-            {
-                "titre": current_title,
-                "contenu": "\n".join(current_lines),
-                "type": detect_texte_type(current_title),
-            }
-        )
-
+    flush()
     return texts
 
 
@@ -514,7 +537,7 @@ def create_or_update_jo_documents_from_markdown(
     db: Session,
     journal: OfficialJournal,
     markdown_text: str,
-    curation_status: str = "published",
+    curation_status: str = "review",
 ) -> List[LegalDocument]:
     """Crée ou met à jour les actes FLUX d’un Journal Officiel à partir de son markdown."""
 
@@ -544,6 +567,7 @@ def create_or_update_jo_documents_from_markdown(
                 date_signature=signature_date,
                 date_publication=journal.publication_date,
                 statut="vigueur",
+                legal_scope=resolve_legal_scope(title),
                 curation_status=curation_status,
                 extraction_status="completed",
             )
@@ -670,6 +694,9 @@ async def process_mineru_extraction(
         meta={"processor": "MinerU"},
     )
     db.add(run)
+    document = db.query(LegalDocument).filter(LegalDocument.id == doc_id).first()
+    if document is not None:
+        document.extraction_status = "processing"
     db.commit()
     db.refresh(run)
     await notify_clients("update", "{}")
@@ -746,22 +773,22 @@ async def process_mineru_extraction(
                 run.json_media_file_id = media_json.id
                 has_json = True
 
+        if result["status"] == "success":
             run.status = "succeeded" if has_markdown and has_json else "partial"
-            run.finished_at = datetime.datetime.utcnow()
-            run.meta = {**(run.meta or {}), "mineru_task_id": task_id}
             set_document_status(document, has_markdown, has_json)
-            merge_metadata(document, {"latest_extraction_run_id": str(run.id)})
         else:
             run.status = "failed"
-            run.finished_at = datetime.datetime.utcnow()
-            run.meta = {**(run.meta or {}), "mineru_task_id": task_id}
-        set_document_status(document, has_markdown, has_json)
+            document.extraction_status = "failed"
+        run.finished_at = datetime.datetime.utcnow()
+        run.meta = {**(run.meta or {}), "mineru_task_id": task_id}
         merge_metadata(document, {"latest_extraction_run_id": str(run.id)})
 
         db.commit()
 
-        import json
-        await notify_clients("notification", json.dumps({"message": f"MinerU a terminé le traitement du document.", "type": "success"}))
+        if run.status == "failed":
+            await notify_clients("notification", json.dumps({"message": "MinerU n'a produit aucun artefact pour ce document.", "type": "error"}))
+        else:
+            await notify_clients("notification", json.dumps({"message": "MinerU a terminé le traitement du document.", "type": "success"}))
     except Exception as exc:
         db.rollback()
         persisted_run = db.query(ExtractionRun).filter(ExtractionRun.id == run.id).first()
@@ -777,7 +804,6 @@ async def process_mineru_extraction(
 
         db.commit()
 
-        import json
         await notify_clients("notification", json.dumps({"message": f"Échec de l'extraction MinerU: {str(exc)}", "type": "error"}))
     finally:
         if os.path.exists(pdf_path):
@@ -821,15 +847,14 @@ async def process_mineru_journal_extraction(
                     db,
                     journal,
                     markdown_text,
-                    curation_status="published",
+                    curation_status="review",
                 )
                 journal.transcription_status = "completed" if created_documents else "pending"
             else:
                 journal.transcription_status = "failed"
             db.commit()
 
-            import json
-            await notify_clients("notification", json.dumps({"message": f"MinerU a terminé le traitement du JO.", "type": "success"}))
+            await notify_clients("notification", json.dumps({"message": "MinerU a terminé le traitement du JO.", "type": "success"}))
         else:
             journal.transcription_status = "failed"
             db.commit()
@@ -860,11 +885,13 @@ async def upload_document(
     date_signature: Optional[str] = Form(None),
     date_publication: Optional[str] = Form(None),
     date_entree_vigueur: Optional[str] = Form(None),
+    legal_scope: Optional[str] = Form(None),
     curation_status: str = Form("draft"),
     pdf_file: UploadFile = File(...),
     md_file: Optional[UploadFile] = File(None),
     json_file: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db),
+    _user: AuthenticatedUser = Depends(require_editor),
 ):
     """Depose un PDF et ses extractions optionnelles dans MinIO puis en base."""
 
@@ -905,11 +932,6 @@ async def upload_document(
     resolved_type_code = resolve_document_type_code(db, type_code, normalized_role)
     institution_id = resolve_institution_id(db, institution_sigle)
 
-    os.makedirs(STORAGE_TMP_DIR, exist_ok=True)
-    temp_pdf_path = os.path.join(STORAGE_TMP_DIR, f"{uuid.uuid4()}_{pdf_file.filename or 'document.pdf'}")
-    with open(temp_pdf_path, "wb") as buffer:
-        buffer.write(pdf_bytes)
-
     new_doc = LegalDocument(
         id=doc_id,
         type_code=resolved_type_code,
@@ -924,6 +946,7 @@ async def upload_document(
         document_role=normalized_role,
         consolidation_as_of=datetime.datetime.utcnow().date() if normalized_role == "STOCK" else None,
         statut="vigueur",
+        legal_scope=resolve_legal_scope(titre_officiel, legal_scope),
         curation_status=curation_status,
         extraction_status="pending",
     )
@@ -1034,12 +1057,13 @@ async def upload_document(
         merge_metadata(new_doc, {"latest_extraction_run_id": str(run.id)})
         db.commit()
 
-        if os.path.exists(temp_pdf_path):
-            os.remove(temp_pdf_path)
-
         asyncio.create_task(notify_clients())
     else:
         db.commit()
+        os.makedirs(STORAGE_TMP_DIR, exist_ok=True)
+        temp_pdf_path = os.path.join(STORAGE_TMP_DIR, f"{uuid.uuid4()}_{pdf_file.filename or 'document.pdf'}")
+        with open(temp_pdf_path, "wb") as buffer:
+            buffer.write(pdf_bytes)
         background_tasks.add_task(
             process_mineru_extraction,
             doc_id,
@@ -1059,7 +1083,7 @@ async def upload_official_journal(
     publication_date: str = Form(...),
     number: Optional[str] = Form(None),
     is_published: bool = Form(True),
-    documents_curation_status: str = Form("published"),
+    documents_curation_status: str = Form("review"),
     pdf_file: UploadFile = File(...),
     md_file: Optional[UploadFile] = File(None),
     json_file: Optional[UploadFile] = File(None),
@@ -1132,13 +1156,17 @@ async def upload_official_journal(
                 curation_status=documents_curation_status,
             )
             journal.transcription_status = "completed" if created_documents else "pending"
-        elif journal_created:
-            # Save temp PDF only if we just created the journal and have no MD/JSON
+        elif journal_created or journal.transcription_status in (None, "pending", "failed"):
+            # Pas d'artefact fourni : on (re)lance MinerU, y compris pour un JO
+            # existant dont la transcription n'a jamais abouti.
+            if not pdf_bytes:
+                return JSONResponse(status_code=422, content={"message": "Le fichier PDF du JO est vide."})
+
             os.makedirs(STORAGE_TMP_DIR, exist_ok=True)
             temp_pdf_path = os.path.join(STORAGE_TMP_DIR, f"{uuid.uuid4()}_jo_{pdf_file.filename or 'document.pdf'}")
             with open(temp_pdf_path, "wb") as buffer:
                 buffer.write(pdf_bytes)
-            
+
             journal.transcription_status = "queued"
             background_tasks.add_task(
                 process_mineru_journal_extraction,
@@ -1166,38 +1194,6 @@ async def upload_official_journal(
             status_code=500,
             content={"message": f"Erreur interne du serveur: {str(exc)}", "details": error_details}
         )
-
-
-@app.get("/api/v1/documents", tags=["documents"])
-def list_documents(db: Session = Depends(get_db)):
-    """Retourne la liste des documents avec disponibilite des artefacts et dernier run."""
-
-    documents = db.query(LegalDocument).order_by(LegalDocument.created_at.desc()).limit(20).all()
-    result = []
-
-    for document in documents:
-        has_md = any(file.file_category == "EXTRACTION_MARKDOWN" for file in document.files)
-        has_json = any(file.file_category == "EXTRACTION_JSON" for file in document.files)
-        latest_run = max(document.extraction_runs, key=lambda item: item.started_at or datetime.datetime.min, default=None)
-
-        result.append(
-            {
-                "id": str(document.id),
-                "titre_officiel": document.titre_officiel,
-                "stock_code": document.stock_code,
-                "document_role": document.document_role,
-                "type_code": document.type_code,
-                "extraction_status": document.extraction_status,
-                "curation_status": document.curation_status,
-                "has_md": has_md,
-                "has_json": has_json,
-                "latest_run_source": latest_run.source if latest_run else None,
-                "latest_run_status": latest_run.status if latest_run else None,
-                "created_at": document.created_at.isoformat() if document.created_at else None,
-            }
-        )
-
-    return result
 
 
 @app.get("/api/v1/stream", tags=["stream"])
@@ -1276,7 +1272,9 @@ async def execute_parsing_task(run_id: uuid.UUID, doc_id: uuid.UUID, media_id: u
 
         run.status = "succeeded"
         run.finished_at = datetime.datetime.utcnow()
-        document.curation_status = "parsed"
+        # Le document entre dans la file de validation : un éditeur doit
+        # contrôler le parsing avant publication (curation Laravel).
+        document.curation_status = "review"
         db.commit()
 
         await notify_clients("notification", json.dumps({"message": f"Parsing terminé avec succès.", "type": "success"}))
@@ -1292,6 +1290,47 @@ async def execute_parsing_task(run_id: uuid.UUID, doc_id: uuid.UUID, media_id: u
     finally:
         db.close()
         await notify_clients("update", "{}")
+
+@app.post("/api/v1/documents/{doc_id}/reprocess", tags=["documents"])
+async def reprocess_document(
+    doc_id: str,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    _user: AuthenticatedUser = Depends(require_editor),
+):
+    """Relance l'extraction MinerU d'un document depuis son PDF source stocké dans MinIO."""
+
+    document = db.query(LegalDocument).filter(LegalDocument.id == doc_id, LegalDocument.deleted_at.is_(None)).first()
+    if not document:
+        return JSONResponse(status_code=404, content={"message": "Document non trouve"})
+
+    pdf_media = next((f for f in document.files if f.file_category == "SOURCE_PDF"), None)
+    if not pdf_media:
+        return JSONResponse(status_code=400, content={"message": "Aucun PDF source pour ce document."})
+
+    pdf_bytes = minio_service.get_file_bytes(pdf_media.object_key)
+    if not pdf_bytes:
+        return JSONResponse(status_code=500, content={"message": "Impossible de relire le PDF source depuis MinIO."})
+
+    os.makedirs(STORAGE_TMP_DIR, exist_ok=True)
+    temp_pdf_path = os.path.join(STORAGE_TMP_DIR, f"{uuid.uuid4()}_{pdf_media.original_filename or 'document.pdf'}")
+    with open(temp_pdf_path, "wb") as buffer:
+        buffer.write(pdf_bytes)
+
+    document.extraction_status = "processing"
+    db.commit()
+
+    background_tasks.add_task(
+        process_mineru_extraction,
+        document.id,
+        pdf_media.id,
+        temp_pdf_path,
+        document.document_role or "FLUX",
+        document.stock_code,
+    )
+
+    return {"message": "Relance de l'extraction MinerU en arrière-plan.", "document_id": str(document.id)}
+
 
 @app.post("/api/v1/documents/{doc_id}/parse", tags=["documents"])
 def parse_document(doc_id: str, background_tasks: BackgroundTasks, source_format: str = Form(...), db: Session = Depends(get_db), _user: AuthenticatedUser = Depends(require_editor)):

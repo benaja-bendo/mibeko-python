@@ -61,6 +61,7 @@ class LegalDocument(Base):
     date_publication = Column(Date, nullable=True)
     date_entree_vigueur = Column(Date, nullable=True)
     statut = Column(String(20), default="vigueur")
+    legal_scope = Column(String(20), default="national")
     curation_status = Column(String(255), default="draft")
     extraction_status = Column(String(20), nullable=True)
     metadata_ = Column("metadata", JSONB, default=dict)

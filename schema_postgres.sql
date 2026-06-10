@@ -224,6 +224,7 @@ CREATE TABLE legal_documents (
     date_entree_vigueur DATE,
 
     statut VARCHAR(20) CHECK (statut IN ('vigueur', 'abroge', 'projet')) DEFAULT 'vigueur',
+    legal_scope VARCHAR(20) NOT NULL CHECK (legal_scope IN ('national', 'ohada', 'communautaire')) DEFAULT 'national',
     curation_status VARCHAR(255) DEFAULT 'draft',
     extraction_status VARCHAR(20),
 
@@ -235,6 +236,7 @@ CREATE TABLE legal_documents (
 );
 
 CREATE INDEX idx_legal_docs_metadata ON legal_documents USING GIN (metadata);
+CREATE INDEX IF NOT EXISTS legal_documents_legal_scope_index ON legal_documents(legal_scope);
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_legal_documents_document_key
 ON legal_documents(document_key)

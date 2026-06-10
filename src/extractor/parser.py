@@ -1,193 +1,212 @@
-import fitz  # PyMuPDF
-import re
 import logging
-from typing import List, Dict, Any
+import re
+from typing import Any, Dict, List, Optional, Tuple
 
-_nlp = None
+logger = logging.getLogger(__name__)
 
-def get_nlp():
-    global _nlp
-    if _nlp is None:
-        try:
-            import spacy
-            _nlp = spacy.load("fr_core_news_sm")
-        except Exception as e:
-            logging.warning(f"Impossible de charger le modèle spaCy 'fr_core_news_sm' : {e}. Utilisation du fallback en texte brut.")
-            _nlp = False
-    return _nlp
+# ---------------------------------------------------------------------------
+# Grammaire des unités structurelles
+# ---------------------------------------------------------------------------
+# Niveaux du plus englobant au plus fin. Un niveau N ferme tous les niveaux >= N.
+# L'ARTICLE est une feuille : il s'attache au dernier niveau ouvert.
+STRUCTURE_LEVELS: List[str] = [
+    "PARTIE",
+    "LIVRE",
+    "TITRE",
+    "CHAPITRE",
+    "SECTION",
+    "SOUS_SECTION",
+    "PARAGRAPHE",
+]
+
+_ROMAN = r"[IVXLCDM]+"
+_ORDINAL_WORD = r"PREMI(?:ER|[EÈ]RE)|UNIQUE|LIMINAIRE|PR[ÉE]LIMINAIRE|\w+I[EÈ]ME"
+_NUMBER = rf"(?:{_ROMAN}|\d+(?:er|[eè]re?|[eè]me)?|{_ORDINAL_WORD})"
+# Séparateur toléré entre le numéro et le libellé : ":", ".", "-", "–", "—".
+_SEP = r"[\s:.\-–—]*"
+
+_LEVEL_KEYWORDS = {
+    "PARTIE": r"PARTIE",
+    "LIVRE": r"LIVRE",
+    "TITRE": r"TITRE",
+    "CHAPITRE": r"CHAPITRE",
+    "SECTION": r"SECTION",
+    "SOUS_SECTION": r"SOUS[\s\-]SECTION",
+    "PARAGRAPHE": r"PARAGRAPHE|§",
+}
+
+# Le séparateur avant le numéro tolère les artefacts OCR : "TITRE : VI", "TITREX".
+STRUCTURE_PATTERNS: Dict[str, re.Pattern] = {
+    level: re.compile(
+        rf"^(?:{keyword}){_SEP}({_NUMBER})\b{_SEP}(.*)$",
+        re.IGNORECASE,
+    )
+    for level, keyword in _LEVEL_KEYWORDS.items()
+}
+
+# "ARTICLE 1er : contenu...", "Art. 12.-", "Article L.122-4", "ARTICLE PREMIER"
+ARTICLE_PATTERN = re.compile(
+    r"^(?:ARTICLE|ART)\.?\s+"
+    r"(PREMIER|[LDRA]?\.?\s*\d+[a-zA-Z0-9\-]*(?:\s+(?:bis|ter|quater|quinquies))?)"
+    r"\s*[:.\-–—]*\s*(.*)$",
+    re.IGNORECASE,
+)
+
+# Forme inversée : "PREMIÈRE PARTIE — ...", "DEUXIÈME PARTIE : ..."
+PARTIE_INVERTED_PATTERN = re.compile(
+    rf"^({_NUMBER})\s+PARTIE{_SEP}(.*)$",
+    re.IGNORECASE,
+)
+
+# Lignes de bruit à ignorer : images markdown, filets, numéros de page isolés.
+_NOISE_PATTERN = re.compile(r"^(?:!\[.*|[-_*=]{3,}|\d{1,3}|[o0]{3,})$")
+
+# Préfixes markdown à retirer pour la détection (mais pas du contenu).
+_MD_PREFIX = re.compile(r"^[#>\s]*[*_]{0,3}\s*")
+_MD_SUFFIX = re.compile(r"\s*[*_]{1,3}$")
+
+
+def _clean_for_matching(line: str) -> str:
+    """Retire les décorations markdown (titres, gras) pour tester les regex."""
+
+    cleaned = _MD_PREFIX.sub("", line.strip())
+    cleaned = _MD_SUFFIX.sub("", cleaned)
+    return cleaned.strip()
+
 
 class LegalDocumentParser:
     """
-    Parseur pour extraire la structure hiérarchique d'un code juridique (ex: Code du Travail)
-    depuis un texte brut ou un PDF en utilisant des expressions régulières.
+    Parseur de structure hiérarchique d'un texte juridique (code, loi, décret)
+    depuis un texte brut ou un markdown OCRisé (sortie MinerU).
+
+    Produit une liste de noeuds racines de la forme :
+    {"type": "TITRE", "number": "I", "title": "...", "content": "", "children": [...]}
+    Les ARTICLEs portent leur texte dans "content" (retours à la ligne préservés).
     """
-    
-    def __init__(self, pdf_path: str = None, text_content: str = None):
+
+    def __init__(self, pdf_path: Optional[str] = None, text_content: Optional[str] = None):
         self.pdf_path = pdf_path
         self.text_content = text_content
-        # Expressions régulières pour identifier les niveaux hiérarchiques
-        # Adapté au format habituel des textes de loi francophones et aux sorties Markdown
-        self.patterns = {
-            "LIVRE": re.compile(r"^(?:#+\s*)?(?:LIVRE|Livre)\s+([A-Z]+|\d+)(?:[\.\-\s:]+(.*))?$", re.IGNORECASE),
-            "TITRE": re.compile(r"^(?:#+\s*)?(?:TITRE|Titre)\s+([A-Z]+|\d+)(?:[\.\-\s:]+(.*))?$", re.IGNORECASE),
-            "CHAPITRE": re.compile(r"^(?:#+\s*)?(?:CHAPITRE|Chapitre)\s+([A-Z]+|\d+)(?:[\.\-\s:]+(.*))?$", re.IGNORECASE),
-            "SECTION": re.compile(r"^(?:#+\s*)?(?:SECTION|Section)\s+(\d+|[A-Z]+|PREMI[EÈ]RE|UNIQUE)(?:[\.\-\s:]+(.*))?$", re.IGNORECASE),
-            "ARTICLE": re.compile(r"^(?:#+\s*)?(?:Article|Art\.?)\s+([LDRA]?\.?\s*\d+[a-zA-Z0-9\-]*(?:\s+bis|\s+ter|\s+quater|\s+er)?)\.?\s*(.*)$", re.IGNORECASE)
-        }
-        
+
     def extract_text(self) -> str:
-        """
-        Retourne le texte fourni ou l'extrait du PDF en utilisant PyMuPDF.
-        """
+        """Retourne le texte fourni ou l'extrait du PDF via PyMuPDF (OCR si dispo)."""
+
         if self.text_content:
             return self.text_content
-            
+
         if not self.pdf_path:
             return ""
-            
+
+        import fitz  # PyMuPDF — import différé : inutile pour le parsing de texte
+
         doc = fitz.open(self.pdf_path)
         full_text = []
-        
+
         for page_num in range(len(doc)):
             page = doc.load_page(page_num)
-            # Utilisation de l'OCR pour les PDF scannés
             try:
-                tp = page.get_textpage_ocr(flags=0, dpi=300, full=True, language='fra')
+                tp = page.get_textpage_ocr(flags=0, dpi=300, full=True, language="fra")
                 text = tp.extractText()
             except Exception:
                 text = page.get_text("text")
-                
-            # Nettoyage simple
-            lines = text.split("\n")
-            clean_lines = []
-            for line in lines:
-                stripped = line.strip()
-                if not stripped:
-                    continue
-                # Ignorer les numéros de page isolés
-                if stripped.isdigit() and len(stripped) < 4:
-                    continue
-                clean_lines.append(stripped)
-                
+
+            clean_lines = [line.strip() for line in text.split("\n") if line.strip()]
             full_text.append("\n".join(clean_lines))
-            
+
         return "\n".join(full_text)
 
     def parse_hierarchy(self) -> List[Dict[str, Any]]:
-        """
-        Analyse le texte brut et reconstruit l'arborescence du document.
-        Retourne une liste de noeuds racines (généralement des LIVREs ou TITREs).
-        """
+        """Analyse le texte et reconstruit l'arborescence du document."""
+
         text = self.extract_text()
-        lines = text.split("\n")
-        
-        nodes = []
-        # Pile pour maintenir le contexte hiérarchique actuel
-        # Index 0: LIVRE, 1: TITRE, 2: CHAPITRE, 3: SECTION, 4: ARTICLE
-        stack = {
-            "LIVRE": None,
-            "TITRE": None,
-            "CHAPITRE": None,
-            "SECTION": None,
-            "ARTICLE": None
-        }
-        
-        current_article_content = []
-        
-        def save_current_article():
-            """Sauvegarde le contenu de l'article en cours d'analyse."""
-            if stack["ARTICLE"] and current_article_content:
-                raw_content = " ".join(current_article_content)
-                nlp_model = get_nlp()
-                if nlp_model:
-                    try:
-                        doc = nlp_model(raw_content)
-                        clean_content = " ".join([sent.text for sent in doc.sents])
-                    except Exception as e:
-                        logging.warning(f"Erreur lors du traitement NLP d'un article : {e}")
-                        clean_content = raw_content
-                else:
-                    clean_content = raw_content
-                stack["ARTICLE"]["content"] = clean_content
-                current_article_content.clear()
+        roots: List[Dict[str, Any]] = []
+        # Pile des noeuds structurels ouverts : [(index_niveau, noeud), ...]
+        open_nodes: List[Tuple[int, Dict[str, Any]]] = []
+        current_article: Optional[Dict[str, Any]] = None
+        content_buffer: List[str] = []
 
-        def add_node(node_type, number, title):
-            save_current_article()
-            
+        def close_article() -> None:
+            nonlocal current_article
+            if current_article is not None:
+                inline = current_article.get("content", "").strip()
+                block = "\n".join(content_buffer).strip()
+                current_article["content"] = f"{inline}\n{block}".strip() if inline and block else (inline or block)
+            content_buffer.clear()
+            current_article = None
+
+        def attach_to_parent(node: Dict[str, Any]) -> None:
+            if open_nodes:
+                open_nodes[-1][1]["children"].append(node)
+            else:
+                roots.append(node)
+
+        def open_structure(level: str, number: str, title: str) -> None:
+            nonlocal current_article
+            close_article()
+            level_index = STRUCTURE_LEVELS.index(level)
+            while open_nodes and open_nodes[-1][0] >= level_index:
+                open_nodes.pop()
+
             node = {
-                "type": node_type,
-                "number": number.strip() if number else "",
-                "title": title.strip() if title else "",
+                "type": level,
+                "number": (number or "").strip(),
+                "title": (title or "").strip(),
                 "content": "",
-                "children": []
+                "children": [],
             }
-            
-            # Déterminer où attacher ce noeud
-            if node_type == "LIVRE":
-                nodes.append(node)
-                stack["LIVRE"] = node
-                stack["TITRE"] = stack["CHAPITRE"] = stack["SECTION"] = stack["ARTICLE"] = None
-                
-            elif node_type == "TITRE":
-                if stack["LIVRE"]:
-                    stack["LIVRE"]["children"].append(node)
-                else:
-                    nodes.append(node)
-                stack["TITRE"] = node
-                stack["CHAPITRE"] = stack["SECTION"] = stack["ARTICLE"] = None
-                
-            elif node_type == "CHAPITRE":
-                if stack["TITRE"]:
-                    stack["TITRE"]["children"].append(node)
-                elif stack["LIVRE"]:
-                    stack["LIVRE"]["children"].append(node)
-                else:
-                    nodes.append(node)
-                stack["CHAPITRE"] = node
-                stack["SECTION"] = stack["ARTICLE"] = None
-                
-            elif node_type == "SECTION":
-                if stack["CHAPITRE"]:
-                    stack["CHAPITRE"]["children"].append(node)
-                elif stack["TITRE"]:
-                    stack["TITRE"]["children"].append(node)
-                else:
-                    nodes.append(node)
-                stack["SECTION"] = node
-                stack["ARTICLE"] = None
-                
-            elif node_type == "ARTICLE":
-                parent = stack["SECTION"] or stack["CHAPITRE"] or stack["TITRE"] or stack["LIVRE"]
-                if parent:
-                    parent["children"].append(node)
-                else:
-                    nodes.append(node)
-                stack["ARTICLE"] = node
+            attach_to_parent(node)
+            open_nodes.append((level_index, node))
 
-        for line in lines:
-            matched = False
-            for node_type, pattern in self.patterns.items():
-                match = pattern.match(line)
-                if match:
-                    number = match.group(1)
-                    title = match.group(2) if len(match.groups()) > 1 else ""
-                    add_node(node_type, number, title)
-                    matched = True
-                    break
-            
-            if not matched:
-                # Si ce n'est pas un titre, c'est potentiellement le contenu d'un article ou le titre sur la ligne suivante
-                if stack["ARTICLE"]:
-                    current_article_content.append(line)
-                else:
-                    # On pourrait être face au titre d'un Livre/Titre/Chapitre écrit sur la ligne suivante
-                    # Simplification : on l'ajoute au titre du dernier élément ouvert (qui n'est pas un article)
-                    for t in ["SECTION", "CHAPITRE", "TITRE", "LIVRE"]:
-                        if stack[t] and not stack[t]["title"]:
-                            stack[t]["title"] = line
-                            break
+        def open_article(number: str, inline_content: str) -> None:
+            nonlocal current_article
+            close_article()
+            node = {
+                "type": "ARTICLE",
+                "number": (number or "").strip(),
+                "title": "",
+                "content": (inline_content or "").strip(),
+                "children": [],
+            }
+            attach_to_parent(node)
+            current_article = node
 
-        # Sauvegarder le dernier article
-        save_current_article()
-        
-        return nodes
+        for raw_line in text.split("\n"):
+            stripped = raw_line.strip()
+            if not stripped:
+                continue
+
+            match_line = _clean_for_matching(stripped)
+            if not match_line or _NOISE_PATTERN.match(match_line):
+                continue
+
+            article_match = ARTICLE_PATTERN.match(match_line)
+            if article_match:
+                open_article(article_match.group(1), article_match.group(2))
+                continue
+
+            structure_match = None
+            inverted = PARTIE_INVERTED_PATTERN.match(match_line)
+            if inverted:
+                structure_match = ("PARTIE", inverted.group(1), inverted.group(2))
+            else:
+                for level in STRUCTURE_LEVELS:
+                    m = STRUCTURE_PATTERNS[level].match(match_line)
+                    if m:
+                        structure_match = (level, m.group(1), m.group(2))
+                        break
+
+            if structure_match:
+                open_structure(*structure_match)
+                continue
+
+            if current_article is not None:
+                # Contenu d'article : on préserve les retours à la ligne
+                # (listes à puces, alinéas) au lieu d'aplatir le texte.
+                content_buffer.append(stripped)
+            elif open_nodes and not open_nodes[-1][1]["title"]:
+                # Titre d'unité écrit sur la ligne suivante (ex: "# TITRE II." puis
+                # "DU CONTRAT DE TRAVAIL").
+                open_nodes[-1][1]["title"] = match_line
+
+        close_article()
+        return roots

@@ -68,12 +68,15 @@ class LegalDocumentSummary(OrmBase):
     stock_code: Optional[str] = None
     document_role: Optional[str] = None
     type_code: Optional[str] = None
+    legal_scope: Optional[str] = None
+    official_journal_id: Optional[UUID] = None
     extraction_status: Optional[str] = None
     curation_status: Optional[str] = None
     has_md: bool = False
     has_json: bool = False
     latest_run_source: Optional[str] = None
     latest_run_status: Optional[str] = None
+    nb_articles: int = 0
     created_at: Optional[datetime.datetime] = None
 
 
@@ -86,6 +89,7 @@ class LegalDocumentDetail(OrmBase):
     document_role: Optional[str] = None
     type_code: Optional[str] = None
     statut: Optional[str] = None
+    legal_scope: Optional[str] = None
     extraction_status: Optional[str] = None
     curation_status: Optional[str] = None
     date_publication: Optional[datetime.date] = None
@@ -149,6 +153,9 @@ class GlobalStatsOut(BaseModel):
     documents_processing: int
     documents_pending: int
     documents_failed: int
+    documents_draft: int = 0
+    documents_review: int = 0
+    documents_published: int = 0
     total_articles: int
     total_runs: int
     runs_running: int
