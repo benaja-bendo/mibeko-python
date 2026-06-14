@@ -158,6 +158,20 @@ class Article(Base):
     versions = relationship("ArticleVersion", back_populates="article", cascade="all, delete-orphan")
 
 
+class CurationFlag(Base):
+    """Signale une anomalie à relire avant publication (trou/doublon d'articles…)."""
+
+    __tablename__ = "curation_flags"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    document_id = Column(UUID(as_uuid=True), ForeignKey("legal_documents.id"), nullable=True)
+    article_id = Column(UUID(as_uuid=True), ForeignKey("articles.id"), nullable=True)
+    type_probleme = Column(String(50), nullable=True)
+    description = Column(Text, nullable=True)
+    resolved = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 class ArticleVersion(Base):
     """Represente une version textuelle datee d'un article."""
 

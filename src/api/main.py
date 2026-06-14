@@ -5,7 +5,7 @@ import json
 import os
 import re
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from fastapi import BackgroundTasks, Depends, FastAPI, File, Form, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -19,10 +19,11 @@ from src.api.routers import documents as documents_router
 from src.api.auth import AuthenticatedUser, require_editor
 from src.api.schemas import GlobalStatsOut, HealthOut
 from src.db.database import SessionLocal, get_db, init_db
-from src.db.models import Article, ArticleVersion, ExtractionRun, Institution, LegalDocument, MediaFile, OfficialJournal, StructureNode
+from src.db.models import Article, ArticleVersion, CurationFlag, ExtractionRun, Institution, LegalDocument, MediaFile, OfficialJournal, StructureNode
 from src.services.mineru_service import mineru_service
 from src.services.minio_service import minio_service
 from src.extractor.parser import LegalDocumentParser
+from src.extractor.chunk_merger import merge_json_chunks, merge_markdown_chunks
 from psycopg2.extras import DateRange
 from sqlalchemy_utils import Ltree
 
@@ -163,8 +164,17 @@ def parse_optional_date(raw_value: Optional[str]) -> Optional[datetime.date]:
     return datetime.date.fromisoformat(raw_value)
 
 
-def resolve_document_type_code(db: Session, requested_type_code: Optional[str], document_role: str) -> Optional[str]:
-    """Valide un code type fourni et applique un fallback compatible avec la base."""
+def resolve_document_type_code(
+    db: Session,
+    requested_type_code: Optional[str],
+    document_role: str,
+    title: Optional[str] = None,
+) -> Optional[str]:
+    """Valide un code type fourni, sinon l'auto-détecte depuis le titre, sinon fallback.
+
+    Priorité : type explicite valide → détection par le titre (convention collective
+    → CONV, acte uniforme → AU, etc.) → défaut (CODE pour un STOCK, LOI pour un FLUX).
+    """
 
     valid_type_codes = {row[0] for row in db.execute(text("SELECT code FROM document_types")).fetchall()}
 
@@ -172,6 +182,13 @@ def resolve_document_type_code(db: Session, requested_type_code: Optional[str], 
         normalized_type = requested_type_code.strip().upper()
         if normalized_type in valid_type_codes:
             return normalized_type
+
+    # Auto-détection limitée aux types nouveaux et non ambigus (CONV, AU) pour ne
+    # pas requalifier à tort un code dont le titre contient « Loi ».
+    if title:
+        detected = map_detected_type_to_type_code(detect_texte_type(title), db)
+        if detected in {"CONV", "AU"}:
+            return detected
 
     candidate_type_code = "CODE" if document_role == "STOCK" else "LOI"
     return candidate_type_code if candidate_type_code in valid_type_codes else None
@@ -197,18 +214,87 @@ def build_journal_object_key(journal: OfficialJournal, filename: str) -> str:
     return f"domino/official-journals/{publication_scope}/{number_scope}/source/{safe_name}{extension}"
 
 
-def extract_text_from_mineru_json(data: Dict[str, Any]) -> str:
-    """Reconstruit un texte brut lisible depuis les variantes JSON connues de MinerU."""
+def _mineru_block_text(block: Dict[str, Any]) -> str:
+    """Texte concaténé des lignes/spans d'un bloc MinerU (hors tables)."""
+
+    out: List[str] = []
+    for line in block.get("lines", []) or []:
+        line_text = " ".join(
+            span.get("content", "").strip()
+            for span in line.get("spans", []) or []
+            if span.get("content")
+        ).strip()
+        if line_text:
+            out.append(line_text)
+    return " ".join(out).strip()
+
+
+def _mineru_table_html(block: Dict[str, Any]) -> str:
+    """Récupère le HTML d'un bloc table MinerU (span['html']), sur une seule ligne.
+
+    On aplatit les espaces (HTML insensible aux espaces entre balises) pour que le
+    tableau reste sur UNE ligne : le parseur le route alors vers un nœud TABLEAU.
+    """
+
+    candidates = list(block.get("blocks", []) or []) + [block]
+    for sub in candidates:
+        for line in sub.get("lines", []) or []:
+            for span in line.get("spans", []) or []:
+                if span.get("html"):
+                    return " ".join(span["html"].split())
+    return ""
+
+
+def extract_text_from_mineru_json(data: Dict[str, Any], with_page_markers: bool = False) -> str:
+    """Reconstruit un markdown lisible depuis le JSON MinerU.
+
+    Points clés :
+    - n'exploite qu'UNE source de blocs par page (`para_blocks` de préférence,
+      sinon `preproc_blocks`) : MinerU duplique souvent les deux, et les additionner
+      doublait tout le texte ingéré ;
+    - marque les titres avec « # » pour fiabiliser la détection de structure
+      (le parseur retire ce préfixe via `_clean_for_matching`) ;
+    - préserve les tableaux en HTML (`span['html']`) au lieu de les perdre ;
+    - les en-têtes/pieds/numéros de page sont déjà écartés par MinerU
+      (`discarded_blocks`), donc ignorés ici.
+
+    Si `with_page_markers` est vrai, une ligne « [[MIBEKO_PAGE:N]] » (N = page
+    1-based) est insérée à chaque page : le parseur s'en sert pour tamponner les
+    nœuds avec leur page d'origine (citabilité), puis l'ignore comme contenu.
+    """
 
     lines: List[str] = []
 
     for page in data.get("pdf_info", []):
-        block_groups = []
-        if isinstance(page, dict):
-            block_groups.extend(page.get("preproc_blocks", []) or [])
-            block_groups.extend(page.get("para_blocks", []) or [])
+        if not isinstance(page, dict):
+            continue
 
-        for block in block_groups:
+        if with_page_markers and isinstance(page.get("page_idx"), int):
+            lines.append(f"[[MIBEKO_PAGE:{page['page_idx'] + 1}]]")
+
+        # para_blocks est la sortie finale ; preproc_blocks le pré-traitement.
+        # Ils sont généralement identiques → on n'en prend qu'un seul.
+        blocks = page.get("para_blocks") or page.get("preproc_blocks") or []
+
+        for block in blocks:
+            block_type = block.get("type")
+
+            if block_type == "table":
+                html = _mineru_table_html(block)
+                if html:
+                    lines.append(html)
+                continue
+
+            if block_type == "title":
+                # Un titre peut tenir sur plusieurs lignes visuelles → on les
+                # joint et on préfixe « # » pour la détection de structure.
+                text = _mineru_block_text(block)
+                if text:
+                    lines.append(f"# {text}")
+                continue
+
+            # Corps (text / list / …) : on préserve les lignes visuelles pour
+            # garder alinéas et puces que le parseur conserve dans le contenu.
             for line in block.get("lines", []) or []:
                 line_text = " ".join(
                     span.get("content", "").strip()
@@ -217,16 +303,6 @@ def extract_text_from_mineru_json(data: Dict[str, Any]) -> str:
                 ).strip()
                 if line_text:
                     lines.append(line_text)
-
-            for table_block in block.get("blocks", []) or []:
-                for line in table_block.get("lines", []) or []:
-                    line_text = " ".join(
-                        span.get("content", "").strip()
-                        for span in line.get("spans", []) or []
-                        if span.get("content")
-                    ).strip()
-                    if line_text:
-                        lines.append(line_text)
 
     return "\n".join(lines)
 
@@ -269,6 +345,12 @@ def detect_texte_type(title: str) -> str:
     """Déduit le type métier d’un acte juridique à partir de son titre."""
 
     normalized = title.strip()
+    # Types prioritaires repérables n'importe où dans le titre. Le séparateur
+    # tolère l'espace ou le tiret (titres issus de noms de fichiers).
+    if re.search(r"\bconventions?[\s\-]+collectives?\b", normalized, flags=re.IGNORECASE):
+        return "CONVENTION_COLLECTIVE"
+    if re.search(r"\bacte[\s\-]+uniforme\b", normalized, flags=re.IGNORECASE):
+        return "ACTE_UNIFORME"
     if re.match(r"^(?:Loi constitutionnelle|LOI CONSTITUTIONNELLE)\b", normalized, flags=re.IGNORECASE):
         return "LOI_CONSTITUTIONNELLE"
     if re.match(r"^(?:Loi|LOI)\b", normalized, flags=re.IGNORECASE):
@@ -330,6 +412,8 @@ def map_detected_type_to_type_code(detected_type: str, db: Session) -> Optional[
 
     valid_type_codes = {row[0] for row in db.execute(text("SELECT code FROM document_types")).fetchall()}
     mapping = {
+        "CONVENTION_COLLECTIVE": "CONV",
+        "ACTE_UNIFORME": "AU",
         "LOI_CONSTITUTIONNELLE": "LOI",
         "LOI": "LOI",
         "DECRET": "DEC",
@@ -400,6 +484,60 @@ def extract_french_date(text_value: str) -> Optional[datetime.date]:
     return datetime.date(year, month, day)
 
 
+def _act_dedup_key(title: str) -> Optional[str]:
+    """Clé de dédoublonnage d'un acte : son numéro « n° X » s'il existe, sinon None.
+
+    Couvre tous les types (Loi n°, Décret n°, Arrêté n°, Avis n°, Délibération n°…).
+    Les actes sans numéro (Discours, Proclamation, Allocution…) renvoient None et
+    ne sont jamais dédupliqués.
+    """
+    match = re.search(r"\bN[°ºo]\s*([0-9][0-9A-Za-z./\-]*)", title, flags=re.IGNORECASE)
+    return match.group(1).upper().rstrip(".-/") if match else None
+
+
+def _dedupe_official_journal_acts(texts: List[Dict[str, str]]) -> List[Dict[str, str]]:
+    """Fusionne les doublons sommaire/corps d'un JO.
+
+    Un Journal Officiel liste ses actes dans un sommaire PUIS les reproduit en
+    intégralité dans le corps : chaque acte numéroté apparaît deux fois (entrée
+    courte du sommaire + texte complet). Pour un même (type, n°) on ne conserve
+    que l'occurrence au contenu le plus riche (le corps). Les actes sans numéro
+    sont préservés tels quels (ils peuvent être nombreux et distincts : avis,
+    discours…). Robuste md/json : converge les deux rendus vers le corps.
+    """
+    best_index: Dict[Tuple[str, str], int] = {}
+    for index, act in enumerate(texts):
+        key_num = _act_dedup_key(act["titre"])
+        if key_num is None:
+            continue
+        key = (act["type"], key_num)
+        if key not in best_index or len(act["contenu"]) > len(texts[best_index[key]]["contenu"]):
+            best_index[key] = index
+
+    kept = set(best_index.values())
+    result: List[Dict[str, str]] = []
+    for index, act in enumerate(texts):
+        if _act_dedup_key(act["titre"]) is None or index in kept:
+            result.append(act)
+    return result
+
+
+# Mots-clés « faibles » : fréquents en plein texte (notes de bas de page,
+# glossaires d'annexes techniques). Ils ne démarrent un acte que s'ils portent un
+# qualificatif d'acte (numéro, date, ou libellé en majuscules).
+_WEAK_ACT_KEYWORDS = {"NOTE", "RAPPORT"}
+
+
+def _weak_keyword_starts_act(rest_of_line: str) -> bool:
+    """Vrai si la suite d'un mot-clé faible ressemble à un vrai titre d'acte."""
+    if re.search(r"\bN[°ºo]\s*\d", rest_of_line, flags=re.IGNORECASE):
+        return True
+    if re.search(r"\b\d{1,2}\s+[a-zà-ÿ]+\s+\d{4}\b", rest_of_line, flags=re.IGNORECASE):
+        return True
+    # Libellé en majuscules (« RAPPORT DE PRÉSENTATION… ») vs note inline (« Note.- … »).
+    return bool(re.match(r"[\s’'A-ZÀ-Ÿ\-]{8,}", rest_of_line))
+
+
 def split_official_journal_markdown(markdown_text: str) -> List[Dict[str, str]]:
     """Découpe un Journal Officiel en actes unitaires à partir du markdown OCRisé."""
 
@@ -437,7 +575,10 @@ def split_official_journal_markdown(markdown_text: str) -> List[Dict[str, str]]:
         # réduite au mot-clé (« Arrête : », « Décrète : ») est le verbe du
         # dispositif, pas un nouvel acte.
         has_substance = title_match and re.search(r"[0-9A-Za-zÀ-ÿ]", cleaned[title_match.end(1):])
-        if title_match and has_substance and not toc_entry_regex.search(cleaned):
+        is_act_start = bool(title_match and has_substance and not toc_entry_regex.search(cleaned))
+        if is_act_start and title_match.group(1).upper() in _WEAK_ACT_KEYWORDS:
+            is_act_start = _weak_keyword_starts_act(cleaned[title_match.end(1):])
+        if is_act_start:
             flush()
             current_title = cleaned
             current_lines = [raw_line]
@@ -447,7 +588,7 @@ def split_official_journal_markdown(markdown_text: str) -> List[Dict[str, str]]:
             current_lines.append(raw_line)
 
     flush()
-    return texts
+    return _dedupe_official_journal_acts(texts)
 
 
 def clear_document_structure(db: Session, document_id: uuid.UUID) -> None:
@@ -459,6 +600,67 @@ def clear_document_structure(db: Session, document_id: uuid.UUID) -> None:
     db.query(Article).filter(Article.document_id == document_id).delete(synchronize_session=False)
     db.query(StructureNode).filter(StructureNode.document_id == document_id).delete(synchronize_session=False)
     db.flush()
+
+
+def flag_article_sequence_anomalies(
+    db: Session,
+    document_id: uuid.UUID,
+    sequence: List[Tuple[Optional[int], uuid.UUID]],
+    max_gap: int = 5,
+    max_flags: int = 200,
+) -> int:
+    """Crée des `curation_flags` pour les trous/doublons de numérotation d'articles.
+
+    Robuste aux compilations (Code Bleu = plusieurs Actes uniformes dont la
+    numérotation repart à 1) et aux recueils annotés (renvois « Art. X » à des
+    articles déjà vus). On privilégie la PRÉCISION : on ne signale que
+    - les petits trous dans une série croissante (saut de N à N+k, k ≤ max_gap) ;
+    - les doublons IMMÉDIATS (même numéro deux fois de suite).
+    Toute baisse du numéro, réapparition, ou grand saut est traitée comme une
+    NOUVELLE série (reset), pas comme une anomalie. Renvoie le nombre d'anomalies.
+    """
+    prev: Optional[int] = None
+    flags = 0
+
+    for number, article_id in sequence:
+        if number is None:
+            continue
+        if flags >= max_flags:
+            break
+        if prev is None:
+            prev = number
+            continue
+
+        if number == prev:
+            db.add(CurationFlag(
+                document_id=document_id,
+                article_id=article_id,
+                type_probleme="article_doublon",
+                description=f"Numéro d'article {number} répété consécutivement.",
+            ))
+            flags += 1
+            continue
+
+        if number == prev + 1:
+            prev = number
+            continue
+
+        if prev < number <= prev + max_gap:
+            missing = ", ".join(str(n) for n in range(prev + 1, number))
+            db.add(CurationFlag(
+                document_id=document_id,
+                article_id=None,
+                type_probleme="article_manquant",
+                description=f"Article(s) {missing} absent(s) (saut de {prev} à {number}).",
+            ))
+            flags += 1
+            prev = number
+            continue
+
+        # Baisse de numéro, réapparition ou grand saut → nouvelle série (reset).
+        prev = number
+
+    return flags
 
 
 def ingest_hierarchy(
@@ -473,6 +675,8 @@ def ingest_hierarchy(
 
     clear_document_structure(db, document.id)
     seen_article_numbers: Dict[str, int] = {}
+    table_counter = {"n": 0}
+    article_sequence: List[Tuple[Optional[int], uuid.UUID]] = []
 
     def insert_nodes(nodes_list: List[Dict[str, Any]], parent_tree_path: Optional[str] = None, parent_node_id: Optional[uuid.UUID] = None, start_order: int = 0) -> None:
         current_order = start_order
@@ -484,7 +688,8 @@ def ingest_hierarchy(
             ltree_obj = Ltree(current_tree_path)
 
             if node_data["type"] == "ARTICLE":
-                article_number = str(node_data.get("number", "")).strip() or f"SANS_NUM_{str(uuid.uuid4())[:8]}"
+                raw_number = str(node_data.get("number", "")).strip()
+                article_number = raw_number or f"SANS_NUM_{str(uuid.uuid4())[:8]}"
                 if article_number in seen_article_numbers:
                     seen_article_numbers[article_number] += 1
                     article_number = f"{article_number}_doublon_{seen_article_numbers[article_number]}"
@@ -501,12 +706,45 @@ def ingest_hierarchy(
                 )
                 db.add(article)
 
+                # Mémorise le numéro entier (s'il existe) pour le contrôle de séquence.
+                seq_match = re.match(r"(\d+)", raw_number)
+                article_sequence.append((int(seq_match.group(1)) if seq_match else None, article.id))
+
                 version = ArticleVersion(
                     article_id=article.id,
                     contenu_texte=node_data.get("content", ""),
                     validity_period=DateRange(datetime.datetime.utcnow().date(), None),
                     source_run_id=run_id,
                     source_media_file_id=media_id,
+                    source_locator={"page": node_data["page"]} if node_data.get("page") is not None else {},
+                    validation_status=validation_status,
+                )
+                db.add(version)
+            elif node_data["type"] == "TABLEAU":
+                # Tableau (grille salariale, etc.) : feuille de contenu marquée
+                # content_format=table dans source_locator (option A, zéro migration).
+                table_counter["n"] += 1
+                table_locator: Dict[str, Any] = {"content_format": "table"}
+                if node_data.get("page") is not None:
+                    table_locator["page"] = node_data["page"]
+
+                article = Article(
+                    id=node_id,
+                    document_id=document.id,
+                    parent_node_id=parent_node_id,
+                    numero_article=f"TABLEAU_{table_counter['n']}",
+                    ordre_affichage=current_order,
+                    validation_status=validation_status,
+                )
+                db.add(article)
+
+                version = ArticleVersion(
+                    article_id=article.id,
+                    contenu_texte=node_data.get("content", ""),
+                    validity_period=DateRange(datetime.datetime.utcnow().date(), None),
+                    source_run_id=run_id,
+                    source_media_file_id=media_id,
+                    source_locator=table_locator,
                     validation_status=validation_status,
                 )
                 db.add(version)
@@ -531,6 +769,7 @@ def ingest_hierarchy(
 
     if hierarchy:
         insert_nodes(hierarchy)
+        flag_article_sequence_anomalies(db, document.id, article_sequence)
 
 
 def create_or_update_jo_documents_from_markdown(
@@ -872,6 +1111,27 @@ async def process_mineru_journal_extraction(
         await notify_clients("update", "{}")
 
 
+async def _collapse_chunks(files: List[UploadFile], kind: str) -> Tuple[bytes, str, List[str]]:
+    """Réduit une liste de fichiers (md ou json) en un seul artefact.
+
+    Un seul fichier → ses octets tels quels (comportement historique). Plusieurs →
+    fusion via `chunk_merger` (tri par nom `chunk_{début}_a_{fin}`, `page_idx`
+    ré-offsetté pour le JSON). Renvoie (octets, nom_artefact, avertissements).
+    """
+    if not files:
+        return b"", f"source.{kind}", []
+    if len(files) == 1:
+        data = await files[0].read()
+        return data, (files[0].filename or f"source.{kind}"), []
+
+    items: List[Tuple[str, bytes]] = [(f.filename or "", await f.read()) for f in files]
+    if kind == "md":
+        merged_text, warnings = merge_markdown_chunks(items)
+        return merged_text.encode("utf-8"), "merged.md", warnings
+    merged_json, warnings = merge_json_chunks(items)
+    return json.dumps(merged_json, ensure_ascii=False).encode("utf-8"), "merged.json", warnings
+
+
 @app.post("/api/v1/documents/upload", tags=["documents"])
 async def upload_document(
     background_tasks: BackgroundTasks,
@@ -888,12 +1148,18 @@ async def upload_document(
     legal_scope: Optional[str] = Form(None),
     curation_status: str = Form("draft"),
     pdf_file: UploadFile = File(...),
-    md_file: Optional[UploadFile] = File(None),
-    json_file: Optional[UploadFile] = File(None),
+    md_file: List[UploadFile] = File(default=[]),
+    json_file: List[UploadFile] = File(default=[]),
     db: Session = Depends(get_db),
     _user: AuthenticatedUser = Depends(require_editor),
 ):
-    """Depose un PDF et ses extractions optionnelles dans MinIO puis en base."""
+    """Depose un PDF et ses extractions optionnelles dans MinIO puis en base.
+
+    `md_file` / `json_file` acceptent un ou plusieurs fichiers. Plusieurs morceaux
+    (PDF volumineux découpé avant MinerU, ex. Code Bleu OHADA) sont fusionnés en
+    un artefact unique à pagination globale via `chunk_merger`. Un seul fichier =
+    comportement historique inchangé.
+    """
 
     normalized_role = document_role.upper()
     normalized_stock_code = sanitize_path_component(stock_code) if stock_code else None
@@ -929,7 +1195,7 @@ async def upload_document(
     if not pdf_s3_path:
         return JSONResponse(status_code=500, content={"message": "Echec de stockage du PDF dans MinIO."})
 
-    resolved_type_code = resolve_document_type_code(db, type_code, normalized_role)
+    resolved_type_code = resolve_document_type_code(db, type_code, normalized_role, title=titre_officiel)
     institution_id = resolve_institution_id(db, institution_sigle)
 
     new_doc = LegalDocument(
@@ -968,8 +1234,12 @@ async def upload_document(
     db.add(pdf_media)
     db.flush()
 
-    if md_file or json_file:
+    md_files = [f for f in (md_file or []) if f is not None]
+    json_files = [f for f in (json_file or []) if f is not None]
+
+    if md_files or json_files:
         provided_formats = []
+        merge_info: Dict[str, Any] = {}
         run = ExtractionRun(
             document_id=doc_id,
             source="MANUAL_UPLOAD",
@@ -984,15 +1254,19 @@ async def upload_document(
         has_markdown = False
         has_json = False
 
-        if md_file:
-            md_bytes = await md_file.read()
+        if md_files:
+            md_bytes, md_source_name, md_warnings = await _collapse_chunks(md_files, "md")
+            if len(md_files) > 1:
+                merge_info["md_chunks"] = [f.filename for f in md_files]
+            if md_warnings:
+                merge_info["md_warnings"] = md_warnings
             if md_bytes:
                 md_object_key = build_object_key(
                     normalized_role,
                     normalized_stock_code,
                     doc_id,
                     "extractions/markdown",
-                    md_file.filename or "source.md",
+                    md_source_name,
                     run.id,
                 )
                 md_s3_path = minio_service.upload_bytes(md_object_key, md_bytes, "text/markdown")
@@ -1004,12 +1278,12 @@ async def upload_document(
                     document_id=doc_id,
                     object_key=md_object_key,
                     file_path=md_s3_path,
-                    original_filename=md_file.filename or "source.md",
+                    original_filename=md_source_name,
                     mime_type="text/markdown",
                     file_category="EXTRACTION_MARKDOWN",
                     payload_size=len(md_bytes),
                     checksum_sha256=compute_sha256(md_bytes),
-                    description="Markdown fourni manuellement a l'upload",
+                    description="Markdown fusionné depuis plusieurs morceaux" if len(md_files) > 1 else "Markdown fourni manuellement a l'upload",
                 )
                 db.add(media_md)
                 db.flush()
@@ -1017,15 +1291,19 @@ async def upload_document(
                 provided_formats.append("md")
                 has_markdown = True
 
-        if json_file:
-            json_bytes = await json_file.read()
+        if json_files:
+            json_bytes, json_source_name, json_warnings = await _collapse_chunks(json_files, "json")
+            if len(json_files) > 1:
+                merge_info["json_chunks"] = [f.filename for f in json_files]
+            if json_warnings:
+                merge_info["json_warnings"] = json_warnings
             if json_bytes:
                 json_object_key = build_object_key(
                     normalized_role,
                     normalized_stock_code,
                     doc_id,
                     "extractions/json",
-                    json_file.filename or "source.json",
+                    json_source_name,
                     run.id,
                 )
                 json_s3_path = minio_service.upload_bytes(json_object_key, json_bytes, "application/json")
@@ -1037,12 +1315,12 @@ async def upload_document(
                     document_id=doc_id,
                     object_key=json_object_key,
                     file_path=json_s3_path,
-                    original_filename=json_file.filename or "source.json",
+                    original_filename=json_source_name,
                     mime_type="application/json",
                     file_category="EXTRACTION_JSON",
                     payload_size=len(json_bytes),
                     checksum_sha256=compute_sha256(json_bytes),
-                    description="JSON fourni manuellement a l'upload",
+                    description="JSON fusionné depuis plusieurs morceaux" if len(json_files) > 1 else "JSON fourni manuellement a l'upload",
                 )
                 db.add(media_json)
                 db.flush()
@@ -1053,6 +1331,8 @@ async def upload_document(
         run.status = "succeeded" if has_markdown and has_json else "partial"
         run.finished_at = datetime.datetime.utcnow()
         run.meta = {**(run.meta or {}), "provided_formats": provided_formats}
+        if merge_info:
+            run.meta = {**run.meta, "merge": merge_info}
         set_document_status(new_doc, has_markdown, has_json)
         merge_metadata(new_doc, {"latest_extraction_run_id": str(run.id)})
         db.commit()
@@ -1261,7 +1541,7 @@ async def execute_parsing_task(run_id: uuid.UUID, doc_id: uuid.UUID, media_id: u
             text_content = file_bytes.decode("utf-8", errors="ignore")
         elif format_type == "json":
             data = json.loads(file_bytes.decode("utf-8", errors="ignore"))
-            text_content = extract_text_from_mineru_json(data)
+            text_content = extract_text_from_mineru_json(data, with_page_markers=True)
 
         # Parse le contenu textuel
         parser = LegalDocumentParser(text_content=text_content)
