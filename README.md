@@ -79,8 +79,8 @@ python main.py serve --port 8001
 - **Onglet STOCK / FLUX** : Choisissez la nature du document.
 - **Upload** : Fournissez un PDF.
   - Si vous ne fournissez **que** le PDF, il sera envoyé en tâche de fond à MinerU.
-  - Si vous fournissez les options **.md** ou **.json**, le document bypass MinerU et sauvegarde directement les extractions dans MinIO et PostgreSQL.
-- **Extraire le contenu** : Une fois le statut passé à `completed`, un bouton apparaît dans le tableau pour lancer le parsing SQL depuis le `.md` ou `.json`.
+  - Si vous fournissez les options **.md** ou **.json**, le document bypass MinerU et sauvegarde directement les extractions dans MinIO et PostgreSQL. Vous pouvez sélectionner **plusieurs fichiers** (.md ou .json) ; ils seront automatiquement fusionnés (utile pour les gros documents découpés en plusieurs morceaux).
+- **Extraire le contenu** : Une fois le statut passé à `completed`, un bouton apparaît dans le tableau pour lancer le parsing SQL depuis le `.md` ou `.json`. Des `CurationFlag` sont également générés en cas d'anomalies de numérotation (trous ou doublons).
 
 ## 📂 Structure du projet
 
@@ -101,7 +101,9 @@ mibeko-python/
 │   │   ├── minio_service.py    # Client MinIO S3
 │   │   └── mineru_service.py   # Client HTTP asynchrone pour MinerU
 │   └── extractor/
-│       └── parser.py           # Logique NLP/Structuration locale
+│       ├── chunk_merger.py           # Fusion de fichiers MD/JSON extraits en morceaux
+│       ├── compilation_splitter.py   # Découpage spécifique (ex: Journaux Officiels)
+│       └── parser.py                 # Logique NLP/Structuration locale et extraction de tables
 └── storage/                    # Fichiers temporaires
 ```
 

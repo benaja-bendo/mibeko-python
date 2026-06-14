@@ -38,10 +38,10 @@ Tous les endpoints commencent par le préfixe `/api/v1`.
 *   `POST /api/v1/documents/upload`
     *   **Description** : Téléverse un nouveau document PDF (ainsi que les extractions optionnelles Markdown ou JSON) dans MinIO et la base de données.
     *   **Type de contenu** : `multipart/form-data`
-    *   **Paramètres** : `titre_officiel`, `document_role`, `stock_code`, `document_key`, `pdf_file`, `md_file`, `json_file`.
+    *   **Paramètres** : `titre_officiel`, `document_role`, `stock_code`, `document_key`, `pdf_file`, `md_file` (accepte plusieurs fichiers pour fusion), `json_file` (accepte plusieurs fichiers pour fusion).
 
 *   `POST /api/v1/documents/{doc_id}/parse`
-    *   **Description** : Déclenche le processus de parsing structurel d'un document à partir de son artefact extrait (MD ou JSON).
+    *   **Description** : Déclenche le processus de parsing structurel d'un document à partir de son artefact extrait (MD ou JSON). Identifie également les anomalies de numérotation d'articles (trous, doublons) et génère des `CurationFlag`.
     *   **Paramètres** : `source_format` (`md` ou `json`).
 
 ### 3. Fichiers et Extractions (Runs)
