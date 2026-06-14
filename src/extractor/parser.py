@@ -44,11 +44,12 @@ STRUCTURE_PATTERNS: Dict[str, re.Pattern] = {
     for level, keyword in _LEVEL_KEYWORDS.items()
 }
 
-# "ARTICLE 1er : contenu...", "Art. 12.-", "Article L.122-4", "ARTICLE PREMIER"
+# "ARTICLE 1er : contenu...", "Art. 12.-", "Article L.122-4", "ARTICLE PREMIER",
+# "Art.4.‐ ..." (sans espace, tiret Unicode ‐ fréquent dans les Actes OHADA)
 ARTICLE_PATTERN = re.compile(
-    r"^(?:ARTICLE|ART)\.?\s+"
+    r"^(?:ARTICLE|ART)\.?\s*"
     r"(PREMIER|[LDRA]?\.?\s*\d+[a-zA-Z0-9\-]*(?:\s+(?:bis|ter|quater|quinquies))?)"
-    r"\s*[:.\-–—]*\s*(.*)$",
+    r"\s*[:.\-–—‐]*\s*(.*)$",
     re.IGNORECASE,
 )
 
@@ -57,6 +58,16 @@ PARTIE_INVERTED_PATTERN = re.compile(
     rf"^({_NUMBER})\s+PARTIE{_SEP}(.*)$",
     re.IGNORECASE,
 )
+
+# Marqueur de page injecté par l'extraction JSON MinerU (cf.
+# extract_text_from_mineru_json) : permet de tamponner chaque nœud avec sa page
+# d'origine (1-based) pour la citabilité « page N ». Absent des entrées markdown.
+PAGE_MARKER_PATTERN = re.compile(r"^\[\[MIBEKO_PAGE:(\d+)\]\]$")
+
+# Tableau HTML émis par l'extraction JSON MinerU (grilles salariales, etc.) sur
+# une seule ligne. Routé vers un nœud feuille TABLEAU plutôt que noyé dans
+# l'article courant.
+TABLE_HTML_PATTERN = re.compile(r"^<table[\s>]", re.IGNORECASE)
 
 # Lignes de bruit à ignorer : images markdown, filets, numéros de page isolés.
 _NOISE_PATTERN = re.compile(r"^(?:!\[.*|[-_*=]{3,}|\d{1,3}|[o0]{3,})$")
@@ -124,6 +135,9 @@ class LegalDocumentParser:
         open_nodes: List[Tuple[int, Dict[str, Any]]] = []
         current_article: Optional[Dict[str, Any]] = None
         content_buffer: List[str] = []
+        # Page d'origine courante (1-based), alimentée par les marqueurs MinerU.
+        # Reste None pour les entrées sans pagination (markdown brut).
+        current_page: Optional[int] = None
 
         def close_article() -> None:
             nonlocal current_article
@@ -152,6 +166,7 @@ class LegalDocumentParser:
                 "number": (number or "").strip(),
                 "title": (title or "").strip(),
                 "content": "",
+                "page": current_page,
                 "children": [],
             }
             attach_to_parent(node)
@@ -165,14 +180,38 @@ class LegalDocumentParser:
                 "number": (number or "").strip(),
                 "title": "",
                 "content": (inline_content or "").strip(),
+                "page": current_page,
                 "children": [],
             }
             attach_to_parent(node)
             current_article = node
 
+        def open_table(html: str) -> None:
+            # Feuille autonome rattachée à la section courante (sœur des articles),
+            # pas au contenu de l'article précédent.
+            close_article()
+            node = {
+                "type": "TABLEAU",
+                "number": "",
+                "title": "",
+                "content": (html or "").strip(),
+                "page": current_page,
+                "children": [],
+            }
+            attach_to_parent(node)
+
         for raw_line in text.split("\n"):
             stripped = raw_line.strip()
             if not stripped:
+                continue
+
+            page_marker = PAGE_MARKER_PATTERN.match(stripped)
+            if page_marker:
+                current_page = int(page_marker.group(1))
+                continue
+
+            if TABLE_HTML_PATTERN.match(stripped):
+                open_table(stripped)
                 continue
 
             match_line = _clean_for_matching(stripped)
