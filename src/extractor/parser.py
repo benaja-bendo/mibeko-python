@@ -45,11 +45,31 @@ STRUCTURE_PATTERNS: Dict[str, re.Pattern] = {
 }
 
 # "ARTICLE 1er : contenu...", "Art. 12.-", "Article L.122-4", "ARTICLE PREMIER",
-# "Art.4.‐ ..." (sans espace, tiret Unicode ‐ fréquent dans les Actes OHADA)
+# "Art.4.‐ ..." (sans espace, tiret Unicode ‐ fréquent dans les Actes OHADA).
+# Le qualificatif "nouveau/nouvelle" est capturé DANS le numéro ("Article 2
+# nouveau" -> "2 nouveau") : dans un acte modificatif il désigne le texte de
+# remplacement d'un article cité, à ne pas confondre avec l'article d'exécution
+# de même numéro (sinon doublon + fausse alerte de curation).
 ARTICLE_PATTERN = re.compile(
     r"^(?:ARTICLE|ART)\.?\s*"
-    r"(PREMIER|[LDRA]?\.?\s*\d+[a-zA-Z0-9\-]*(?:\s+(?:bis|ter|quater|quinquies))?)"
+    r"(PREMIER|[LDRA]?\.?\s*\d+[a-zA-Z0-9\-]*(?:\s+(?:bis|ter|quater|quinquies|nouveau|nouvelle|nouveaux|nouvelles))?)"
     r"\s*[:.\-–—‐]*\s*(.*)$",
+    re.IGNORECASE,
+)
+
+# Formule finale d'un acte : « Fait à Brazzaville, le 18 avril 2026 » suivie du
+# nom du ou des signataires. Isolée en feuille SIGNATURE plutôt que collée au
+# contenu du dernier article. On exige « le <jour> » après le lieu pour ne pas
+# confondre avec une ligne d'article qui débuterait par « Fait à … » (le « l »
+# de « le » est parfois OCRisé en « I » majuscule).
+SIGNATURE_PATTERN = re.compile(r"^Fait\s+à\b.*\b[lI]e\s+\d", re.IGNORECASE)
+
+# En-têtes de rubrique d'un Journal Officiel (ministère, partie, sous-section…)
+# qui suivent parfois la signature du dernier acte d'une section. Servent
+# UNIQUEMENT, en mode signature, à clore la feuille SIGNATURE sans la polluer.
+_SECTION_NOISE_PATTERN = re.compile(
+    r"^(?:MINIST[EÈ]RE|PR[EÉ]SIDENCE|PRIMATURE|PARTIE\b|ANNONCES|ACTE\s+EN\s+ABR[EÉ]G[EÉ]|"
+    r"[AB]\s*[-–—]\s|[-–—]\s*(?:DECRET|TEXTES|ANNONCES))",
     re.IGNORECASE,
 )
 
@@ -93,6 +113,10 @@ class LegalDocumentParser:
     Produit une liste de noeuds racines de la forme :
     {"type": "TITRE", "number": "I", "title": "...", "content": "", "children": [...]}
     Les ARTICLEs portent leur texte dans "content" (retours à la ligne préservés).
+
+    Le texte qui précède le premier élément structurel d'un acte (qualité du
+    signataire, visas « Vu … », considérants) est émis comme feuille PREAMBULE
+    en tête des roots — mais uniquement si un ARTICLE/structure suit.
     """
 
     def __init__(self, pdf_path: Optional[str] = None, text_content: Optional[str] = None):
@@ -138,6 +162,18 @@ class LegalDocumentParser:
         # Page d'origine courante (1-based), alimentée par les marqueurs MinerU.
         # Reste None pour les entrées sans pagination (markdown brut).
         current_page: Optional[int] = None
+        # Texte antérieur au premier élément structurel (qualité du signataire,
+        # visas, considérants). Émis comme feuille PREAMBULE en tête, mais
+        # SEULEMENT si un ARTICLE/structure suit : un texte sans dispositif
+        # (proclamation, discours) n'est pas un préambule et reste géré par le
+        # fallback « texte intégral » de l'appelant.
+        preamble_buffer: List[str] = []
+        preamble_page: Optional[int] = None
+        structure_opened = False
+        # Formule finale (« Fait à … » + signataire) isolée en feuille SIGNATURE
+        # plutôt que collée au contenu du dernier article.
+        current_signature: Optional[Dict[str, Any]] = None
+        signature_buffer: List[str] = []
 
         def close_article() -> None:
             nonlocal current_article
@@ -154,8 +190,59 @@ class LegalDocumentParser:
             else:
                 roots.append(node)
 
+        def flush_preamble() -> None:
+            """Émet le préambule bufferisé comme feuille de tête, une seule fois.
+
+            Appelé à l'ouverture du premier élément structurel : le texte qui le
+            précède (visas, considérants) devient un nœud PREAMBULE prepend en
+            tête des roots. Si aucun élément structurel n'ouvre jamais, le buffer
+            est ignoré (l'appelant retombe sur son fallback « texte intégral »).
+            """
+            nonlocal structure_opened
+            if structure_opened:
+                return
+            structure_opened = True
+            text = "\n".join(preamble_buffer).strip()
+            preamble_buffer.clear()
+            if text:
+                roots.insert(0, {
+                    "type": "PREAMBULE",
+                    "number": "",
+                    "title": "",
+                    "content": text,
+                    "page": preamble_page,
+                    "children": [],
+                })
+
+        def close_signature() -> None:
+            nonlocal current_signature
+            if current_signature is not None:
+                current_signature["content"] = "\n".join(signature_buffer).strip()
+            signature_buffer.clear()
+            current_signature = None
+
+        def open_signature(first_line: str) -> None:
+            nonlocal current_signature
+            close_signature()
+            close_article()
+            node = {
+                "type": "SIGNATURE",
+                "number": "",
+                "title": "",
+                "content": "",
+                "page": current_page,
+                "children": [],
+            }
+            # Toujours à la racine de l'acte (le signataire engage l'acte entier),
+            # pas rattachée au dernier chapitre/section ouvert.
+            roots.append(node)
+            current_signature = node
+            signature_buffer.append(first_line)
+
         def open_structure(level: str, number: str, title: str) -> None:
             nonlocal current_article
+            flush_preamble()
+            close_signature()
             close_article()
             level_index = STRUCTURE_LEVELS.index(level)
             while open_nodes and open_nodes[-1][0] >= level_index:
@@ -174,6 +261,8 @@ class LegalDocumentParser:
 
         def open_article(number: str, inline_content: str) -> None:
             nonlocal current_article
+            flush_preamble()
+            close_signature()
             close_article()
             node = {
                 "type": "ARTICLE",
@@ -189,6 +278,8 @@ class LegalDocumentParser:
         def open_table(html: str) -> None:
             # Feuille autonome rattachée à la section courante (sœur des articles),
             # pas au contenu de l'article précédent.
+            flush_preamble()
+            close_signature()
             close_article()
             node = {
                 "type": "TABLEAU",
@@ -218,6 +309,11 @@ class LegalDocumentParser:
             if not match_line or _NOISE_PATTERN.match(match_line):
                 continue
 
+            if SIGNATURE_PATTERN.match(match_line):
+                # « Fait à … » : clôt le dispositif et ouvre la feuille SIGNATURE.
+                open_signature(match_line)
+                continue
+
             article_match = ARTICLE_PATTERN.match(match_line)
             if article_match:
                 open_article(article_match.group(1), article_match.group(2))
@@ -238,7 +334,15 @@ class LegalDocumentParser:
                 open_structure(*structure_match)
                 continue
 
-            if current_article is not None:
+            if current_signature is not None:
+                # Contenu de la formule finale (nom du signataire…). Un en-tête de
+                # rubrique du JO (ministère, partie…) clôt la signature et est ignoré
+                # pour ne pas la polluer avec le début de l'acte suivant.
+                if _SECTION_NOISE_PATTERN.match(match_line):
+                    close_signature()
+                else:
+                    signature_buffer.append(match_line)
+            elif current_article is not None:
                 # Contenu d'article : on préserve les retours à la ligne
                 # (listes à puces, alinéas) au lieu d'aplatir le texte.
                 content_buffer.append(stripped)
@@ -246,6 +350,13 @@ class LegalDocumentParser:
                 # Titre d'unité écrit sur la ligne suivante (ex: "# TITRE II." puis
                 # "DU CONTRAT DE TRAVAIL").
                 open_nodes[-1][1]["title"] = match_line
+            elif not structure_opened:
+                # Préambule de l'acte : qualité du signataire, visas « Vu … »,
+                # considérants — tout ce qui précède le premier article/structure.
+                if preamble_page is None:
+                    preamble_page = current_page
+                preamble_buffer.append(match_line)
 
+        close_signature()
         close_article()
         return roots

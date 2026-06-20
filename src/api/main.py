@@ -208,7 +208,10 @@ def build_journal_object_key(journal: OfficialJournal, filename: str) -> str:
     """Construit une clé objet stable pour le PDF source d’un Journal Officiel."""
 
     publication_scope = journal.publication_date.isoformat()
-    safe_name = sanitize_path_component(os.path.splitext(filename)[0])
+    # Borne le nom : les titres d'actes très longs gonflaient le chemin S3
+    # au-delà des limites de colonne (file_path). 120 caractères restent lisibles
+    # et laissent une marge confortable même avec le préfixe bucket le plus long.
+    safe_name = sanitize_path_component(os.path.splitext(filename)[0])[:120]
     extension = os.path.splitext(filename)[1].lower() or ".pdf"
     number_scope = sanitize_path_component(journal.number or str(journal.id))
     return f"domino/official-journals/{publication_scope}/{number_scope}/source/{safe_name}{extension}"
@@ -305,6 +308,81 @@ def extract_text_from_mineru_json(data: Dict[str, Any], with_page_markers: bool 
                     lines.append(line_text)
 
     return "\n".join(lines)
+
+
+def _normalize_for_match(text: str) -> str:
+    """Normalise une ligne pour l'alignement md↔json : minuscules, espaces compactés."""
+
+    cleaned = re.sub(r"^[#>\s*_]+", "", text)
+    return re.sub(r"\s+", " ", cleaned).strip().lower()
+
+
+def build_json_page_index(json_payload: Dict[str, Any]) -> List[Tuple[str, int]]:
+    """Liste ordonnée (ligne normalisée, page 1-based) depuis le JSON MinerU.
+
+    Sert à retrouver la page PDF d'origine d'une ligne de texte. On ignore les
+    lignes trop courtes (bruit) pour fiabiliser l'alignement.
+    """
+
+    index: List[Tuple[str, int]] = []
+    for page in json_payload.get("pdf_info", []) or []:
+        if not isinstance(page, dict):
+            continue
+        page_no = page.get("page_idx")
+        if not isinstance(page_no, int):
+            continue
+        blocks = page.get("para_blocks") or page.get("preproc_blocks") or []
+        for block in blocks:
+            for line in block.get("lines", []) or []:
+                text = " ".join(
+                    span.get("content", "").strip()
+                    for span in line.get("spans", []) or []
+                    if span.get("content")
+                ).strip()
+                norm = _normalize_for_match(text)
+                if len(norm) >= 8:
+                    index.append((norm, page_no + 1))
+    return index
+
+
+def annotate_markdown_with_pages(
+    content: str,
+    page_index: List[Tuple[str, int]],
+    cursor: List[int],
+    window: int = 250,
+) -> str:
+    """Injecte des marqueurs « [[MIBEKO_PAGE:N]] » dans `content` (texte d'un acte).
+
+    Aligne chaque ligne sur `page_index` (issu du JSON) via un curseur partagé qui
+    avance (les deux sources sont dans le même ordre documentaire) : ainsi les
+    lignes répétées d'un acte à l'autre (« Vu la Constitution ») sont résolues à la
+    BONNE page. Le parseur consomme ensuite ces marqueurs pour tamponner chaque
+    nœud (préambule, articles, signature) avec sa page PDF d'origine. Tolérant aux
+    différences de segmentation md/json (match par préfixe de 18 caractères).
+    """
+
+    out: List[str] = []
+    last_emitted: Optional[int] = None
+    for raw in content.split("\n"):
+        norm = _normalize_for_match(raw)
+        page: Optional[int] = None
+        if len(norm) >= 8:
+            key = norm[:18]
+            start = cursor[0]
+            end = min(len(page_index), start + window)
+            j = start
+            while j < end:
+                cand, cand_page = page_index[j]
+                if cand.startswith(key) or norm.startswith(cand[:18]):
+                    page = cand_page
+                    cursor[0] = j + 1
+                    break
+                j += 1
+        if page is not None and page != last_emitted:
+            out.append(f"[[MIBEKO_PAGE:{page}]]")
+            last_emitted = page
+        out.append(raw)
+    return "\n".join(out)
 
 
 def sanitize_legal_text(content: str) -> str:
@@ -581,7 +659,10 @@ def split_official_journal_markdown(markdown_text: str) -> List[Dict[str, str]]:
         if is_act_start:
             flush()
             current_title = cleaned
-            current_lines = [raw_line]
+            # La ligne de titre n'est PAS reversée dans le contenu : elle est déjà
+            # conservée comme titre de l'acte (titre_officiel). Évite de répéter le
+            # titre en tête du préambule.
+            current_lines = []
             continue
 
         if current_title:
@@ -706,9 +787,21 @@ def ingest_hierarchy(
                 )
                 db.add(article)
 
-                # Mémorise le numéro entier (s'il existe) pour le contrôle de séquence.
-                seq_match = re.match(r"(\d+)", raw_number)
-                article_sequence.append((int(seq_match.group(1)) if seq_match else None, article.id))
+                # Numéro ordinal pour le contrôle de séquence :
+                # - « premier » → 1 (forme légale officielle, non normalisée à
+                #   l'affichage où numero_article reste « premier ») ;
+                # - « X nouveau » → hors séquence : c'est le texte de remplacement
+                #   cité dans un acte modificatif, pas un article séquentiel (sinon
+                #   faux doublon avec l'article d'exécution de même numéro).
+                low_number = raw_number.lower()
+                if "nouveau" in low_number or "nouvelle" in low_number:
+                    ordinal = None
+                elif low_number.startswith(("premier", "première", "premiere")):
+                    ordinal = 1
+                else:
+                    seq_match = re.match(r"(\d+)", raw_number)
+                    ordinal = int(seq_match.group(1)) if seq_match else None
+                article_sequence.append((ordinal, article.id))
 
                 version = ArticleVersion(
                     article_id=article.id,
@@ -717,6 +810,63 @@ def ingest_hierarchy(
                     source_run_id=run_id,
                     source_media_file_id=media_id,
                     source_locator={"page": node_data["page"]} if node_data.get("page") is not None else {},
+                    validation_status=validation_status,
+                )
+                db.add(version)
+            elif node_data["type"] == "PREAMBULE":
+                # Préambule de l'acte (qualité du signataire, visas, considérants) :
+                # feuille de tête marquée content_format=preamble dans source_locator
+                # (même approche que TABLEAU, zéro migration). Hors contrôle de
+                # séquence : ce n'est pas un article numéroté.
+                preamble_locator: Dict[str, Any] = {"content_format": "preamble"}
+                if node_data.get("page") is not None:
+                    preamble_locator["page"] = node_data["page"]
+
+                article = Article(
+                    id=node_id,
+                    document_id=document.id,
+                    parent_node_id=parent_node_id,
+                    numero_article="PREAMBULE",
+                    ordre_affichage=current_order,
+                    validation_status=validation_status,
+                )
+                db.add(article)
+
+                version = ArticleVersion(
+                    article_id=article.id,
+                    contenu_texte=node_data.get("content", ""),
+                    validity_period=DateRange(datetime.datetime.utcnow().date(), None),
+                    source_run_id=run_id,
+                    source_media_file_id=media_id,
+                    source_locator=preamble_locator,
+                    validation_status=validation_status,
+                )
+                db.add(version)
+            elif node_data["type"] == "SIGNATURE":
+                # Formule finale (« Fait à … » + signataire) : feuille de pied
+                # marquée content_format=signature (même approche que TABLEAU,
+                # zéro migration). Hors contrôle de séquence d'articles.
+                signature_locator: Dict[str, Any] = {"content_format": "signature"}
+                if node_data.get("page") is not None:
+                    signature_locator["page"] = node_data["page"]
+
+                article = Article(
+                    id=node_id,
+                    document_id=document.id,
+                    parent_node_id=parent_node_id,
+                    numero_article="SIGNATURE",
+                    ordre_affichage=current_order,
+                    validation_status=validation_status,
+                )
+                db.add(article)
+
+                version = ArticleVersion(
+                    article_id=article.id,
+                    contenu_texte=node_data.get("content", ""),
+                    validity_period=DateRange(datetime.datetime.utcnow().date(), None),
+                    source_run_id=run_id,
+                    source_media_file_id=media_id,
+                    source_locator=signature_locator,
                     validation_status=validation_status,
                 )
                 db.add(version)
@@ -777,12 +927,24 @@ def create_or_update_jo_documents_from_markdown(
     journal: OfficialJournal,
     markdown_text: str,
     curation_status: str = "review",
+    page_source_json: Optional[Dict[str, Any]] = None,
 ) -> List[LegalDocument]:
-    """Crée ou met à jour les actes FLUX d’un Journal Officiel à partir de son markdown."""
+    """Crée ou met à jour les actes FLUX d’un Journal Officiel à partir de son markdown.
+
+    Le découpage en actes se fait TOUJOURS sur le markdown (fiable). Si
+    `page_source_json` (JSON MinerU du même PDF) est fourni, on s'en sert
+    uniquement pour TAMPONNER chaque nœud avec sa page PDF d'origine (citabilité
+    « page N »), sans influencer le découpage.
+    """
 
     extracted_texts = split_official_journal_markdown(markdown_text)
     created_documents: List[LegalDocument] = []
     journal_institution_id = resolve_institution_id(db, "JO")
+
+    # Index de pages partagé (curseur avançant) : les actes sont dans l'ordre du
+    # document, comme les pages du JSON.
+    page_index = build_json_page_index(page_source_json) if page_source_json else []
+    page_cursor = [0]
 
     for extracted in extracted_texts:
         title = extracted["titre"].strip()
@@ -821,16 +983,23 @@ def create_or_update_jo_documents_from_markdown(
             document.curation_status = curation_status
             document.extraction_status = "completed"
 
-        parser = LegalDocumentParser(text_content=extracted["contenu"])
+        act_content = extracted["contenu"]
+        if page_index:
+            act_content = annotate_markdown_with_pages(act_content, page_index, page_cursor)
+        parser = LegalDocumentParser(text_content=act_content)
         hierarchy = parser.parse_hierarchy()
         
-        # Fallback pour les documents sans structure (ex: Discours, Proclamation)
+        # Fallback pour les documents sans structure (ex: Discours, Proclamation,
+        # actes en abrégé) : tout le texte en un article « Unique », tamponné avec
+        # la première page repérée pour rester citable.
         if not hierarchy and extracted["contenu"].strip():
+            first_marker = re.search(r"\[\[MIBEKO_PAGE:(\d+)\]\]", act_content)
             hierarchy = [{
                 "type": "ARTICLE",
                 "number": "Unique",
                 "title": "Texte intégral",
                 "content": extracted["contenu"].strip(),
+                "page": int(first_marker.group(1)) if first_marker else None,
                 "children": []
             }]
 
@@ -1072,14 +1241,22 @@ async def process_mineru_journal_extraction(
         result = await mineru_service.get_results(task_id)
 
         if result["status"] == "success":
+            # Le JSON (s'il existe) sert de source de pages ; le markdown reste la
+            # source de découpage. Repli sur le texte reconstruit du JSON sinon.
+            page_source_json: Optional[Dict[str, Any]] = None
+            if result.get("json_url"):
+                json_bytes = await mineru_service.download_result(result["json_url"])
+                try:
+                    page_source_json = json.loads(json_bytes.decode("utf-8", errors="ignore"))
+                except json.JSONDecodeError:
+                    page_source_json = None
+
             markdown_text = ""
             if result.get("md_url"):
                 md_bytes = await mineru_service.download_result(result["md_url"])
                 markdown_text = md_bytes.decode("utf-8", errors="ignore")
-            elif result.get("json_url"):
-                json_bytes = await mineru_service.download_result(result["json_url"])
-                json_payload = json.loads(json_bytes.decode("utf-8", errors="ignore"))
-                markdown_text = extract_text_from_mineru_json(json_payload)
+            elif page_source_json is not None:
+                markdown_text = extract_text_from_mineru_json(page_source_json)
 
             if markdown_text:
                 created_documents = create_or_update_jo_documents_from_markdown(
@@ -1087,6 +1264,7 @@ async def process_mineru_journal_extraction(
                     journal,
                     markdown_text,
                     curation_status="review",
+                    page_source_json=page_source_json,
                 )
                 journal.transcription_status = "completed" if created_documents else "pending"
             else:
@@ -1421,11 +1599,19 @@ async def upload_official_journal(
             if md_bytes:
                 markdown_text = md_bytes.decode("utf-8", errors="ignore")
 
-        if not markdown_text and json_file:
+        # Le JSON sert de SOURCE DE PAGES (citabilité), pas de découpage. S'il n'y
+        # a pas de markdown, on s'en sert aussi comme repli pour reconstruire le texte.
+        page_source_json: Optional[Dict[str, Any]] = None
+        if json_file:
             json_bytes = await json_file.read()
             if json_bytes:
-                json_payload = json.loads(json_bytes.decode("utf-8", errors="ignore"))
-                markdown_text = extract_text_from_mineru_json(json_payload)
+                try:
+                    page_source_json = json.loads(json_bytes.decode("utf-8", errors="ignore"))
+                except json.JSONDecodeError:
+                    page_source_json = None
+
+        if not markdown_text and page_source_json is not None:
+            markdown_text = extract_text_from_mineru_json(page_source_json)
 
         created_documents: List[LegalDocument] = []
         if markdown_text:
@@ -1434,6 +1620,7 @@ async def upload_official_journal(
                 journal,
                 markdown_text,
                 curation_status=documents_curation_status,
+                page_source_json=page_source_json,
             )
             journal.transcription_status = "completed" if created_documents else "pending"
         elif journal_created or journal.transcription_status in (None, "pending", "failed"):

@@ -108,7 +108,7 @@ def list_documents(
     if document_ids:
         article_counts = dict(
             db.query(Article.document_id, func.count(Article.id))
-            .filter(Article.document_id.in_(document_ids))
+            .filter(Article.document_id.in_(document_ids), Article.deleted_at.is_(None))
             .group_by(Article.document_id)
             .all()
         )
@@ -139,7 +139,7 @@ def global_stats(db: Session = Depends(get_db)):
     draft = count_docs(LegalDocument.curation_status == "draft")
     review = count_docs(LegalDocument.curation_status == "review")
     published = count_docs(LegalDocument.curation_status == "published")
-    total_articles = db.query(func.count(Article.id)).scalar() or 0
+    total_articles = db.query(func.count(Article.id)).filter(Article.deleted_at.is_(None)).scalar() or 0
     total_runs = db.query(func.count(ExtractionRun.id)).scalar() or 0
     runs_running = db.query(func.count(ExtractionRun.id)).filter(ExtractionRun.status == "running").scalar() or 0
 
@@ -171,7 +171,7 @@ def get_document(doc_id: str, db: Session = Depends(get_db)):
 
     has_md = any(f.file_category == "EXTRACTION_MARKDOWN" for f in document.files)
     has_json = any(f.file_category == "EXTRACTION_JSON" for f in document.files)
-    nb_articles = db.query(func.count(Article.id)).filter(Article.document_id == document.id).scalar() or 0
+    nb_articles = db.query(func.count(Article.id)).filter(Article.document_id == document.id, Article.deleted_at.is_(None)).scalar() or 0
     nb_nodes = db.query(func.count(StructureNode.id)).filter(StructureNode.document_id == document.id).scalar() or 0
 
     detail = LegalDocumentDetail(
@@ -247,7 +247,7 @@ def get_document_stats(doc_id: str, db: Session = Depends(get_db)):
     if not document:
         raise HTTPException(status_code=404, detail="Document non trouvé")
 
-    nb_articles = db.query(func.count(Article.id)).filter(Article.document_id == document.id).scalar() or 0
+    nb_articles = db.query(func.count(Article.id)).filter(Article.document_id == document.id, Article.deleted_at.is_(None)).scalar() or 0
     nb_nodes = db.query(func.count(StructureNode.id)).filter(StructureNode.document_id == document.id).scalar() or 0
     nb_runs = db.query(func.count(ExtractionRun.id)).filter(ExtractionRun.document_id == document.id).scalar() or 0
     nb_files = db.query(func.count(MediaFile.id)).filter(MediaFile.document_id == document.id).scalar() or 0
@@ -279,10 +279,10 @@ def get_document_articles(
     if not document:
         raise HTTPException(status_code=404, detail="Document non trouvé")
 
-    total = db.query(func.count(Article.id)).filter(Article.document_id == document.id).scalar() or 0
+    total = db.query(func.count(Article.id)).filter(Article.document_id == document.id, Article.deleted_at.is_(None)).scalar() or 0
     articles = (
         db.query(Article)
-        .filter(Article.document_id == document.id)
+        .filter(Article.document_id == document.id, Article.deleted_at.is_(None))
         .order_by(Article.ordre_affichage)
         .offset((page - 1) * per_page)
         .limit(per_page)

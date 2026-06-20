@@ -31,7 +31,9 @@ class OfficialJournal(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     title = Column(String(255), nullable=False)
     publication_date = Column(Date, nullable=False)
-    file_path = Column(String(255), nullable=False)
+    # Aligné sur media_files.file_path : le chemin S3 dérivé du titre (long) d'un
+    # acte dépassait VARCHAR(255). Cf. migration widen_official_journals_file_path.
+    file_path = Column(String(512), nullable=False)
     transcription_status = Column(String(255), nullable=True)
     is_published = Column(Boolean, default=False)
     number = Column(String(255), nullable=True)
@@ -150,6 +152,9 @@ class Article(Base):
     numero_article = Column(String(50), nullable=False)
     ordre_affichage = Column(Integer, default=0)
     validation_status = Column(String(20), default="pending")
+    # SoftDeletes côté Laravel : les lectures Python doivent filtrer deleted_at IS
+    # NULL pour ne pas compter/exposer des articles supprimés par la curation.
+    deleted_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
