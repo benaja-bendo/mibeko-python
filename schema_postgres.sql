@@ -5,6 +5,17 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";   -- Pour les IDs uniques
 CREATE EXTENSION IF NOT EXISTS "ltree";       -- Pour la hiérarchie performante
 CREATE EXTENSION IF NOT EXISTS "vector";      -- Pour la recherche sémantique (RAG)
 CREATE EXTENSION IF NOT EXISTS "btree_gist";  -- Pour les contraintes de temps (exclude)
+CREATE EXTENSION IF NOT EXISTS "pg_trgm";     -- Recherche floue (trigram) : variantes morphologiques & fautes de frappe
+CREATE EXTENSION IF NOT EXISTS "unaccent";    -- Normalisation des accents pour la recherche floue
+
+-- Wrapper IMMUTABLE autour de unaccent() (forme à dictionnaire explicite) :
+-- indispensable pour l'utiliser dans les expressions de recherche floue. Voir
+-- la recherche Bibliothèque (strict_word_similarity sur f_unaccent(contenu)).
+CREATE OR REPLACE FUNCTION f_unaccent(text)
+RETURNS text
+LANGUAGE sql
+IMMUTABLE PARALLEL SAFE STRICT
+AS $func$ SELECT public.unaccent('public.unaccent', $1) $func$;
 
 -- NETTOYAGE (Attention: supprime les données existantes)
 DROP TABLE IF EXISTS audits CASCADE;
@@ -368,9 +379,21 @@ COMMENT ON COLUMN article_versions.validity_period IS
 
 CREATE INDEX idx_versions_search ON article_versions USING GIN(search_tsv);
 
+-- Index GIN trigram (contenu désaccentué) : accélère le filet de recherche
+-- floue de la Bibliothèque (opérateur %>> / strict_word_similarity), qui rattrape
+-- les variantes morphologiques (dot ↔ dotal) et les fautes de frappe.
+CREATE INDEX idx_versions_content_trgm ON article_versions
+USING gin (f_unaccent(contenu_texte) gin_trgm_ops);
+
 CREATE INDEX idx_versions_embedding ON article_versions
 USING hnsw (embedding vector_cosine_ops)
 WITH (m = 16, ef_construction = 64);
+
+-- Seuil par défaut du filet flou : l'opérateur %>> l'utilise. 0.35 garde
+-- « dotal » (0.375) et écarte « dotation » (0.27) pour une recherche « dote ».
+DO $$ BEGIN
+    EXECUTE format('ALTER DATABASE %I SET pg_trgm.strict_word_similarity_threshold = 0.35', current_database());
+END $$;
 
 -- ===========================================================
 -- 5. TABLE : LIENS ET CITATIONS (Le Graph Juridique)
