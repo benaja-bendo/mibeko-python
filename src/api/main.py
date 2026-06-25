@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import text
+from sqlalchemy import func, text
 from sqlalchemy.orm import Session
 
 from src.api.routers import documents as documents_router
@@ -683,65 +683,173 @@ def clear_document_structure(db: Session, document_id: uuid.UUID) -> None:
     db.flush()
 
 
+def find_missing_runs(distinct_sorted: List[int]) -> List[Tuple[int, int, int]]:
+    """Plages d'entiers ABSENTES dans [min, max] de l'ensemble fourni.
+
+    Basé sur l'ENSEMBLE (pas la séquence) : robuste à un OCR qui restitue les
+    pages dans le désordre — un trou « 487→552 » réel est détecté quel que soit
+    l'ordre d'apparition des articles. Chaque plage : (début, fin, taille).
+    """
+    runs: List[Tuple[int, int, int]] = []
+    if not distinct_sorted:
+        return runs
+
+    present = set(distinct_sorted)
+    lo, hi = distinct_sorted[0], distinct_sorted[-1]
+    start: Optional[int] = None
+    for value in range(lo, hi + 1):
+        if value not in present:
+            if start is None:
+                start = value
+        elif start is not None:
+            runs.append((start, value - 1, value - start))
+            start = None
+    return runs
+
+
+def count_series_restarts(ordinals: List[int], restart_low: int = 3, restart_prev_min: int = 10) -> int:
+    """Compte les redémarrages de numérotation (chute vers un petit numéro après
+    un numéro élevé) : signal d'une compilation de plusieurs textes dont chacun
+    renumérote ses articles à partir de 1."""
+    restarts = 0
+    prev: Optional[int] = None
+    for number in ordinals:
+        if prev is not None and number <= restart_low and prev > restart_prev_min:
+            restarts += 1
+        prev = number
+    return restarts
+
+
+def analyze_article_sequence(
+    sequence: List[Tuple[Optional[int], uuid.UUID]],
+    *,
+    block_threshold: int = 10,
+    restart_low: int = 3,
+    restart_prev_min: int = 10,
+    min_restarts: int = 2,
+    max_anomalies: int = 200,
+) -> List[Dict[str, Any]]:
+    """Analyse PURE d'une séquence d'articles (ordinal, id) → anomalies à signaler.
+
+    Vise le RAPPEL sur les vrais défauts d'ingestion tout en restant robuste à un
+    OCR désordonné (où l'analyse séquentielle des trous produit des faux positifs
+    massifs : « saut de 86 à 553 » alors que l'article 553 a juste été restitué
+    trop tôt). Trois familles d'anomalies :
+
+    - ``article_doublon`` : même numéro deux fois de suite (séquentiel, précis) ;
+    - ``compilation_suspectee`` : la numérotation redémarre plusieurs fois
+      (plusieurs séries) → le document devrait être segmenté avant publication ;
+    - ``bloc_manquant`` / ``article_manquant`` : plages absentes calculées sur
+      l'ENSEMBLE des numéros (indépendant de l'ordre). Un bloc contigu long
+      (≥ ``block_threshold``) est signalé même en compilation (peu probable que ce
+      soit un acte encapsulé, lesquels sont peu numérotés) ; les petits trous ne
+      sont signalés QUE hors compilation (sinon bruit dû à l'entrelacement des
+      séries d'une compilation).
+
+    Renvoie une liste de dicts {type_probleme, article_id, description}.
+    """
+    anomalies: List[Dict[str, Any]] = []
+
+    # 1. Doublons immédiats (séquentiel, précis).
+    prev: Optional[int] = None
+    for number, article_id in sequence:
+        if number is None:
+            continue
+        if prev is not None and number == prev:
+            anomalies.append({
+                "type_probleme": "article_doublon",
+                "article_id": article_id,
+                "description": f"Numéro d'article {number} répété consécutivement.",
+            })
+        prev = number
+
+    ordinals = [number for number, _ in sequence if number is not None]
+    if not ordinals:
+        return anomalies[:max_anomalies]
+
+    # 2. Compilation (plusieurs séries de numérotation) ?
+    restarts = count_series_restarts(ordinals, restart_low, restart_prev_min)
+    is_compilation = restarts >= min_restarts
+    if is_compilation:
+        anomalies.append({
+            "type_probleme": "compilation_suspectee",
+            "article_id": None,
+            "description": (
+                f"La numérotation d'articles redémarre {restarts} fois "
+                "(plusieurs séries détectées) : compilation probable de plusieurs "
+                "textes. Segmentation recommandée avant publication."
+            ),
+        })
+
+    # 3. Plages absentes (basé sur l'ensemble, robuste à l'ordre).
+    for start, end, size in find_missing_runs(sorted(set(ordinals))):
+        if size >= block_threshold:
+            anomalies.append({
+                "type_probleme": "bloc_manquant",
+                "article_id": None,
+                "description": (
+                    f"{size} numéros d'articles consécutifs absents ({start}-{end}) : "
+                    "perte de pages probable à l'extraction."
+                ),
+            })
+        elif not is_compilation:
+            label = f"{start}" if start == end else f"{start}-{end}"
+            anomalies.append({
+                "type_probleme": "article_manquant",
+                "article_id": None,
+                "description": f"Article(s) {label} absent(s) ({size} numéro(s)).",
+            })
+
+    return anomalies[:max_anomalies]
+
+
 def flag_article_sequence_anomalies(
     db: Session,
     document_id: uuid.UUID,
     sequence: List[Tuple[Optional[int], uuid.UUID]],
-    max_gap: int = 5,
     max_flags: int = 200,
 ) -> int:
-    """Crée des `curation_flags` pour les trous/doublons de numérotation d'articles.
+    """Persiste les anomalies de numérotation d'un document en `curation_flags`.
 
-    Robuste aux compilations (Code Bleu = plusieurs Actes uniformes dont la
-    numérotation repart à 1) et aux recueils annotés (renvois « Art. X » à des
-    articles déjà vus). On privilégie la PRÉCISION : on ne signale que
-    - les petits trous dans une série croissante (saut de N à N+k, k ≤ max_gap) ;
-    - les doublons IMMÉDIATS (même numéro deux fois de suite).
-    Toute baisse du numéro, réapparition, ou grand saut est traitée comme une
-    NOUVELLE série (reset), pas comme une anomalie. Renvoie le nombre d'anomalies.
+    Garde-fou de curation : tant que ces anomalies ne sont pas résolues, le
+    document ne peut pas être publié (cf. `LegalDocumentController`). L'analyse est
+    déléguée à `analyze_article_sequence` (pure, testée). Renvoie le nb d'anomalies.
     """
-    prev: Optional[int] = None
-    flags = 0
+    anomalies = analyze_article_sequence(sequence, max_anomalies=max_flags)
+    for anomaly in anomalies:
+        db.add(CurationFlag(
+            document_id=document_id,
+            article_id=anomaly["article_id"],
+            type_probleme=anomaly["type_probleme"],
+            description=anomaly["description"],
+        ))
+    return len(anomalies)
 
-    for number, article_id in sequence:
-        if number is None:
-            continue
-        if flags >= max_flags:
-            break
-        if prev is None:
-            prev = number
-            continue
 
-        if number == prev:
-            db.add(CurationFlag(
-                document_id=document_id,
-                article_id=article_id,
-                type_probleme="article_doublon",
-                description=f"Numéro d'article {number} répété consécutivement.",
-            ))
-            flags += 1
-            continue
+def assign_dfs_order(hierarchy: List[Dict[str, Any]]) -> None:
+    """Assigne un ordre d'affichage GLOBAL (pré-ordre DFS) à chaque nœud.
 
-        if number == prev + 1:
-            prev = number
-            continue
+    Écrit la clé ``_order`` (entier croissant unique sur tout le document) sur
+    chaque nœud, dans l'ordre de lecture (un parent précède ses enfants, qui
+    précèdent le frère suivant du parent). Sans cela, ``ordre_affichage`` /
+    ``sort_order`` ne sont monotones qu'au sein d'un groupe de frères (reset à 0
+    par branche) : un listing à plat ``ORDER BY ordre_affichage`` ressort alors
+    mélangé. Le viewer arborescent (qui regroupe par parent) reste correct dans
+    les deux cas, mais une clé globale rend le modèle robuste pour tout
+    consommateur à plat (API d'extraction paginée, exports).
+    """
 
-        if prev < number <= prev + max_gap:
-            missing = ", ".join(str(n) for n in range(prev + 1, number))
-            db.add(CurationFlag(
-                document_id=document_id,
-                article_id=None,
-                type_probleme="article_manquant",
-                description=f"Article(s) {missing} absent(s) (saut de {prev} à {number}).",
-            ))
-            flags += 1
-            prev = number
-            continue
+    counter = {"n": 0}
 
-        # Baisse de numéro, réapparition ou grand saut → nouvelle série (reset).
-        prev = number
+    def walk(nodes: List[Dict[str, Any]]) -> None:
+        for node in nodes:
+            node["_order"] = counter["n"]
+            counter["n"] += 1
+            children = node.get("children")
+            if children:
+                walk(children)
 
-    return flags
+    walk(hierarchy)
 
 
 def ingest_hierarchy(
@@ -759,9 +867,24 @@ def ingest_hierarchy(
     table_counter = {"n": 0}
     article_sequence: List[Tuple[Optional[int], uuid.UUID]] = []
 
-    def insert_nodes(nodes_list: List[Dict[str, Any]], parent_tree_path: Optional[str] = None, parent_node_id: Optional[uuid.UUID] = None, start_order: int = 0) -> None:
-        current_order = start_order
+    def unique_article_number(base: str) -> str:
+        """Garantit l'unicité de (document_id, numero_article).
+
+        Suffixe ``_doublon_N`` en cas de collision. S'applique aux vrais articles
+        homonymes MAIS AUSSI aux feuilles PREAMBULE/SIGNATURE multiples : un acte
+        compilé (Code bleu, recueil) peut contenir plusieurs préambules/signatures,
+        sinon violation de la contrainte unique uq_articles_document_numero.
+        """
+        if base in seen_article_numbers:
+            seen_article_numbers[base] += 1
+            return f"{base}_doublon_{seen_article_numbers[base]}"
+        seen_article_numbers[base] = 0
+        return base
+
+    def insert_nodes(nodes_list: List[Dict[str, Any]], parent_tree_path: Optional[str] = None, parent_node_id: Optional[uuid.UUID] = None) -> None:
         for node_data in nodes_list:
+            # Ordre d'affichage GLOBAL (pré-ordre DFS) calculé par assign_dfs_order.
+            display_order = node_data["_order"]
             node_id = uuid.uuid4()
             # Ltree labels must start with a letter. We prefix with 'n' (node)
             node_ltree_id = f"n_{str(node_id).replace('-', '_')}"
@@ -770,19 +893,14 @@ def ingest_hierarchy(
 
             if node_data["type"] == "ARTICLE":
                 raw_number = str(node_data.get("number", "")).strip()
-                article_number = raw_number or f"SANS_NUM_{str(uuid.uuid4())[:8]}"
-                if article_number in seen_article_numbers:
-                    seen_article_numbers[article_number] += 1
-                    article_number = f"{article_number}_doublon_{seen_article_numbers[article_number]}"
-                else:
-                    seen_article_numbers[article_number] = 0
+                article_number = unique_article_number(raw_number or f"SANS_NUM_{str(uuid.uuid4())[:8]}")
 
                 article = Article(
                     id=node_id,
                     document_id=document.id,
                     parent_node_id=parent_node_id,
                     numero_article=article_number,
-                    ordre_affichage=current_order,
+                    ordre_affichage=display_order,
                     validation_status=validation_status,
                 )
                 db.add(article)
@@ -826,8 +944,8 @@ def ingest_hierarchy(
                     id=node_id,
                     document_id=document.id,
                     parent_node_id=parent_node_id,
-                    numero_article="PREAMBULE",
-                    ordre_affichage=current_order,
+                    numero_article=unique_article_number("PREAMBULE"),
+                    ordre_affichage=display_order,
                     validation_status=validation_status,
                 )
                 db.add(article)
@@ -854,8 +972,8 @@ def ingest_hierarchy(
                     id=node_id,
                     document_id=document.id,
                     parent_node_id=parent_node_id,
-                    numero_article="SIGNATURE",
-                    ordre_affichage=current_order,
+                    numero_article=unique_article_number("SIGNATURE"),
+                    ordre_affichage=display_order,
                     validation_status=validation_status,
                 )
                 db.add(article)
@@ -883,7 +1001,7 @@ def ingest_hierarchy(
                     document_id=document.id,
                     parent_node_id=parent_node_id,
                     numero_article=f"TABLEAU_{table_counter['n']}",
-                    ordre_affichage=current_order,
+                    ordre_affichage=display_order,
                     validation_status=validation_status,
                 )
                 db.add(article)
@@ -906,20 +1024,120 @@ def ingest_hierarchy(
                     numero=node_data.get("number", ""),
                     titre=node_data.get("title", ""),
                     tree_path=ltree_obj,
-                    sort_order=current_order,
+                    sort_order=display_order,
                     validation_status=validation_status,
                 )
                 db.add(node)
                 db.flush()
 
                 if node_data.get("children"):
-                    insert_nodes(node_data["children"], parent_tree_path=current_tree_path, parent_node_id=node.id, start_order=0)
-
-            current_order += 1
+                    insert_nodes(node_data["children"], parent_tree_path=current_tree_path, parent_node_id=node.id)
 
     if hierarchy:
+        assign_dfs_order(hierarchy)
         insert_nodes(hierarchy)
         flag_article_sequence_anomalies(db, document.id, article_sequence)
+
+
+# ---------------------------------------------------------------------------
+# Rejouabilité non-destructive (staging) — un retraitement ne doit jamais
+# écraser la curation humaine. La proposition est parquée dans extraction_runs.meta
+# (JSONB) puis arbitrée (diff → promote/discard) par un éditeur.
+# ---------------------------------------------------------------------------
+
+LEAF_CONTENT_TYPES = {"ARTICLE", "PREAMBULE", "SIGNATURE", "TABLEAU"}
+
+
+def document_has_curated_content(db: Session, document_id: uuid.UUID) -> bool:
+    """Vrai si le document porte du travail humain à protéger d'un écrasement.
+
+    Est considéré « précieux » : un document déjà publié, OU au moins une version
+    d'article validée par un éditeur. Dans ce cas, un nouveau parsing est mis en
+    attente d'arbitrage (staging) au lieu d'écraser le live.
+    """
+    document = db.get(LegalDocument, document_id)
+    if document is not None and document.curation_status == "published":
+        return True
+
+    validated = (
+        db.query(ArticleVersion.id)
+        .join(Article, ArticleVersion.article_id == Article.id)
+        .filter(
+            Article.document_id == document_id,
+            Article.deleted_at.is_(None),
+            ArticleVersion.validation_status == "validated",
+        )
+        .first()
+    )
+    return validated is not None
+
+
+def flatten_hierarchy_articles(hierarchy: List[Dict[str, Any]]) -> List[Tuple[str, str]]:
+    """Aplati une hiérarchie parsée en liste ordonnée de (numéro, contenu) pour
+    les feuilles porteuses de texte (articles, préambule, signature, tableaux)."""
+    flat: List[Tuple[str, str]] = []
+
+    def walk(nodes: Optional[List[Dict[str, Any]]]) -> None:
+        for node in nodes or []:
+            if node.get("type") in LEAF_CONTENT_TYPES:
+                number = str(node.get("number") or "").strip() or node["type"]
+                flat.append((number, node.get("content", "") or ""))
+            walk(node.get("children"))
+
+    walk(hierarchy)
+    return flat
+
+
+def fetch_live_articles(db: Session, document_id: uuid.UUID) -> List[Tuple[str, str]]:
+    """(numéro, contenu) de la version courante (validity_period ouverte) de
+    chaque article vivant du document — base de comparaison pour le diff."""
+    rows = (
+        db.query(Article.numero_article, ArticleVersion.contenu_texte)
+        .join(ArticleVersion, ArticleVersion.article_id == Article.id)
+        .filter(
+            Article.document_id == document_id,
+            Article.deleted_at.is_(None),
+            func.upper_inf(ArticleVersion.validity_period),
+        )
+        .order_by(Article.ordre_affichage)
+        .all()
+    )
+    return [(row[0], row[1] or "") for row in rows]
+
+
+def diff_articles(proposed: List[Tuple[str, str]], live: List[Tuple[str, str]]) -> Dict[str, Any]:
+    """Compare deux jeux d'articles par numéro : ajouts, suppressions, modifications.
+
+    Le contenu est comparé après normalisation des espaces. Les numéros dupliqués
+    sont regroupés : c'est un résumé d'arbitrage, pas un diff ligne à ligne.
+    """
+    def index(pairs: List[Tuple[str, str]]) -> Dict[str, List[str]]:
+        grouped: Dict[str, List[str]] = {}
+        for number, content in pairs:
+            grouped.setdefault(number, []).append(" ".join((content or "").split()))
+        return grouped
+
+    proposed_idx = index(proposed)
+    live_idx = index(live)
+
+    added = [n for n in proposed_idx if n not in live_idx]
+    removed = [n for n in live_idx if n not in proposed_idx]
+    changed = [n for n in proposed_idx if n in live_idx and proposed_idx[n] != live_idx[n]]
+    unchanged = [n for n in proposed_idx if n in live_idx and proposed_idx[n] == live_idx[n]]
+
+    return {
+        "proposed_count": sum(len(v) for v in proposed_idx.values()),
+        "live_count": sum(len(v) for v in live_idx.values()),
+        "added": added,
+        "removed": removed,
+        "changed": changed,
+        "summary": {
+            "added": len(added),
+            "removed": len(removed),
+            "changed": len(changed),
+            "unchanged": len(unchanged),
+        },
+    }
 
 
 def create_or_update_jo_documents_from_markdown(
@@ -1734,17 +1952,32 @@ async def execute_parsing_task(run_id: uuid.UUID, doc_id: uuid.UUID, media_id: u
         parser = LegalDocumentParser(text_content=text_content)
         hierarchy = parser.parse_hierarchy()
 
-        if hierarchy:
-            ingest_hierarchy(db, document, hierarchy, run_id=run.id, media_id=media.id, validation_status="pending")
+        if hierarchy and document_has_curated_content(db, document.id):
+            # Replay NON-DESTRUCTIF : le document porte de la curation humaine.
+            # On parque la proposition dans le run (staging) au lieu d'écraser le
+            # live ; un éditeur arbitrera via le diff puis promeut ou rejette.
+            run.status = "needs_review"
+            run.finished_at = datetime.datetime.utcnow()
+            run.meta = {**(run.meta or {}), "staged": True, "proposed_hierarchy": hierarchy}
+            document.curation_status = "review"
+            db.commit()
 
-        run.status = "succeeded"
-        run.finished_at = datetime.datetime.utcnow()
-        # Le document entre dans la file de validation : un éditeur doit
-        # contrôler le parsing avant publication (curation Laravel).
-        document.curation_status = "review"
-        db.commit()
+            await notify_clients("notification", json.dumps({
+                "message": "Nouveau parsing prêt : proposition en attente d'arbitrage (le contenu existant n'a pas été modifié).",
+                "type": "info",
+            }))
+        else:
+            if hierarchy:
+                ingest_hierarchy(db, document, hierarchy, run_id=run.id, media_id=media.id, validation_status="pending")
 
-        await notify_clients("notification", json.dumps({"message": f"Parsing terminé avec succès.", "type": "success"}))
+            run.status = "succeeded"
+            run.finished_at = datetime.datetime.utcnow()
+            # Le document entre dans la file de validation : un éditeur doit
+            # contrôler le parsing avant publication (curation Laravel).
+            document.curation_status = "review"
+            db.commit()
+
+            await notify_clients("notification", json.dumps({"message": f"Parsing terminé avec succès.", "type": "success"}))
 
     except Exception as exc:
         db.rollback()
@@ -1844,3 +2077,79 @@ def parse_document(doc_id: str, background_tasks: BackgroundTasks, source_format
         "message": f"Demande de parsing enregistree depuis le fichier .{normalized_format}. Le processus est en cours d'execution.",
         "run_id": str(run.id),
     }
+
+
+# ---------------------------------------------------------------------------
+# Arbitrage d'un retraitement non-destructif (staging) : diff / promote / discard
+# ---------------------------------------------------------------------------
+
+def _staged_run(db: Session, doc_id: str, run_id: str) -> Optional[ExtractionRun]:
+    """Run du document portant une proposition en attente, ou None."""
+    return (
+        db.query(ExtractionRun)
+        .filter(ExtractionRun.id == run_id, ExtractionRun.document_id == doc_id)
+        .first()
+    )
+
+
+@app.get("/api/v1/documents/{doc_id}/runs/{run_id}/diff", tags=["documents"])
+def get_run_diff(doc_id: str, run_id: str, db: Session = Depends(get_db)):
+    """Compare la proposition d'un run en attente (staging) au contenu live."""
+    run = _staged_run(db, doc_id, run_id)
+    if not run:
+        return JSONResponse(status_code=404, content={"message": "Run introuvable pour ce document."})
+
+    proposed_hierarchy = (run.meta or {}).get("proposed_hierarchy")
+    if not proposed_hierarchy:
+        return JSONResponse(status_code=400, content={"message": "Ce run ne porte aucune proposition en attente (staging)."})
+
+    proposed = flatten_hierarchy_articles(proposed_hierarchy)
+    live = fetch_live_articles(db, run.document_id)
+    return diff_articles(proposed, live)
+
+
+@app.post("/api/v1/documents/{doc_id}/runs/{run_id}/promote", tags=["documents"])
+def promote_run(doc_id: str, run_id: str, db: Session = Depends(get_db), _user: AuthenticatedUser = Depends(require_editor)):
+    """Applique la proposition d'un run (staging) au live — action humaine explicite."""
+    document = db.query(LegalDocument).filter(LegalDocument.id == doc_id, LegalDocument.deleted_at.is_(None)).first()
+    if not document:
+        return JSONResponse(status_code=404, content={"message": "Document non trouve."})
+
+    run = _staged_run(db, str(document.id), run_id)
+    if not run:
+        return JSONResponse(status_code=404, content={"message": "Run introuvable pour ce document."})
+
+    proposed_hierarchy = (run.meta or {}).get("proposed_hierarchy")
+    if not proposed_hierarchy:
+        return JSONResponse(status_code=400, content={"message": "Ce run ne porte aucune proposition a promouvoir."})
+
+    # C'est ICI, et seulement ici, que l'écrasement du contenu a lieu — sur
+    # décision humaine explicite (et non plus automatiquement à chaque parsing).
+    ingest_hierarchy(db, document, proposed_hierarchy, run_id=run.id, media_id=run.source_media_file_id, validation_status="pending")
+
+    meta = dict(run.meta or {})
+    meta.pop("proposed_hierarchy", None)
+    meta.update({"staged": False, "promoted_at": datetime.datetime.utcnow().isoformat()})
+    run.meta = meta
+    run.status = "succeeded"
+    document.curation_status = "review"
+    db.commit()
+
+    return {"message": "Proposition promue : le contenu a ete remplace et repasse en file de validation.", "document_id": str(document.id)}
+
+
+@app.post("/api/v1/documents/{doc_id}/runs/{run_id}/discard", tags=["documents"])
+def discard_run(doc_id: str, run_id: str, db: Session = Depends(get_db), _user: AuthenticatedUser = Depends(require_editor)):
+    """Rejette la proposition d'un run (staging) : le live reste intact."""
+    run = _staged_run(db, doc_id, run_id)
+    if not run:
+        return JSONResponse(status_code=404, content={"message": "Run introuvable pour ce document."})
+
+    meta = dict(run.meta or {})
+    meta.pop("proposed_hierarchy", None)
+    meta.update({"staged": False, "discarded_at": datetime.datetime.utcnow().isoformat()})
+    run.meta = meta
+    run.status = "discarded"
+    db.commit()
+
+    return {"message": "Proposition rejetee : aucun changement applique au contenu existant."}

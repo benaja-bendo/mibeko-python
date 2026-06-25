@@ -140,6 +140,75 @@ def split_compilation(json_path, boundaries_path, outdir):
 
     click.secho("→ Uploadez chaque fichier via /editor/ingestion (type auto-détecté AU).", fg="cyan")
 
+
+@cli.command("suggest-boundaries-md")
+@click.option('--md', 'md_path', required=True, help='Chemin du markdown MinerU (recueil)')
+@click.option('--out', default=None, help='Fichier de bornes à écrire (défaut : <md>.boundaries.json)')
+def suggest_boundaries_md(md_path, out):
+    """Propose des bornes d'actes encapsulés (LOI/ORDONNANCE/DÉCRET/CODE…) depuis un markdown."""
+    import json as _json
+    from src.extractor.compilation_splitter import suggest_markdown_boundaries
+
+    if not os.path.isfile(md_path):
+        click.secho(f"Erreur : markdown introuvable « {md_path} »", fg="red")
+        return
+
+    with open(md_path, encoding="utf-8") as handle:
+        markdown_text = handle.read()
+
+    boundaries = suggest_markdown_boundaries(markdown_text)
+    out_path = out or f"{os.path.splitext(md_path)[0]}.boundaries.json"
+    with open(out_path, "w", encoding="utf-8") as handle:
+        _json.dump(boundaries, handle, ensure_ascii=False, indent=2)
+
+    click.secho(f"{len(boundaries)} borne(s) candidate(s) écrite(s) : {out_path}", fg="green")
+    click.secho("→ Relisez/corrigez ce fichier (gardez les vraies lignes de début d'acte) avant le découpage.", fg="yellow")
+    for boundary in boundaries:
+        click.echo(f"    L{boundary['start_line']:>5} — [{boundary['type_code']}] {boundary['title'][:55]}")
+
+
+@cli.command("split-compilation-md")
+@click.option('--md', 'md_path', required=True, help='Chemin du markdown (recueil)')
+@click.option('--boundaries', 'boundaries_path', required=True, help='Fichier de bornes validées (cf. suggest-boundaries-md)')
+@click.option('--outdir', default=None, help='Dossier de sortie (défaut : <md_dir>/actes)')
+def split_compilation_md(md_path, boundaries_path, outdir):
+    """Découpe le markdown en N sous-markdowns (un par acte) à uploader séparément."""
+    import json as _json
+    import re as _re
+    from src.extractor.compilation_splitter import slice_markdown_by_boundaries
+
+    for path in (md_path, boundaries_path):
+        if not os.path.isfile(path):
+            click.secho(f"Erreur : fichier introuvable « {path} »", fg="red")
+            return
+
+    with open(md_path, encoding="utf-8") as handle:
+        markdown_text = handle.read()
+    with open(boundaries_path, encoding="utf-8") as handle:
+        boundaries = _json.load(handle)
+
+    slices = slice_markdown_by_boundaries(markdown_text, boundaries)
+    if not slices:
+        click.secho("Aucune borne exploitable (start_line manquant ?).", fg="red")
+        return
+
+    target_dir = outdir or os.path.join(os.path.dirname(os.path.abspath(md_path)), "actes")
+    os.makedirs(target_dir, exist_ok=True)
+
+    click.secho(f"{len(slices)} acte(s) → {target_dir}", fg="green")
+    for index, (boundary, sub_text) in enumerate(slices, start=1):
+        meta = boundary["_mibeko_split"]
+        label = boundary.get("suggested") or meta.get("title") or f"acte-{index}"
+        slug = _re.sub(r"[^a-z0-9]+", "-", label.lower()).strip("-")[:40] or f"acte-{index}"
+        out_name = f"acte_{index:02d}_{slug}.md"
+        out_path = os.path.join(target_dir, out_name)
+        with open(out_path, "w", encoding="utf-8") as handle:
+            handle.write(sub_text)
+        click.echo(f"    {out_name}  (L{meta['line_start']}-{meta['line_end']}, {meta['line_count']} lignes, type {meta['type_code']})")
+
+    click.secho("→ Uploadez chaque fichier via /editor/ingestion (type pré-rempli par acte).", fg="cyan")
+
+
 @cli.command()
 @click.option('--path', default='data/congo-code-1975-travail.pdf', help='Chemin absolu ou relatif vers le PDF du Code du Travail')
 @click.option('--title', default='Code du Travail', help='Titre du document juridique')
