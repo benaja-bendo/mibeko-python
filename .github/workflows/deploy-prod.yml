@@ -103,8 +103,10 @@ jobs:
             MINIO_SECRET_KEY=${{ secrets.MINIO_SECRET_KEY }}
             MINIO_SECURE=false
 
+            MINERU_BACKEND=${{ secrets.MINERU_BACKEND || 'cloud' }}
             MINERU_API_URL=${{ secrets.MINERU_API_URL || 'https://mineru.net/api/v4' }}
             MINERU_API_KEY=${{ secrets.MINERU_API_KEY }}
+            MINERU_LANG=${{ secrets.MINERU_LANG || 'fr' }}
 
             GITHUB_REPOSITORY=$REPO_LC
             EOF

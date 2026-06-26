@@ -6,7 +6,7 @@ services:
     env_file: [.env]
     environment:
       PORT: "8000"
-    networks: [proxy, db_internal]
+    networks: [proxy, db_internal, mineru_internal]
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=proxy"
@@ -36,4 +36,6 @@ networks:
   proxy:
     external: true
   db_internal:
+    external: true
+  mineru_internal:
     external: true
