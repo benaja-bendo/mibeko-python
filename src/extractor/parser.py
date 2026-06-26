@@ -223,6 +223,13 @@ class LegalDocumentParser:
 
         def open_signature(first_line: str) -> None:
             nonlocal current_signature
+            # Une signature (« Fait à … ») marque la fin du dispositif : le texte
+            # qui précède (qualité du signataire, visas « Vu … », considérants) est
+            # un vrai préambule, même si AUCUN article/structure n'a été détecté
+            # avant (acte court : nomination, décision, ou « Article » mal OCRisé).
+            # Sans ce flush — contrairement à open_structure/open_article/open_table
+            # — ce préambule était silencieusement perdu (roots = [SIGNATURE] seul).
+            flush_preamble()
             close_signature()
             close_article()
             node = {

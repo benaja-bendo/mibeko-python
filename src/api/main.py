@@ -815,11 +815,23 @@ def flag_article_sequence_anomalies(
     document ne peut pas être publié (cf. `LegalDocumentController`). L'analyse est
     déléguée à `analyze_article_sequence` (pure, testée). Renvoie le nb d'anomalies.
     """
+    # Idempotence : on purge nos propres signalements heuristiques NON résolus
+    # avant de recalculer (ré-import/replay), sans toucher aux flags résolus par un
+    # humain ni aux autres couches (structural/llm). Les flags article-liés
+    # partent déjà en CASCADE quand l'article est supprimé ; ceci couvre en plus
+    # les flags niveau document (article_id NULL : bloc manquant, compilation).
+    db.query(CurationFlag).filter(
+        CurationFlag.document_id == document_id,
+        CurationFlag.source == "heuristic",
+        CurationFlag.resolved.is_(False),
+    ).delete(synchronize_session=False)
+
     anomalies = analyze_article_sequence(sequence, max_anomalies=max_flags)
     for anomaly in anomalies:
         db.add(CurationFlag(
             document_id=document_id,
             article_id=anomaly["article_id"],
+            source="heuristic",
             type_probleme=anomaly["type_probleme"],
             description=anomaly["description"],
         ))

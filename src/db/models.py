@@ -171,7 +171,13 @@ class CurationFlag(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     document_id = Column(UUID(as_uuid=True), ForeignKey("legal_documents.id"), nullable=True)
     article_id = Column(UUID(as_uuid=True), ForeignKey("articles.id"), nullable=True)
+    # Origine du signalement : la couche heuristique (numérotation) tague
+    # 'heuristic' pour pouvoir être purgée/recréée sans toucher aux flags
+    # humains ni aux autres couches (structural/llm) côté Laravel.
+    source = Column(String(20), default="heuristic")
     type_probleme = Column(String(50), nullable=True)
+    # Seul 'blocking' empêche la publication côté Laravel (warning/info informent).
+    severity = Column(String(20), default="blocking")
     description = Column(Text, nullable=True)
     resolved = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)

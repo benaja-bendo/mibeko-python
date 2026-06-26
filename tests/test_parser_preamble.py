@@ -165,6 +165,52 @@ def test_signature_close_sur_entete_rubrique():
     assert "MINISTERE" not in signature["content"], "l'en-tête suivant ne doit pas être happé"
 
 
+def test_preambule_capture_avant_signature_sans_article():
+    """Acte court (nomination/décision) : qualité + visas + « Fait à … » + signataire,
+    SANS aucun article numéroté ni structure détectés.
+
+    Régression : auparavant `open_signature` ne flushait pas le préambule, donc
+    tout le préambule (qualité, visas) ET le texte opératoire non numéroté étaient
+    silencieusement perdus (roots = [SIGNATURE] seul). On exige désormais une
+    feuille PREAMBULE en tête qui conserve ce texte.
+    """
+    text = "\n".join([
+        "Le ministre de la santé,",
+        "Vu la Constitution ;",
+        "Vu le décret n° 2021-1 du 1er janvier 2021 ;",
+        "Décide : Monsieur X est nommé directeur.",
+        "Fait à Brazzaville, le 18 avril 2026",
+        "Pierre OBA",
+    ])
+    roots = parse(text)
+
+    types = [n["type"] for n in roots]
+    assert types == ["PREAMBULE", "SIGNATURE"], f"obtenu {types}"
+    preambule = roots[0]
+    assert "Vu la Constitution" in preambule["content"]
+    assert "Le ministre de la santé" in preambule["content"]
+    # Le texte opératoire non numéroté n'est pas perdu non plus.
+    assert "Monsieur X est nommé" in preambule["content"]
+    # La signature reste isolée et n'avale pas les visas.
+    assert "Vu la Constitution" not in roots[1]["content"]
+    assert "Pierre OBA" in roots[1]["content"]
+
+
+def test_preambule_visas_seuls_avant_signature():
+    """Visas seuls + signature : le préambule (visas) doit survivre."""
+    text = "\n".join([
+        "Le Président de la République,",
+        "Vu la Constitution ;",
+        "Fait à Brazzaville, le 1er mai 2026",
+        "Denis SASSOU N'GUESSO",
+    ])
+    roots = parse(text)
+
+    assert roots[0]["type"] == "PREAMBULE", f"obtenu {[n['type'] for n in roots]}"
+    assert "Vu la Constitution" in roots[0]["content"]
+    assert roots[-1]["type"] == "SIGNATURE"
+
+
 def test_page_du_preambule_renseignee():
     """La page d'origine du préambule est tamponnée (citabilité « page N »)."""
     text = "\n".join([

@@ -359,7 +359,7 @@ CREATE TABLE article_versions (
     embedding_context TEXT,
     embedding VECTOR(1024),
     search_tsv TSVECTOR,
-    modifie_par_document_id UUID REFERENCES legal_documents(id),
+    modifie_par_document_id UUID REFERENCES legal_documents(id) ON DELETE SET NULL,
     source_run_id UUID REFERENCES extraction_runs(id) ON DELETE SET NULL,
     source_media_file_id UUID REFERENCES media_files(id) ON DELETE SET NULL,
     source_locator JSONB DEFAULT '{}'::jsonb,
@@ -400,10 +400,10 @@ END $$;
 -- ===========================================================
 CREATE TABLE document_relations (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    source_doc_id UUID REFERENCES legal_documents(id),
-    target_doc_id UUID REFERENCES legal_documents(id),
-    source_article_id UUID REFERENCES articles(id),
-    target_article_id UUID REFERENCES articles(id),
+    source_doc_id UUID REFERENCES legal_documents(id) ON DELETE CASCADE,
+    target_doc_id UUID REFERENCES legal_documents(id) ON DELETE CASCADE,
+    source_article_id UUID REFERENCES articles(id) ON DELETE CASCADE,
+    target_article_id UUID REFERENCES articles(id) ON DELETE CASCADE,
     relation_type VARCHAR(50),
     commentaire TEXT,
     effective_date DATE,
@@ -432,13 +432,32 @@ CREATE INDEX IF NOT EXISTS idx_document_relations_meta ON document_relations USI
 -- ===========================================================
 CREATE TABLE curation_flags (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    document_id UUID REFERENCES legal_documents(id),
-    article_id UUID REFERENCES articles(id),
+    document_id UUID REFERENCES legal_documents(id) ON DELETE CASCADE,
+    article_id UUID REFERENCES articles(id) ON DELETE CASCADE,
+    -- Division ciblée (anomalies structurelles : division vide/sans titre).
+    node_id UUID REFERENCES structure_nodes(id) ON DELETE CASCADE,
+    -- Origine : heuristic (numérotation) | structural | llm | human. Les flags
+    -- 'human' ne sont jamais purgés par les détecteurs automatiques.
+    source VARCHAR(20) DEFAULT 'human',
     type_probleme VARCHAR(50),
+    -- Seul 'blocking' empêche la publication ; 'warning'/'info' informent.
+    severity VARCHAR(20) DEFAULT 'blocking',
     description TEXT,
+    -- Proposition de correction (LLM) — jamais appliquée automatiquement.
+    suggestion JSONB,
+    -- Ancrage : { page, char_start, char_end, tree_path } pour le surlignage.
+    anchor JSONB,
+    confidence NUMERIC(5,4),
+    -- Rattache un lot de détection (idempotence des re-runs).
+    run_id UUID,
     resolved BOOLEAN DEFAULT FALSE,
+    resolved_at TIMESTAMP(0) WITHOUT TIME ZONE,
+    resolved_by UUID REFERENCES users(id) ON DELETE SET NULL,
     created_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE INDEX IF NOT EXISTS idx_curation_flags_doc_resolved_source
+    ON curation_flags(document_id, resolved, source);
 
 -- ===========================================================
 -- 7. TAGS POLYMORPHES (Pour Sandrine / Simplification)
