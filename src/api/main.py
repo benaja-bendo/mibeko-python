@@ -7,7 +7,7 @@ import re
 import uuid
 from typing import Any, Dict, List, Optional, Tuple
 
-from fastapi import BackgroundTasks, Depends, FastAPI, File, Form, Request, UploadFile
+from fastapi import BackgroundTasks, Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session
 
 from src.api.routers import documents as documents_router
 from src.api.auth import AuthenticatedUser, require_editor
+from src.api.config import EXPOSE_API_DOCS, INGESTION_CONSOLE_ENABLED, SERVICE_VERSION
 from src.api.schemas import GlobalStatsOut, HealthOut
 from src.db.database import SessionLocal, get_db, init_db
 from src.db.models import Article, ArticleVersion, CurationFlag, ExtractionRun, Institution, LegalDocument, MediaFile, OfficialJournal, StructureNode
@@ -38,10 +39,12 @@ MEDIA_CATEGORY_BY_FORMAT = {
 app = FastAPI(
     title="Mibeko Python API",
     description="Interface d'ingestion et d'extraction de documents juridiques",
-    version="1.0.0",
-    docs_url="/api/v1/docs",
-    redoc_url="/api/v1/redoc",
-    openapi_url="/api/v1/openapi.json"
+    version=SERVICE_VERSION,
+    # Documentation OpenAPI désactivée en production sauf EXPOSE_API_DOCS=true :
+    # ce service interne décrit des opérations d'écriture qui n'ont pas à être publiques.
+    docs_url="/api/v1/docs" if EXPOSE_API_DOCS else None,
+    redoc_url="/api/v1/redoc" if EXPOSE_API_DOCS else None,
+    openapi_url="/api/v1/openapi.json" if EXPOSE_API_DOCS else None,
 )
 
 # ---------------------------------------------------------------------------
@@ -63,6 +66,26 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# ---------------------------------------------------------------------------
+# En-têtes de sécurité — ce sous-domaine est une brique d'infrastructure,
+# jamais un site : aucun moteur ne doit l'indexer et on applique les en-têtes
+# de durcissement standards.
+# ---------------------------------------------------------------------------
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["X-Robots-Tag"] = "noindex, nofollow"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "no-referrer"
+    response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
+    forwarded_proto = request.headers.get("x-forwarded-proto", request.url.scheme)
+    if forwarded_proto == "https":
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    return response
+
 
 # ---------------------------------------------------------------------------
 # Routeurs
@@ -1305,9 +1328,37 @@ def health_check(db: Session = Depends(get_db)):
     )
 
 
-@app.get("/", response_class=HTMLResponse)
+@app.get("/", include_in_schema=False)
 async def read_root(request: Request):
-    """Affiche le tableau de bord principal de depot documentaire."""
+    """Page d'identité du service interne (aucune console publique)."""
+
+    payload = {
+        "service": "mibeko-python",
+        "role": "service interne d'ingestion et d'extraction",
+        "status": "ok",
+        "version": SERVICE_VERSION,
+        "health": "/api/v1/health",
+        "docs": "/api/v1/docs" if EXPOSE_API_DOCS else None,
+    }
+    if "application/json" in request.headers.get("accept", ""):
+        return JSONResponse(payload)
+
+    return templates.TemplateResponse(
+        "status.html",
+        {"request": request, "version": SERVICE_VERSION, "docs_enabled": EXPOSE_API_DOCS},
+    )
+
+
+@app.get("/console", response_class=HTMLResponse, include_in_schema=False)
+async def legacy_console(request: Request):
+    """Console d'ingestion HTMX héritée — désactivée sauf activation explicite.
+
+    Le véritable outil d'ingestion vit désormais dans le front éditeur
+    (app.mibeko.fr). Cette console n'est rendue que si INGESTION_CONSOLE_ENABLED.
+    """
+
+    if not INGESTION_CONSOLE_ENABLED:
+        raise HTTPException(status_code=404, detail="Console désactivée.")
 
     return templates.TemplateResponse("index.html", {"request": request})
 
@@ -1894,8 +1945,15 @@ async def upload_official_journal(
 
 
 @app.get("/api/v1/stream", tags=["stream"])
-async def stream_events():
-    """Expose un flux SSE pour recharger le tableau en temps reel, avec heartbeat pour eviter les timeouts."""
+async def stream_events(_user: AuthenticatedUser = Depends(require_editor)):
+    """Expose un flux SSE pour recharger le tableau en temps reel, avec heartbeat pour eviter les timeouts.
+
+    Sécurité : réservé aux éditeurs/admins (``require_editor`` → 401 si token
+    absent/invalide, 403 sinon). Le flux diffuse des métadonnées d'ingestion
+    (titres, ids, statut) qui ne doivent pas fuiter anonymement. Le front le
+    consomme via ``fetch``+``ReadableStream`` afin de porter l'en-tête standard
+    ``Authorization: Bearer`` (impossible avec ``EventSource`` natif).
+    """
 
     queue = asyncio.Queue()
     event_queues.append(queue)
@@ -2105,7 +2163,7 @@ def _staged_run(db: Session, doc_id: str, run_id: str) -> Optional[ExtractionRun
 
 
 @app.get("/api/v1/documents/{doc_id}/runs/{run_id}/diff", tags=["documents"])
-def get_run_diff(doc_id: str, run_id: str, db: Session = Depends(get_db)):
+def get_run_diff(doc_id: str, run_id: str, db: Session = Depends(get_db), _user: AuthenticatedUser = Depends(require_editor)):
     """Compare la proposition d'un run en attente (staging) au contenu live."""
     run = _staged_run(db, doc_id, run_id)
     if not run:

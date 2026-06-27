@@ -81,6 +81,7 @@ def list_documents(
     ),
     q: Optional[str] = Query(default=None, description="Recherche sur le titre ou le code stock"),
     db: Session = Depends(get_db),
+    _user: AuthenticatedUser = Depends(require_editor),
 ):
     """Retourne la liste des documents avec disponibilité des artefacts et dernier run."""
     query = (
@@ -121,7 +122,7 @@ def list_documents(
 # ---------------------------------------------------------------------------
 
 @router.get("/stats", response_model=GlobalStatsOut)
-def global_stats(db: Session = Depends(get_db)):
+def global_stats(db: Session = Depends(get_db), _user: AuthenticatedUser = Depends(require_editor)):
     """Retourne les KPIs globaux pour le dashboard frontend."""
     def count_docs(*criteria) -> int:
         return (
@@ -163,7 +164,7 @@ def global_stats(db: Session = Depends(get_db)):
 # ---------------------------------------------------------------------------
 
 @router.get("/{doc_id}", response_model=LegalDocumentDetail)
-def get_document(doc_id: str, db: Session = Depends(get_db)):
+def get_document(doc_id: str, db: Session = Depends(get_db), _user: AuthenticatedUser = Depends(require_editor)):
     """Retourne le détail complet d'un document avec ses fichiers et runs."""
     document = db.query(LegalDocument).filter(LegalDocument.id == doc_id, LegalDocument.deleted_at.is_(None)).first()
     if not document:
@@ -206,7 +207,7 @@ def get_document(doc_id: str, db: Session = Depends(get_db)):
 # ---------------------------------------------------------------------------
 
 @router.get("/{doc_id}/runs", response_model=list[ExtractionRunOut])
-def get_document_runs(doc_id: str, db: Session = Depends(get_db)):
+def get_document_runs(doc_id: str, db: Session = Depends(get_db), _user: AuthenticatedUser = Depends(require_editor)):
     """Retourne tous les runs d'extraction pour un document, du plus récent au plus ancien."""
     document = db.query(LegalDocument).filter(LegalDocument.id == doc_id, LegalDocument.deleted_at.is_(None)).first()
     if not document:
@@ -226,7 +227,7 @@ def get_document_runs(doc_id: str, db: Session = Depends(get_db)):
 # ---------------------------------------------------------------------------
 
 @router.get("/{doc_id}/files", response_model=list[MediaFileOut])
-def get_document_files(doc_id: str, db: Session = Depends(get_db)):
+def get_document_files(doc_id: str, db: Session = Depends(get_db), _user: AuthenticatedUser = Depends(require_editor)):
     """Retourne tous les fichiers média associés à un document."""
     document = db.query(LegalDocument).filter(LegalDocument.id == doc_id, LegalDocument.deleted_at.is_(None)).first()
     if not document:
@@ -241,7 +242,7 @@ def get_document_files(doc_id: str, db: Session = Depends(get_db)):
 # ---------------------------------------------------------------------------
 
 @router.get("/{doc_id}/stats", response_model=DocumentStatsOut)
-def get_document_stats(doc_id: str, db: Session = Depends(get_db)):
+def get_document_stats(doc_id: str, db: Session = Depends(get_db), _user: AuthenticatedUser = Depends(require_editor)):
     """Retourne les statistiques d'extraction d'un document."""
     document = db.query(LegalDocument).filter(LegalDocument.id == doc_id, LegalDocument.deleted_at.is_(None)).first()
     if not document:
@@ -273,6 +274,7 @@ def get_document_articles(
     page: int = Query(default=1, ge=1),
     per_page: int = Query(default=50, ge=1, le=200),
     db: Session = Depends(get_db),
+    _user: AuthenticatedUser = Depends(require_editor),
 ):
     """Retourne les articles extraits d'un document, avec leurs versions."""
     document = db.query(LegalDocument).filter(LegalDocument.id == doc_id, LegalDocument.deleted_at.is_(None)).first()
