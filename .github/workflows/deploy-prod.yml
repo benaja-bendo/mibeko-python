@@ -126,3 +126,26 @@ jobs:
             docker compose up -d --remove-orphans
             docker image prune -f
 
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Job 3 : Nettoyage GHCR — ne garder que `latest` + les 5 derniers tags `sha-`
+  # Les manifestes enfants (multi-arch / attestations) des images gardées sont
+  # automatiquement préservés. La prod ne tire que `latest`, jamais les `sha-`.
+  # ─────────────────────────────────────────────────────────────────────────────
+  cleanup:
+    name: Cleanup old GHCR images
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: success()
+    continue-on-error: true
+    permissions:
+      packages: write
+    steps:
+      - name: Delete old image versions (keep latest + 5 last sha-)
+        uses: dataaxiom/ghcr-cleanup-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          packages: mibeko-python
+          exclude-tags: latest
+          keep-n-tagged: 5
+          delete-untagged: true
+

@@ -1,0 +1,37 @@
+name: 🧹 Cleanup GHCR images
+
+# Filet de sécurité hebdomadaire + bouton manuel de purge / prévisualisation.
+# Le nettoyage principal tourne déjà après CHAQUE déploiement (voir deploy-prod.yml).
+# Politique : garder `latest` + les 5 derniers tags `sha-`, supprimer le reste
+# (anciens `sha-` + manifestes untagged orphelins). Les enfants des images
+# conservées (couches multi-arch / attestations) sont préservés automatiquement.
+
+on:
+  schedule:
+    - cron: '0 3 * * 0'        # chaque dimanche, 03:00 UTC
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Simulation (n'effectue AUCUNE suppression, liste seulement)"
+        type: boolean
+        default: true
+
+permissions:
+  packages: write
+  contents: read
+
+jobs:
+  cleanup:
+    name: Delete old GHCR image versions
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cleanup (keep latest + 5 last sha-)
+        uses: dataaxiom/ghcr-cleanup-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          packages: mibeko-python
+          exclude-tags: latest
+          keep-n-tagged: 5
+          delete-untagged: true
+          # Lancement manuel = simulation par défaut ; cron hebdo = réel.
+          dry-run: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || false }}
