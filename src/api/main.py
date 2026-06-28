@@ -49,23 +49,53 @@ app = FastAPI(
 
 # ---------------------------------------------------------------------------
 # CORS — autorise le frontend React (dev :5173 et prod)
+# Liste partagée avec le gestionnaire d'exception global : ce dernier doit
+# ré-attacher l'en-tête CORS à la main (une exception non gérée court-circuite
+# le middleware CORS, cf. unhandled_exception_handler plus bas).
 # ---------------------------------------------------------------------------
+ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1:5173",
+    "http://localhost:3000",
+    "https://mibeko.fr",
+    "https://www.mibeko.fr",
+    "https://app.mibeko.fr",
+    "https://www.app.mibeko.fr",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://localhost:5174",
-        "http://127.0.0.1:5173",
-        "http://localhost:3000",
-        "https://mibeko.fr",
-        "https://www.mibeko.fr",
-        "https://app.mibeko.fr",
-        "https://www.app.mibeko.fr",
-    ],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# ---------------------------------------------------------------------------
+# Gestionnaire d'exception global — une exception non gérée est traitée par le
+# middleware le plus externe (ServerErrorMiddleware), qui COURT-CIRCUITE le
+# middleware CORS : la réponse 500 partait donc sans en-tête Access-Control-
+# Allow-Origin, et le navigateur l'affichait comme une « erreur CORS » trompeuse
+# masquant le vrai 500. On logge ici la traceback (diagnostic) et on ré-attache
+# l'en-tête CORS pour que le front reçoive le vrai message d'erreur.
+# ---------------------------------------------------------------------------
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    import traceback
+    error_details = traceback.format_exc()
+    print(f"ERREUR 500 non gérée sur {request.method} {request.url.path}:\n{error_details}")
+    response = JSONResponse(
+        status_code=500,
+        content={"message": "Erreur interne du serveur.", "error": str(exc)},
+    )
+    origin = request.headers.get("origin")
+    if origin in ALLOWED_ORIGINS:
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Vary"] = "Origin"
+    return response
 
 
 # ---------------------------------------------------------------------------
@@ -1628,6 +1658,15 @@ async def upload_document(
 
     if normalized_role == "STOCK" and not normalized_stock_code:
         return JSONResponse(status_code=422, content={"message": "Le champ code du stock est obligatoire pour un document de type STOCK."})
+
+    # `legal_documents.stock_code` est un varchar(100) : un slug dérivé d'un titre
+    # long déborde et fait échouer l'INSERT (StringDataRightTruncation → 500). On
+    # renvoie ici un 422 explicite plutôt que de laisser planter la requête.
+    if normalized_stock_code and len(normalized_stock_code) > 100:
+        return JSONResponse(
+            status_code=422,
+            content={"message": "Le code du stock ne doit pas dépasser 100 caractères. Raccourcissez-le (il est dérivé du titre)."},
+        )
 
     resolved_document_key = document_key or build_document_key(normalized_role, normalized_stock_code, titre_officiel)
     existing_document = db.query(LegalDocument).filter(LegalDocument.document_key == resolved_document_key).first()
