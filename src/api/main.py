@@ -2061,6 +2061,28 @@ async def execute_parsing_task(run_id: uuid.UUID, doc_id: uuid.UUID, media_id: u
         parser = LegalDocumentParser(text_content=text_content)
         hierarchy = parser.parse_hierarchy()
 
+        # Fallback pour les documents sans structure détectable (circulaire,
+        # instruction, discours, proclamation, décision courte : aucun
+        # « Article »/« Titre »/« Fait à … le N »). Tout le texte devient un
+        # article « Unique » / « Texte intégral », tamponné avec la première page
+        # repérée pour rester citable. Symétrique du chemin Journal Officiel
+        # (cf. _ingest_journal_acts) : sans lui, le parsing « réussit » mais
+        # n'ingère rien, et le document atterrit en review vide, impubliable.
+        if not hierarchy and text_content.strip():
+            first_marker = re.search(r"\[\[MIBEKO_PAGE:(\d+)\]\]", text_content)
+            clean_text = "\n".join(
+                ln for ln in text_content.splitlines()
+                if not re.match(r"^\s*\[\[MIBEKO_PAGE:\d+\]\]\s*$", ln)
+            ).strip()
+            hierarchy = [{
+                "type": "ARTICLE",
+                "number": "Unique",
+                "title": "Texte intégral",
+                "content": clean_text,
+                "page": int(first_marker.group(1)) if first_marker else None,
+                "children": [],
+            }]
+
         if hierarchy and document_has_curated_content(db, document.id):
             # Replay NON-DESTRUCTIF : le document porte de la curation humaine.
             # On parque la proposition dans le run (staging) au lieu d'écraser le
