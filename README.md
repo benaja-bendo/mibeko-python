@@ -1,109 +1,127 @@
-# Mibeko Python - Interface d'Ingestion et Parsing Juridique
+# Mibeko Python — Service d'ingestion et de parsing juridique
 
-Ce projet Python a pour but de centraliser l'ingestion, l'extraction OCR et la structuration (parsing) de textes juridiques. Il offre à la fois un **Tableau de Bord Web temps réel (FastAPI + HTMX/Alpine.js)** et une **CLI (Command Line Interface)**.
-Il orchestre le flux de documents entre le stockage local/S3 (MinIO), l'OCR asynchrone (via MinerU), et le stockage en base de données PostgreSQL.
+> Statut : à jour au 2 juillet 2026 · Service FastAPI interne d'ingestion, d'extraction OCR (MinerU) et de structuration des textes juridiques congolais.
 
-## 🚀 Fonctionnalités Principales
+Ce dépôt héberge le service Python qui centralise l'ingestion, l'extraction OCR et la structuration (parsing) des textes juridiques du Congo-Brazzaville. C'est une **brique d'infrastructure interne** (domaine `python.mibeko.fr`) consommée par le backend Laravel (`mibeko-tableau-de-bord`) et le front éditeur (`mibeko-front`, espace `/editor`) via les routes `/api/v1/*` protégées par token Sanctum. Il n'est pas exposé comme site public. Il orchestre le flux de documents entre le stockage S3 (MinIO), l'OCR (MinerU) et la base PostgreSQL partagée avec Laravel.
 
-1. **Interface Web Réactive** : Upload de documents PDF (STOCK et FLUX) et suivi en temps réel du statut de l'OCR via SSE (Server-Sent Events).
-2. **Intégration MinIO** : Stockage automatique des PDF sources et des fichiers d'extraction (`.md`, `.json`) dans des buckets S3.
-3. **OCR avec MinerU** : Soumission asynchrone des documents à MinerU et téléchargement automatique des résultats de parsing structurés.
-4. **Parsing et NLP local** : Structuration fine et insertion en base de données via SQLAlchemy, PyMuPDF et spaCy.
+## Fonctionnalités principales
 
-## 🛠️ Prérequis
+1. **Ingestion de documents** : upload de PDF (STOCK ou FLUX) et, en option, d'artefacts d'extraction `.md`/`.json` (fusionnés si découpés en morceaux), stockés dans MinIO.
+2. **OCR avec MinerU** : soumission des PDF à MinerU (backend `cloud` SaaS par défaut, ou `local` auto-hébergé) et récupération des artefacts d'extraction.
+3. **Parsing et structuration** : reconstruction de la hiérarchie (nœuds, articles, versions) via PyMuPDF et spaCy, insertion en PostgreSQL, détection d'anomalies de numérotation (`CurationFlag`).
+4. **Temps réel (SSE)** et **retraitement non destructif** (replay/staging) pour l'outil d'ingestion du front éditeur.
+5. **CLI** (`main.py`) pour la fusion de chunks, le découpage de compilations (Journaux Officiels, Actes uniformes) et des imports de test.
 
-- Python 3.10 ou plus
-- **PostgreSQL** en cours d'exécution (port 5433)
-- **MinIO** en cours d'exécution pour le stockage S3
-- Tesseract OCR (Optionnel, selon les méthodes de parsing locales)
+Pour le détail, voir la [documentation technique](docs/README.md) : [architecture](docs/architecture.md) et [API](docs/API.md).
 
-## 📦 Installation et Configuration
+## Prérequis
 
-1. **Créer et activer un environnement virtuel :**
+- Python 3.10+ (image Docker de production : `python:3.11-slim`).
+- **PostgreSQL** accessible (dev local : port 5433 ; le schéma est piloté par Laravel — le service ne crée aucune table).
+- **MinIO** pour le stockage S3.
+- Une clé MinerU (backend `cloud`) ou un serveur MinerU local (harnais `../minerU-docker`, backend `local`).
+
+## Installation
+
+1. **Environnement virtuel :**
    ```bash
    cd mibeko-python
    python3 -m venv venv
    source venv/bin/activate
    ```
-2. **Installer les dépendances :**
+2. **Dépendances :**
    ```bash
    pip install -r requirements.txt
    ```
-3. **Télécharger le modèle de langue français pour spaCy :**
+3. **Modèle de langue français pour spaCy :**
    ```bash
    python -m spacy download fr_core_news_sm
    ```
-4. **Configuration de l'environnement (`.env`) :**
-   Créez un fichier `.env` à la racine de `mibeko-python` :
+4. **Configuration (`.env`)** — copier `.env.example` et renseigner les valeurs. Points clés :
    ```env
-   # Base de données PostgreSQL
-   DB_CONNECTION=pgsql
+   # Base de données PostgreSQL (partagée avec Laravel)
    DB_HOST=127.0.0.1
    DB_PORT=5433
    DB_DATABASE=mibeko
-   DB_USERNAME=root
-   DB_PASSWORD=root
+   DB_USERNAME=...
+   DB_PASSWORD=...
 
-   # Configuration MinIO
+   # MinerU (OCR) : cloud (défaut) ou local
+   MINERU_BACKEND=cloud
+   MINERU_API_URL="https://mineru.net/api/v4"
+   MINERU_API_KEY=...
+
+   # MinIO
    MINIO_HOST=127.0.0.1
    MINIO_PORT=9000
-   MINIO_ACCESS_KEY=root
-   MINIO_SECRET_KEY=password
-   MINIO_SECURE=false
+   MINIO_ACCESS_KEY=...
+   MINIO_SECRET_KEY=...
 
-   # Configuration MinerU (OCR)
-   MINERU_API_URL=https://mineru.net/api/v4
-   MINERU_API_KEY=votre_cle_api_ici
+   # Exposition (brique interne)
+   APP_ENV=production          # verrouille docs + console
+   EXPOSE_API_DOCS=false       # Swagger/ReDoc ; true en local
+   INGESTION_CONSOLE_ENABLED=false
    ```
 
-## 💻 Utilisation (Serveur Web & CLI)
+## Lancement
 
-Le point d'entrée principal est le fichier `main.py` qui utilise `Click` pour grouper les commandes.
-
-### 1. Lancer le Tableau de Bord Web (Recommandé)
-
-Pour démarrer l'interface graphique permettant d'uploader et de suivre les documents :
+### Serveur web (FastAPI)
 
 ```bash
-# Dans le dossier mibeko-python, avec l'environnement virtuel activé
-python main.py serve --port 8001
+# Dans mibeko-python, environnement virtuel activé
+python main.py serve --port 8000
 ```
 
-- Ouvrez votre navigateur sur **<http://localhost:8001>**
-- La documentation API interactive est disponible sur **<http://localhost:8001/api/v1/docs>** (Swagger UI) et **<http://localhost:8001/api/v1/redoc>** (ReDoc).
-- Voir la [Documentation détaillée de l'API](docs/API.md) pour plus d'informations.
-- L'interface utilise les Server-Sent Events (SSE) pour rafraîchir le tableau automatiquement dès qu'un document est uploadé ou que MinerU a terminé son extraction.
+Le service écoute sur le **port 8000** (valeur par défaut, cohérente avec le `Dockerfile` et le déploiement Docker/Traefik).
 
-### 2. Flux de l'Interface Web
+- Page d'identité du service : `http://localhost:8000/`
+- Health check : `http://localhost:8000/api/v1/health`
+- Documentation OpenAPI (hors production ou `EXPOSE_API_DOCS=true`) : `http://localhost:8000/api/v1/docs` (Swagger) et `/api/v1/redoc` (ReDoc).
 
-- **Onglet STOCK / FLUX** : Choisissez la nature du document.
-- **Upload** : Fournissez un PDF.
-  - Si vous ne fournissez **que** le PDF, il sera envoyé en tâche de fond à MinerU.
-  - Si vous fournissez les options **.md** ou **.json**, le document bypass MinerU et sauvegarde directement les extractions dans MinIO et PostgreSQL. Vous pouvez sélectionner **plusieurs fichiers** (.md ou .json) ; ils seront automatiquement fusionnés (utile pour les gros documents découpés en plusieurs morceaux).
-- **Extraire le contenu** : Une fois le statut passé à `completed`, un bouton apparaît dans le tableau pour lancer le parsing SQL depuis le `.md` ou `.json`. Des `CurationFlag` sont également générés en cas d'anomalies de numérotation (trous ou doublons).
+L'ingestion réelle passe par le front éditeur (`app.mibeko.fr`, espace `/editor`), qui appelle les routes `/api/v1/*` avec un token Sanctum et écoute le flux SSE `/api/v1/stream`. La console HTMX héritée sur `/console` est désactivée par défaut.
 
-## 📂 Structure du projet
+### CLI
+
+Le point d'entrée `main.py` (Click) regroupe des commandes utilitaires : `serve`, `merge-chunks` (fusion de chunks MinerU MD/JSON), `suggest-boundaries` / `split-compilation` (découpage de compilations en Actes, en JSON ou en Markdown), et des imports de test. Lister les commandes :
+
+```bash
+python main.py --help
+```
+
+## Structure du projet
 
 ```
 mibeko-python/
-├── main.py                     # Point d'entrée principal (CLI & Web)
-├── requirements.txt            # Liste des dépendances (FastAPI, SQLAlchemy, Minio, etc.)
-├── schema_postgres.sql         # Définition exacte du schéma SQL
+├── main.py                     # CLI (Click) : serve, merge-chunks, split-compilation…
+├── requirements.txt            # Dépendances (FastAPI, SQLAlchemy, Minio, PyMuPDF, spaCy…)
+├── schema_postgres.sql         # Référence documentaire du schéma (piloté par Laravel, non appliqué ici)
+├── Dockerfile / .deploy/       # Image et déploiement Docker (port 8000, Traefik)
+├── docs/                       # Documentation technique (README, architecture, API)
 ├── src/
-│   ├── api/                    # Serveur FastAPI
-│   │   ├── main.py             # Routes et logique Web (Upload, SSE, Parse)
-│   │   ├── static/             # Fichiers CSS/JS (si besoin)
-│   │   └── templates/          # Vues HTML (index.html avec Tailwind/Alpine.js)
+│   ├── api/
+│   │   ├── main.py             # Application FastAPI : routes, upload, SSE, parse, staging
+│   │   ├── auth.py             # Validation des tokens Sanctum + require_editor
+│   │   ├── config.py           # Exposition (docs/console, env)
+│   │   ├── routers/            # Routeurs (documents)
+│   │   ├── templates/          # Page de statut (Jinja2)
+│   │   └── static/             # Fichiers statiques
 │   ├── db/
-│   │   ├── database.py         # Connexion PostgreSQL
-│   │   └── models.py           # Modèles SQLAlchemy (LegalDocument, MediaFile, ExtractionRun...)
+│   │   ├── database.py         # Connexion PostgreSQL (init_db = no-op)
+│   │   └── models.py           # Modèles SQLAlchemy (à synchroniser manuellement avec Laravel)
 │   ├── services/
-│   │   ├── minio_service.py    # Client MinIO S3
-│   │   └── mineru_service.py   # Client HTTP asynchrone pour MinerU
+│   │   ├── minio_service.py    # Client MinIO (S3)
+│   │   └── mineru_service.py   # Client MinerU (backends cloud/local)
 │   └── extractor/
-│       ├── chunk_merger.py           # Fusion de fichiers MD/JSON extraits en morceaux
-│       ├── compilation_splitter.py   # Découpage spécifique (ex: Journaux Officiels)
-│       └── parser.py                 # Logique NLP/Structuration locale et extraction de tables
-└── storage/                    # Fichiers temporaires
+│       ├── chunk_merger.py         # Fusion de chunks MD/JSON
+│       ├── compilation_splitter.py # Découpage (Journaux Officiels, Actes uniformes)
+│       └── parser.py               # Structuration NLP locale
+└── storage/                    # Fichiers temporaires locaux
 ```
 
+## Points d'exploitation à connaître
+
+- **Base partagée, schéma Laravel** : `init_db()` est volontairement un no-op ; les modèles Python doivent rester synchronisés à la main (risque de drift).
+- **SSE protégé** : `/api/v1/stream` exige `require_editor`.
+- **Pas de file durable** : une extraction ou un parsing en cours est perdu si le service redémarre (run orphelin) ; relancer via `/parse` ou `/reprocess`.
+
+Détails complets dans [docs/architecture.md](docs/architecture.md).
