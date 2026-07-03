@@ -124,4 +124,3 @@ mibeko-python/
 - **SSE protégé** : `/api/v1/stream` exige `require_editor`.
 - **Pas de file durable** : une extraction ou un parsing en cours est perdu si le service redémarre (run orphelin) ; relancer via `/parse` ou `/reprocess`.
 
-Détails complets dans [docs/architecture.md](docs/architecture.md).
