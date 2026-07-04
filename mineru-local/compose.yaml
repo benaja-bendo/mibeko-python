@@ -1,0 +1,59 @@
+# MinerU local (CPU) pour le développement de la pipeline d'ingestion Mibeko.
+#
+#   Démarrer le serveur :   docker compose up -d --build
+#   Pré-télécharger les modèles (recommandé, sinon 1re requête longue) :
+#                           docker compose --profile setup run --rm mineru-models
+#   Logs :                  docker compose logs -f mineru
+#   API docs (Swagger) :    http://localhost:8000/docs
+#   Santé :                 http://localhost:8000/health
+#
+name: mibeko-mineru
+
+services:
+  # Serveur d'API MinerU (FastAPI) — expose POST /file_parse, /tasks, /health.
+  mineru:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: mibeko/mineru-cpu:3.4.0
+    platform: linux/amd64
+    container_name: mibeko-mineru
+    ports:
+      - "${MINERU_PORT:-8000}:8000"
+    environment:
+      MINERU_DEVICE_MODE: cpu
+      MINERU_MODEL_SOURCE: ${MINERU_MODEL_SOURCE:-huggingface}
+    volumes:
+      # Cache des modèles : téléchargés une seule fois, réutilisés ensuite.
+      - mineru-models:/models
+      # Sorties de parsing accessibles depuis l'hôte (debug).
+      - ./output:/app/output
+    # torch/OpenCV ont besoin de mémoire partagée ; sans ça, crashs aléatoires.
+    shm_size: "2gb"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      # Laisse le temps au serveur de démarrer (le 1er chargement modèle est long).
+      start_period: 180s
+    restart: unless-stopped
+
+  # Service jetable : pré-télécharge les modèles « pipeline » dans le volume
+  # partagé, puis s'arrête. Évite une 1re requête de parsing très lente.
+  #   docker compose --profile setup run --rm mineru-models
+  mineru-models:
+    image: mibeko/mineru-cpu:3.4.0
+    platform: linux/amd64
+    profiles: ["setup"]
+    environment:
+      MINERU_MODEL_SOURCE: ${MINERU_MODEL_SOURCE:-huggingface}
+      HF_HOME: /models/huggingface
+      MODELSCOPE_CACHE: /models/modelscope
+      MINERU_TOOLS_CONFIG_JSON: /models/mineru.json
+    volumes:
+      - mineru-models:/models
+    entrypoint: ["mineru-models-download", "-s", "huggingface", "-m", "pipeline"]
+
+volumes:
+  mineru-models:
