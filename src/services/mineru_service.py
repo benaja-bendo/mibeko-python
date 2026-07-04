@@ -10,13 +10,21 @@ load_dotenv()
 
 # Backend d'extraction :
 #   cloud  → API SaaS MinerU (https://mineru.net/api/v4), asynchrone (défaut).
-#   local  → serveur mineru-api auto-hébergé (cf. ../minerU-docker), synchrone.
+#   local  → serveur mineru-api auto-hébergé (cf. mineru-local/), synchrone.
 MINERU_BACKEND = os.getenv("MINERU_BACKEND", "cloud").strip().lower()
 
 MINERU_API_URL = os.getenv("MINERU_API_URL", "https://mineru.net/api/v4")
 MINERU_API_KEY = os.getenv("MINERU_API_KEY", "")
 # Langue OCR pour le backend local (textes juridiques congolais = français).
 MINERU_LANG = os.getenv("MINERU_LANG", "fr")
+
+# Délai maximal (s) pour UNE requête /file_parse au backend local (synchrone :
+# la réponse HTTP n'arrive qu'une fois tout le PDF traité). 900s (15 min)
+# s'est révélé insuffisant en pratique sur CPU émulé (Docker/Mac) : un JO
+# scanné de 25 pages a dépassé ce délai alors que le serveur travaillait
+# toujours dessus (vérifié le 04/07/2026 — /health montrait processing_tasks
+# encore actif après l'abandon côté client). 45 min par défaut, ajustable.
+MINERU_LOCAL_TIMEOUT_SECONDS = float(os.getenv("MINERU_LOCAL_TIMEOUT_SECONDS", "2700"))
 
 # Le pipeline OCR local (PP-OCRv5) n'expose pas de modèle « latin/français » ;
 # son modèle par défaut (« ch ») reconnaît déjà l'écriture latine. Pour ces
@@ -69,7 +77,7 @@ class MineruService:
             data["lang_list"] = MINERU_LANG.strip()
 
         # Le parsing CPU peut être long (plusieurs minutes pour un gros JO).
-        async with httpx.AsyncClient(timeout=httpx.Timeout(900.0)) as client:
+        async with httpx.AsyncClient(timeout=httpx.Timeout(MINERU_LOCAL_TIMEOUT_SECONDS)) as client:
             with open(file_path, "rb") as f:
                 files = {"files": (os.path.basename(file_path), f, "application/pdf")}
                 response = await client.post(endpoint, data=data, files=files)
