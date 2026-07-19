@@ -296,7 +296,7 @@ CREATE TABLE extraction_runs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     document_id UUID NOT NULL REFERENCES legal_documents(id) ON DELETE CASCADE,
     source VARCHAR(50) NOT NULL CHECK (source IN ('MINERU', 'MANUAL_UPLOAD', 'PARSING')) DEFAULT 'MINERU',
-    status VARCHAR(20) NOT NULL CHECK (status IN ('queued', 'running', 'succeeded', 'failed', 'partial')) DEFAULT 'queued',
+    status VARCHAR(20) NOT NULL CHECK (status IN ('queued', 'running', 'succeeded', 'failed', 'partial', 'needs_review', 'discarded')) DEFAULT 'queued',
     started_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     finished_at TIMESTAMP(0) WITHOUT TIME ZONE,
     source_media_file_id UUID REFERENCES media_files(id) ON DELETE SET NULL,

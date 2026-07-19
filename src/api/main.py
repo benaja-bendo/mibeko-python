@@ -5,6 +5,7 @@ import json
 import logging
 import os
 import re
+import time
 import uuid
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -22,6 +23,7 @@ from src.api.config import EXPOSE_API_DOCS, INGESTION_CONSOLE_ENABLED, IS_PRODUC
 from src.api.schemas import GlobalStatsOut, HealthOut
 from src.api.upload_utils import BodySizeLimitMiddleware, read_upload_capped, sanitize_filename, stream_upload_to_tmp
 from src.db.database import SessionLocal, get_db, init_db
+from src.db.schema_check import check_schema
 from src.db.models import Article, ArticleVersion, CurationFlag, ExtractionRun, Institution, LegalDocument, MediaFile, OfficialJournal, StructureNode
 from src.services.mineru_service import mineru_service
 from src.services.minio_service import minio_service
@@ -1358,11 +1360,101 @@ def merge_metadata(document: LegalDocument, extra: dict) -> None:
     document.metadata_ = {**current, **extra}
 
 
+def reap_orphaned_runs() -> None:
+    """Marque en échec les traitements restés bloqués après un redémarrage.
+
+    Le pipeline repose sur BackgroundTasks en mémoire process : un redémarrage
+    du service abandonne les tâches en cours. Sans reaper, trois états restent
+    bloqués indéfiniment :
+
+    - ``extraction_runs.status`` « running »/« queued » (trace du run) ;
+    - ``official_journals.transcription_status`` « running »/« queued » — un JO
+      redéployé en plein MinerU reste sinon coincé, car la condition de relance
+      de l'upload (``in (None, 'pending', 'failed')``) exclut queued/running ;
+    - ``legal_documents.extraction_status`` « processing » — un STOCK/FLUX
+      abandonné en cours de MinerU garde un statut trompeur.
+
+    On bascule tout ça en « failed » au démarrage (meta tracée pour les runs).
+    """
+
+    db = SessionLocal()
+    try:
+        orphaned_runs = (
+            db.query(ExtractionRun)
+            .filter(ExtractionRun.status.in_(("running", "queued")))
+            .all()
+        )
+        for run in orphaned_runs:
+            run.status = "failed"
+            run.finished_at = datetime.datetime.utcnow()
+            run.meta = {**(run.meta or {}), "error": "orphaned: service restart"}
+
+        orphaned_journals = (
+            db.query(OfficialJournal)
+            .filter(OfficialJournal.transcription_status.in_(("running", "queued")))
+            .update({OfficialJournal.transcription_status: "failed"}, synchronize_session=False)
+        )
+
+        orphaned_documents = (
+            db.query(LegalDocument)
+            .filter(LegalDocument.extraction_status == "processing")
+            .update({LegalDocument.extraction_status: "failed"}, synchronize_session=False)
+        )
+
+        db.commit()
+        if orphaned_runs or orphaned_journals or orphaned_documents:
+            logger.warning(
+                "Reaper : %d run(s), %d JO, %d document(s) orphelin(s) marqué(s) en échec après redémarrage.",
+                len(orphaned_runs),
+                orphaned_journals,
+                orphaned_documents,
+            )
+    except Exception:
+        # Un souci DB au démarrage ne doit pas empêcher le service de se lancer
+        # (le health check signalera l'indisponibilité de la base).
+        db.rollback()
+        logger.exception("Reaper : impossible de récupérer les traitements orphelins.")
+    finally:
+        db.close()
+
+
+# Résultat du check de drift schéma (P2.3), calculé au démarrage puis mis en
+# cache : le schéma DB (piloté par Laravel) ne change pas pendant la vie du
+# process. None = pas encore évalué (health le tolère). Exposé dans /health.
+_schema_check_cache: Dict[str, Any] = {"ok": None, "issues": []}
+
+
+def run_schema_check() -> None:
+    """Compare le schéma DB aux modèles au démarrage et met le résultat en cache.
+
+    Non bloquant : tout échec est absorbé (le service démarre quand même), un
+    écart n'empêche jamais le boot — il est seulement remonté via /health.
+    """
+
+    db = SessionLocal()
+    try:
+        ok, issues = check_schema(db)
+        _schema_check_cache["ok"] = ok
+        _schema_check_cache["issues"] = issues
+        if not ok:
+            logger.warning(
+                "Schema check : %d écart(s) schéma DB↔modèles détecté(s). %s",
+                len(issues),
+                " | ".join(issues),
+            )
+    except Exception:
+        logger.exception("Schema check : échec inattendu au démarrage.")
+    finally:
+        db.close()
+
+
 @app.on_event("startup")
 def on_startup() -> None:
     """Initialise la couche base de donnees au demarrage de l'API."""
 
     init_db()
+    reap_orphaned_runs()
+    run_schema_check()
 
 @app.on_event("shutdown")
 async def on_shutdown() -> None:
@@ -1371,14 +1463,26 @@ async def on_shutdown() -> None:
         await queue.put((None, None))
 
 
+# Cache du check DB du health check : l'endpoint est public, on ne veut pas
+# qu'un appel anonyme déclenche une requête SQL à chaque hit (audit S4). Le
+# statut est réévalué au plus toutes les DB_HEALTH_CACHE_TTL secondes.
+DB_HEALTH_CACHE_TTL = 30.0
+_db_health_cache: Dict[str, Any] = {"status": None, "checked_at": 0.0}
+
+
 @app.get("/api/v1/health", response_model=HealthOut, tags=["health"])
 def health_check(db: Session = Depends(get_db)):
-    """Health check de l'API et de la connexion base de données."""
-    try:
-        db.execute(text("SELECT 1"))
-        db_status = "ok"
-    except Exception:
-        db_status = "error"
+    """Health check de l'API et de la connexion base de données (check DB mis en cache ~30 s)."""
+    now = time.monotonic()
+    if _db_health_cache["status"] is None or now - _db_health_cache["checked_at"] >= DB_HEALTH_CACHE_TTL:
+        try:
+            db.execute(text("SELECT 1"))
+            _db_health_cache["status"] = "ok"
+        except Exception:
+            _db_health_cache["status"] = "error"
+        _db_health_cache["checked_at"] = now
+
+    db_status = _db_health_cache["status"]
 
     return HealthOut(
         status="ok",
@@ -1386,6 +1490,8 @@ def health_check(db: Session = Depends(get_db)):
         version="1.0.0",
         db=db_status,
         timestamp=datetime.datetime.utcnow(),
+        schema_ok=_schema_check_cache["ok"],
+        schema_issues=_schema_check_cache["issues"],
     )
 
 

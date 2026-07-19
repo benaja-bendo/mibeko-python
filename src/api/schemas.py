@@ -171,6 +171,12 @@ class HealthOut(BaseModel):
     version: str = "1.0.0"
     db: str = "ok"
     timestamp: datetime.datetime
+    # Cohérence du schéma DB (piloté par Laravel) vs les modèles SQLAlchemy.
+    # None = check non encore effectué ; True = aucun écart ; False = écart(s).
+    schema_ok: Optional[bool] = None
+    # Liste courte et lisible des écarts détectés (colonnes manquantes /
+    # divergence de nullabilité), tronquée pour rester exploitable.
+    schema_issues: list[str] = []
 
 
 # ---------------------------------------------------------------------------
