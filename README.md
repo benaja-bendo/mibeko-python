@@ -8,9 +8,9 @@ Ce dépôt héberge le service Python qui centralise l'ingestion, l'extraction O
 
 1. **Ingestion de documents** : upload de PDF (STOCK ou FLUX) et, en option, d'artefacts d'extraction `.md`/`.json` (fusionnés si découpés en morceaux), stockés dans MinIO.
 2. **OCR avec MinerU** : soumission des PDF à MinerU (backend `cloud` SaaS par défaut, ou `local` auto-hébergé) et récupération des artefacts d'extraction.
-3. **Parsing et structuration** : reconstruction de la hiérarchie (nœuds, articles, versions) via PyMuPDF et spaCy, insertion en PostgreSQL, détection d'anomalies de numérotation (`CurationFlag`).
+3. **Parsing et structuration** : reconstruction de la hiérarchie (nœuds, articles, versions), insertion en PostgreSQL, détection d'anomalies de numérotation (`CurationFlag`).
 4. **Temps réel (SSE)** et **retraitement non destructif** (replay/staging) pour l'outil d'ingestion du front éditeur.
-5. **CLI** (`main.py`) pour la fusion de chunks, le découpage de compilations (Journaux Officiels, Actes uniformes) et des imports de test.
+5. **CLI** (`main.py`) pour la fusion de chunks et le découpage de compilations (Journaux Officiels, Actes uniformes).
 
 Pour le détail, voir la [documentation technique](docs/README.md) : [architecture](docs/architecture.md) et [API](docs/API.md).
 
@@ -33,11 +33,7 @@ Pour le détail, voir la [documentation technique](docs/README.md) : [architectu
    ```bash
    pip install -r requirements.txt
    ```
-3. **Modèle de langue français pour spaCy :**
-   ```bash
-   python -m spacy download fr_core_news_sm
-   ```
-4. **Configuration (`.env`)** — copier `.env.example` et renseigner les valeurs. Points clés :
+3. **Configuration (`.env`)** — copier `.env.example` et renseigner les valeurs. Points clés :
    ```env
    # Base de données PostgreSQL (partagée avec Laravel)
    DB_HOST=127.0.0.1
@@ -69,7 +65,7 @@ Pour le détail, voir la [documentation technique](docs/README.md) : [architectu
 
 ```bash
 # Dans mibeko-python, environnement virtuel activé
-python main.py serve --port 8000
+python main.py serve --port 8001
 ```
 
 Le service écoute sur le **port 8000** (valeur par défaut, cohérente avec le `Dockerfile` et le déploiement Docker/Traefik).
@@ -82,7 +78,7 @@ L'ingestion réelle passe par le front éditeur (`app.mibeko.fr`, espace `/edito
 
 ### CLI
 
-Le point d'entrée `main.py` (Click) regroupe des commandes utilitaires : `serve`, `merge-chunks` (fusion de chunks MinerU MD/JSON), `suggest-boundaries` / `split-compilation` (découpage de compilations en Actes, en JSON ou en Markdown), et des imports de test. Lister les commandes :
+Le point d'entrée `main.py` (Click) regroupe des commandes utilitaires : `serve`, `merge-chunks` (fusion de chunks MinerU MD/JSON), `suggest-boundaries` / `split-compilation` (découpage de compilations en Actes, en JSON ou en Markdown). Lister les commandes :
 
 ```bash
 python main.py --help
@@ -93,7 +89,7 @@ python main.py --help
 ```
 mibeko-python/
 ├── main.py                     # CLI (Click) : serve, merge-chunks, split-compilation…
-├── requirements.txt            # Dépendances (FastAPI, SQLAlchemy, Minio, PyMuPDF, spaCy…)
+├── requirements.txt            # Dépendances (FastAPI, SQLAlchemy, Minio, PyMuPDF…)
 ├── schema_postgres.sql         # Référence documentaire du schéma (piloté par Laravel, non appliqué ici)
 ├── Dockerfile / .deploy/       # Image et déploiement Docker (port 8000, Traefik)
 ├── docs/                       # Documentation technique (README, architecture, API)
