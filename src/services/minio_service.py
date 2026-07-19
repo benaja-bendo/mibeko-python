@@ -95,6 +95,20 @@ class MinioService:
             print(f"Erreur URL MinIO: {err}")
             return ""
 
+    def delete_file(self, object_name: str) -> bool:
+        """Supprime un objet du bucket — best-effort : logge et renvoie False si échec.
+
+        Utilisé par la suppression de document pour ne pas laisser d'orphelins
+        MinIO (audit S9). Un échec ne doit jamais bloquer la suppression DB,
+        d'où le except large (S3Error mais aussi erreurs réseau urllib3).
+        """
+        try:
+            self.client.remove_object(self.bucket_name, object_name)
+            return True
+        except Exception as err:
+            print(f"Erreur suppression MinIO ({object_name}): {err}")
+            return False
+
     def get_file_bytes(self, object_name: str) -> bytes:
         """Télécharge le fichier depuis MinIO en mémoire."""
         try:

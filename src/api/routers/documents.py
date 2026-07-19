@@ -4,6 +4,7 @@ Expose les fonctionnalités d'ingestion qui étaient uniquement disponibles via 
 """
 
 import datetime
+import logging
 import uuid
 from math import ceil
 from typing import Optional
@@ -25,6 +26,7 @@ from src.api.schemas import (
     PaginatedArticles,
 )
 from src.db.database import get_db
+from src.services.minio_service import minio_service
 from src.db.models import (
     Article,
     ArticleVersion,
@@ -33,6 +35,8 @@ from src.db.models import (
     MediaFile,
     StructureNode,
 )
+
+logger = logging.getLogger("mibeko.api")
 
 router = APIRouter(prefix="/api/v1/documents", tags=["documents"])
 
@@ -327,6 +331,16 @@ def delete_document(doc_id: str, db: Session = Depends(get_db), _user: Authentic
     if not document:
         raise HTTPException(status_code=404, detail="Document non trouvé")
 
+    # On collecte les clés MinIO à purger AVANT de supprimer les media_files,
+    # mais on ne purge le stockage qu'APRÈS le commit DB : si le commit échoue,
+    # le PDF d'un document encore visible resterait sinon détruit (audit :
+    # purge avant commit = destruction irréversible sur rollback DB).
+    object_keys_to_purge = [
+        media.object_key
+        for media in db.query(MediaFile).filter(MediaFile.document_id == document.id).all()
+        if media.storage_provider == "MINIO" and media.object_key
+    ]
+
     # Suppression en cascade manuelle pour les tables sans FK CASCADE
     article_ids = [a.id for a in db.query(Article).filter(Article.document_id == document.id).all()]
     if article_ids:
@@ -337,3 +351,11 @@ def delete_document(doc_id: str, db: Session = Depends(get_db), _user: Authentic
     db.query(MediaFile).filter(MediaFile.document_id == document.id).delete(synchronize_session=False)
     db.delete(document)
     db.commit()
+
+    # DB engagée : on purge le stockage MinIO en best-effort. Un échec ici laisse
+    # au pire des objets orphelins (récupérables), jamais un document sans son PDF.
+    for object_key in object_keys_to_purge:
+        try:
+            minio_service.delete_file(object_key)
+        except Exception:
+            logger.warning("Purge MinIO best-effort échouée pour l'objet %s (document %s supprimé en DB).", object_key, doc_id)
