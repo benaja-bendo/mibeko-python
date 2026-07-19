@@ -1,3 +1,4 @@
+import logging
 import os
 from minio import Minio
 from minio.error import S3Error
@@ -5,10 +6,30 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+logger = logging.getLogger("mibeko.minio")
+
+_IS_PRODUCTION = os.getenv("APP_ENV", "production").strip().lower() in ("production", "prod")
+
+
+def _credential_env(name: str, dev_default: str) -> str:
+    """Identifiant sensible : obligatoire en production, repli loggé en dev (audit S7)."""
+
+    value = os.getenv(name)
+    if value:
+        return value
+    if _IS_PRODUCTION:
+        raise RuntimeError(
+            f"Variable d'environnement {name} obligatoire en production : "
+            "aucun identifiant par défaut n'est autorisé (APP_ENV=production)."
+        )
+    logger.warning("%s absent du .env — repli développement « %s » utilisé.", name, dev_default)
+    return dev_default
+
+
 MINIO_HOST = os.getenv("MINIO_HOST", "127.0.0.1")
 MINIO_PORT = os.getenv("MINIO_PORT", "9000")
-MINIO_ACCESS_KEY = os.getenv("MINIO_ACCESS_KEY", "root")
-MINIO_SECRET_KEY = os.getenv("MINIO_SECRET_KEY", "password")
+MINIO_ACCESS_KEY = _credential_env("MINIO_ACCESS_KEY", "root")
+MINIO_SECRET_KEY = _credential_env("MINIO_SECRET_KEY", "password")
 MINIO_SECURE = os.getenv("MINIO_SECURE", "false").lower() == "true"
 
 class MinioService:
