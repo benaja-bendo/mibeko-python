@@ -100,12 +100,11 @@ async def run_mineru(pdf_path: Path) -> Tuple[str, str]:
 def _mineru_backend_label() -> str:
     from src.services.mineru_service import mineru_service
 
-    # getattr défensif : certains tests (test_upload_security.py et consorts)
-    # remplacent globalement sys.modules["src.services.mineru_service"] par un
-    # module factice (mineru_service = object()) sans le restaurer ensuite —
-    # pollution qui peut survivre à la collecte pytest de ce module-ci selon
-    # l'ordre d'exécution. Le service réel a toujours .backend ; ce repli
-    # n'est exercé que sous cette pollution de test, jamais en production.
+    # getattr défensif : certains tests neutralisent temporairement
+    # src.services.mineru_service (cf. tests/conftest.py::stub_service_modules,
+    # qui restaure sys.modules en sortie de bloc). Le service réel a toujours
+    # .backend ; ce repli reste une ceinture-bretelles si un test venait à ne
+    # pas restaurer correctement, jamais exercé en production.
     return f"mineru_{getattr(mineru_service, 'backend', 'cloud')}"
 
 

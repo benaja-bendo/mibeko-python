@@ -11,20 +11,16 @@ Exécutable sans backend : python3 tests/test_page_annotation.py
 
 import os
 import sys
-import types
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-for _name, _attr in [("src.services.minio_service", "minio_service"),
-                     ("src.services.mineru_service", "mineru_service")]:
-    _mod = types.ModuleType(_name)
-    setattr(_mod, _attr, object())
-    sys.modules[_name] = _mod
+from conftest import stub_service_modules  # noqa: E402
 
-from src.api.main import (  # noqa: E402
-    annotate_markdown_with_pages,
-    build_json_page_index,
-)
+with stub_service_modules():
+    from src.api.main import (  # noqa: E402
+        annotate_markdown_with_pages,
+        build_json_page_index,
+    )
 from src.extractor.parser import LegalDocumentParser  # noqa: E402
 
 
