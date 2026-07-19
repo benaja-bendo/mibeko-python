@@ -111,6 +111,45 @@ def test_dry_run_ne_telecharge_rien(tmp_path: Path):
     assert "https://www.sgg.cg/JO/2026/congo-jo-2026-13.pdf" not in counters
 
 
+def test_repli_enumeration_si_autoindex_ferme(tmp_path: Path):
+    """Autoindex fermé (404) pour cette année : repli sur l'énumération HEAD."""
+    data = tmp_path / "data"
+    counters: dict = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        url = str(request.url)
+        counters[url] = counters.get(url, 0) + 1
+        if url == "https://www.sgg.cg/JO/2026/":
+            return httpx.Response(404)  # autoindex fermé pour cette année
+        if url == "https://www.sgg.cg/JO/2026/congo-jo-2026-1.pdf":
+            return httpx.Response(200, content=PDF_13)
+        return httpx.Response(404)
+
+    carnet = {
+        "version": 1,
+        "series": [
+            {
+                "id": "jo-recents",
+                "type": "journal_officiel",
+                "annees": [2026],
+                "enumeration": {"actif": True, "max_numero": 2, "stop_apres_absents": 1},
+            }
+        ],
+        "textes": [],
+    }
+    path = tmp_path / "corpus-v1.yaml"
+    path.write_text(yaml.safe_dump(carnet, allow_unicode=True), encoding="utf-8")
+
+    http = httpx.Client(transport=httpx.MockTransport(handler))
+    client = PoliteClient(client=http, sleep=lambda _: None, min_delay=0, max_delay=0)
+    report = run_acquire(path, data, client=client)
+
+    result = report["series"]["jo-recents"]
+    assert counters["https://www.sgg.cg/JO/2026/"] == 1  # autoindex tenté une fois
+    assert result["urls_decouvertes"] == 1  # trouvé par l'énumération, filet
+    assert result["telecharges"] == 1
+
+
 def test_doublon_checksum_non_reintroduit(tmp_path: Path):
     """Un même contenu servi sous deux URLs ne crée qu'une entrée."""
     data = tmp_path / "data"

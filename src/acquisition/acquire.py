@@ -18,6 +18,7 @@ from .manifest import Manifest, ManifestEntry, known_checksums, utc_now_iso
 from .politeness import AcquisitionError, PoliteClient
 from .sgg import (
     acquire_jo_urls,
+    discover_by_autoindex,
     discover_by_enumeration,
     discover_from_index_pages,
     parse_jo_filename,
@@ -50,17 +51,26 @@ def _acquire_jo_series(
             parsed = parse_jo_filename(url.rsplit("/", 1)[-1])
             if parsed and (not annees or parsed["annee"] in annees):
                 urls.append(url)
+
+    # Autoindex Apache ouvert (/JO/{annee}/) : mode par défaut, ne rate aucune
+    # variante (suffixes imprévisibles). Repli par année sur l'énumération HEAD
+    # si l'autoindex est fermé/vide pour cette année-là.
+    autoindex = series.get("autoindex", {})
     enumeration = series.get("enumeration", {})
-    if enumeration.get("actif", False):
-        for annee in sorted(annees):
-            for url in discover_by_enumeration(
+    for annee in sorted(annees):
+        annee_urls: list[str] = []
+        if autoindex.get("actif", True):
+            annee_urls = discover_by_autoindex(client, annee)
+        if not annee_urls and enumeration.get("actif", False):
+            annee_urls = discover_by_enumeration(
                 client,
                 annee,
                 max_numero=int(enumeration.get("max_numero", 60)),
                 stop_after=int(enumeration.get("stop_apres_absents", 5)),
-            ):
-                if url not in urls:
-                    urls.append(url)
+            )
+        for url in annee_urls:
+            if url not in urls:
+                urls.append(url)
 
     result = acquire_jo_urls(
         client,

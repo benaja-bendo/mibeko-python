@@ -22,6 +22,13 @@ from src.acquisition.sgg import build_jo_url, extract_jo_links, parse_jo_filenam
         ("congo-jo-2025-5-volume-xvii-4.pdf", 2025, "5", False),
         ("congo-jo-2025-5-volume-vii-2025-2.pdf", 2025, "5", False),
         ("congo-jo-2025-5-volume-xxvi.pdf", 2025, "5", False),
+        # Suffixes imprévisibles relevés par la recon autoindex du 04/07/2026 :
+        # la grammaire stricte précédente (-sp / -volume-… / -2 seulement) les
+        # rejetait à tort, ce qui les excluait silencieusement de l'acquisition.
+        ("congo-jo-2026-13-5.pdf", 2026, "13", False),
+        ("congo-jo-2026-12-2.pdf", 2026, "12", False),
+        ("congo-jo-2026-20-interactif.pdf", 2026, "20", False),
+        ("congo-jo-2026-20-interactif-2.pdf", 2026, "20", False),
     ],
 )
 def test_grammaire_variantes_reelles(filename, annee, numero, special):

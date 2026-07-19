@@ -1,24 +1,38 @@
 """Acquisition des Journaux officiels sur sgg.cg.
 
 Grammaire des noms de fichiers, relevée sur les 68 JO déjà acquis
-(data/sources/sgg/JO/, Phase 0) :
+(data/sources/sgg/JO/, Phase 0) puis élargie par la recon du 04/07/2026
+(72 répertoires-années, autoindex Apache ouvert) :
 
-    congo-jo-{AAAA}-{NN}(-sp)?(-volume-{romain}(-{suffixe})?)?(-2)?.pdf
+    congo-jo-{AAAA}-{NN}{suffixe}.pdf
 
-    - AAAA : année (1958-…)
+    - AAAA : année (1946-…)
     - NN : numéro du JO (1-2 chiffres observés, 3 acceptés)
-    - -sp : édition spéciale
-    - -volume-{romain} : JO fractionné en volumes (observé sur 2025-5 uniquement)
-    - -2 : second fichier pour un même numéro
+    - suffixe : libre (-sp, -volume-{romain}(-…)?, -2, -3…, -interactif,
+      -interactif-2…) — la recon a établi que ces suffixes de révision sont
+      imprévisibles et NE DOIVENT PAS être reconstruits ; `suffixe` n'est
+      décomposé que pour repérer -sp (édition spéciale).
 
-L'URL est reconstructible : https://www.sgg.cg/JO/{AAAA}/{nom_de_fichier}.
+L'URL est reconstructible à partir d'un nom de fichier connu :
+https://www.sgg.cg/JO/{AAAA}/{nom_de_fichier}. Mais construire un nom de
+fichier à partir du numéro seul n'est PAS fiable (suffixes imprévisibles) :
+c'est pourquoi la découverte par autoindex (ci-dessous) prime sur toute
+reconstruction.
 
-Deux stratégies de découverte, toutes deux pilotées par le carnet :
+Trois stratégies de découverte, pilotées par le carnet :
+- autoindex (par défaut) : liste le répertoire Apache ouvert /JO/{AAAA}/ et
+  retient tous les liens .pdf réellement présents — ne rate aucune variante ;
 - index : scan de pages d'index HTML (ex. « journaux spéciaux ») listant des
   liens vers /JO/{AAAA}/….pdf ;
-- énumération : sonde HEAD sur congo-jo-{AAAA}-{n}.pdf, n croissant, arrêt
-  après `stop_after` absences consécutives (filet quand aucune page d'index
-  ne liste les numéros ordinaires).
+- énumération (filet) : sonde HEAD sur congo-jo-{AAAA}-{n}.pdf, n croissant,
+  arrêt après `stop_after` absences consécutives — utilisée seulement si
+  l'autoindex est fermé pour l'année considérée.
+
+Plusieurs fichiers différents peuvent partager le même numéro nominal (re-
+publications, versions interactives, corrections). On les télécharge TOUS
+(chacun son entrée de manifeste) plutôt que d'en choisir un arbitrairement ;
+`acquire_jo_urls` les signale via `ManifestEntry.variantes_multiples` +
+l'événement `variantes_multiples_detectees`, pour arbitrage humain.
 """
 
 from __future__ import annotations
@@ -34,13 +48,17 @@ SGG_BASE = "https://www.sgg.cg"
 
 JO_FILENAME_RE = re.compile(
     r"^congo-jo-(?P<annee>\d{4})-(?P<numero>\d{1,3})"
-    r"(?P<suffixe>(?:-sp)?(?:-volume-[ivxlcdm]+(?:-[a-z0-9-]+)?)?(?:-2)?)"
+    r"(?P<suffixe>[a-z0-9-]*)"
     r"\.pdf$",
     re.IGNORECASE,
 )
 
 # Liens /JO/{AAAA}/xxx.pdf dans une page d'index HTML.
 JO_HREF_RE = re.compile(r"""href=["'](?P<href>[^"']*/JO/\d{4}/[^"']+\.pdf)["']""", re.IGNORECASE)
+
+# Liens .pdf dans un autoindex Apache classique (mod_autoindex) : relatifs au
+# répertoire courant, ex. <a href="congo-jo-2026-13.pdf">congo-jo-2026-13.pdf</a>.
+AUTOINDEX_HREF_RE = re.compile(r"""href=["'](?P<href>[^"']+\.pdf)["']""", re.IGNORECASE)
 
 
 def parse_jo_filename(filename: str) -> Optional[dict]:
@@ -117,6 +135,37 @@ def discover_by_enumeration(
     return found
 
 
+def discover_by_autoindex(client: PoliteClient, annee: int) -> list[str]:
+    """Liste /JO/{annee}/ via l'autoindex Apache ouvert (recon du 04/07/2026).
+
+    Contrairement à `discover_by_enumeration`, ne devine aucun nom de fichier :
+    restitue tous les PDF réellement présents, suffixes imprévisibles compris
+    (-2, -13-5, -interactif, -interactif-2, -volume-xxii-3…). Retourne une
+    liste vide (jamais d'exception) si le répertoire est fermé ou absent, pour
+    permettre à l'appelant de replier silencieusement sur l'énumération HEAD.
+    """
+    dir_url = f"{SGG_BASE}/JO/{annee}/"
+    try:
+        response = client.get(dir_url)
+    except AcquisitionError:
+        return []
+    if response.status_code != 200:
+        return []
+
+    urls: list[str] = []
+    for match in AUTOINDEX_HREF_RE.finditer(response.text):
+        href = match.group("href")
+        if href.startswith("http"):
+            url = href
+        elif href.startswith("/"):
+            url = SGG_BASE + href
+        else:
+            url = dir_url + href
+        if url not in urls:
+            urls.append(url)
+    return urls
+
+
 def acquire_jo_urls(
     client: PoliteClient,
     manifest: Manifest,
@@ -128,9 +177,24 @@ def acquire_jo_urls(
 ) -> dict:
     """Télécharge les URLs de JO absentes du manifeste. Idempotent.
 
-    Retourne un résumé {telecharges, ignores_connus, doublons, erreurs, prevus}.
+    Retourne un résumé {telecharges, ignores_connus, doublons, erreurs,
+    variantes_multiples, prevus}.
     """
-    summary = {"telecharges": 0, "ignores_connus": 0, "doublons": 0, "erreurs": 0, "prevus": []}
+    summary = {
+        "telecharges": 0,
+        "ignores_connus": 0,
+        "doublons": 0,
+        "erreurs": 0,
+        "variantes_multiples": 0,
+        "prevus": [],
+    }
+    # (annee, numero) -> ids déjà au manifeste, pour repérer les fichiers
+    # multiples sous un même numéro nominal (suffixes imprévisibles).
+    numero_index: dict[tuple[int, str], list[str]] = {}
+    for existing in manifest.entries.values():
+        if existing.jo_annee is not None and existing.jo_numero is not None:
+            numero_index.setdefault((existing.jo_annee, existing.jo_numero), []).append(existing.id)
+
     for url in urls:
         filename = url.rsplit("/", 1)[-1]
         parsed = parse_jo_filename(filename)
@@ -180,6 +244,30 @@ def acquire_jo_urls(
             statut="telecharge",
         )
         entry.add_event("telecharge", "MibekoBot/acquire", detail=url)
+
+        numero_key = (parsed["annee"], parsed["numero"])
+        siblings = numero_index.get(numero_key, [])
+        if siblings:
+            # Autre(s) fichier(s) déjà connus sous ce même numéro nominal :
+            # on garde les deux (contenus différents, checksum déjà écarté
+            # ci-dessus), et on flague pour arbitrage humain plutôt que de
+            # choisir silencieusement lequel garder.
+            groupe = sorted(siblings + [entry_id])
+            detail = f"variantes du JO {parsed['annee']}-{parsed['numero']} : {', '.join(groupe)}"
+            entry.variantes_multiples = groupe
+            entry.add_event("variantes_multiples_detectees", "MibekoBot/acquire", detail=detail)
+            for sibling_id in siblings:
+                sibling = manifest.get(sibling_id)
+                if sibling is None:
+                    continue
+                sibling.variantes_multiples = groupe
+                if not any(e.quoi == "variantes_multiples_detectees" for e in sibling.evenements):
+                    sibling.add_event(
+                        "variantes_multiples_detectees", "MibekoBot/acquire", detail=detail
+                    )
+            summary["variantes_multiples"] += 1
+        numero_index.setdefault(numero_key, []).append(entry_id)
+
         manifest.upsert(entry)
         known_shas[sha] = entry_id
         manifest.save()  # sauvegarde après chaque fichier : reprise sur crash

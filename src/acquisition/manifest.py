@@ -61,6 +61,7 @@ class ManifestEntry(BaseModel):
     jo_date: Optional[str] = None      # complétée plus tard (métadonnées du JO)
     statut: str = "telecharge"
     retroactif: bool = False           # True = fichier acquis avant l'usine
+    variantes_multiples: Optional[list[str]] = None  # ids sœurs, même (jo_annee, jo_numero) : arbitrage humain
     evenements: list[ManifestEvent] = Field(default_factory=list)
 
     def add_event(self, quoi: str, par: str, detail: Optional[str] = None) -> None:
