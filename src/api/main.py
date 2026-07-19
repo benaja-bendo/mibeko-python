@@ -471,21 +471,75 @@ def annotate_markdown_with_pages(
     return "\n".join(out)
 
 
-def sanitize_legal_text(content: str) -> str:
-    """Corrige quelques artefacts OCR fréquents avant découpage ou parsing."""
+# Heuristique de qualité/lisibilité : extraite dans src/extractor/text_quality.py
+# (module pur, sans FastAPI/SQLAlchemy) pour être réutilisable par le triage de
+# l'étage 2 de l'usine à textes sans importer toute l'API.
+from src.extractor.text_quality import (  # noqa: E402
+    OCR_ARTIFACT_REPLACEMENTS,
+    OCR_QUALITY_WARN_THRESHOLD,
+    compute_ocr_quality,
+    sanitize_legal_text,
+)
 
-    replacements = (
-        (r"\bL0I\b", "LOI"),
-        (r"\bArtide\b", "Article"),
-        (r"\bDÉCRÊT\b", "DECRET"),
-        (r"\bARRETÊ\b", "ARRETE"),
-        (r"\bN°\s*o\b", "N°"),
+
+def flag_low_ocr_quality(
+    db: Session,
+    document_id: uuid.UUID,
+    quality: Dict[str, Any],
+    threshold: float = OCR_QUALITY_WARN_THRESHOLD,
+    run_id: Optional[uuid.UUID] = None,
+) -> bool:
+    """Émet un flag de curation NON bloquant si la qualité OCR passe sous le seuil.
+
+    Réutilise le mécanisme ``curation_flags`` existant (comme
+    flag_article_sequence_anomalies) mais en sévérité ``warning`` : l'éditeur voit
+    l'avertissement et garde le bouton « Publier quand même » (seul ``blocking``
+    gèle la publication côté Laravel). Idempotent : purge son propre flag non
+    résolu avant de recalculer (source='heuristic', type='ocr_quality_faible').
+
+    Renvoie True si un flag a été émis (qualité sous le seuil), False sinon.
+    """
+    db.query(CurationFlag).filter(
+        CurationFlag.document_id == document_id,
+        CurationFlag.source == "heuristic",
+        CurationFlag.type_probleme == "ocr_quality_faible",
+        CurationFlag.resolved.is_(False),
+    ).delete(synchronize_session=False)
+
+    score = quality.get("score", 1.0)
+    if score >= threshold:
+        return False
+
+    pct = round(score * 100)
+    signals = quality.get("signals", {})
+    detail_bits = []
+    if signals.get("replacement_char_count"):
+        detail_bits.append(f"{signals['replacement_char_count']} caractère(s) illisible(s) (U+FFFD)")
+    if signals.get("ocr_artifact_count"):
+        detail_bits.append(f"{signals['ocr_artifact_count']} artefact(s) OCR connu(s)")
+    if signals.get("single_letter_word_count"):
+        detail_bits.append(f"{signals['single_letter_word_count']} mot(s) fragmenté(s)")
+    if signals.get("control_char_count"):
+        detail_bits.append(f"{signals['control_char_count']} caractère(s) de contrôle")
+    detail = " ; ".join(detail_bits) if detail_bits else "signaux de dégradation détectés"
+
+    flag = CurationFlag(
+        document_id=document_id,
+        source="heuristic",
+        type_probleme="ocr_quality_faible",
+        severity="warning",  # informe l'éditeur SANS bloquer la publication
+        description=(
+            f"Qualité OCR estimée faible ({pct} %, seuil {round(threshold * 100)} %) : {detail}. "
+            "Indicateur de LISIBILITÉ (non contractuel) — vérifier le texte contre le PDF source "
+            "avant publication. Ne mesure pas la justesse juridique."
+        ),
+        resolved=False,
     )
-
-    result = content
-    for pattern, replacement in replacements:
-        result = re.sub(pattern, replacement, result, flags=re.IGNORECASE)
-    return result
+    # anchor/confidence/run_id ne sont pas mappés par le modèle Python (colonnes
+    # Laravel) ; on renseigne ce que l'ORM connaît. La confiance chiffrée vit dans
+    # extraction_runs.meta.ocr_quality (source d'audit).
+    db.add(flag)
+    return True
 
 
 VALID_LEGAL_SCOPES = {"national", "ohada", "communautaire"}
@@ -2226,6 +2280,11 @@ async def execute_parsing_task(run_id: uuid.UUID, doc_id: uuid.UUID, media_id: u
             data = json.loads(file_bytes.decode("utf-8", errors="ignore"))
             text_content = extract_text_from_mineru_json(data, with_page_markers=True)
 
+        # Indicateur de qualité OCR (lisibilité) calculé sur le texte source AVANT
+        # réparation/découpage. Persisté dans extraction_runs.meta pour audit et
+        # affichage éditeur ; sert de base au flag non bloquant plus bas.
+        ocr_quality = compute_ocr_quality(text_content)
+
         # Parse le contenu textuel
         parser = LegalDocumentParser(text_content=text_content)
         hierarchy = parser.parse_hierarchy()
@@ -2258,7 +2317,9 @@ async def execute_parsing_task(run_id: uuid.UUID, doc_id: uuid.UUID, media_id: u
             # live ; un éditeur arbitrera via le diff puis promeut ou rejette.
             run.status = "needs_review"
             run.finished_at = datetime.datetime.utcnow()
-            run.meta = {**(run.meta or {}), "staged": True, "proposed_hierarchy": hierarchy}
+            # ocr_quality conservé dans le staging : le flag ne sera émis qu'à la
+            # PROMOTION (le live n'est pas encore modifié), cf. promote_run.
+            run.meta = {**(run.meta or {}), "staged": True, "proposed_hierarchy": hierarchy, "ocr_quality": ocr_quality}
             document.curation_status = "review"
             db.commit()
 
@@ -2269,9 +2330,14 @@ async def execute_parsing_task(run_id: uuid.UUID, doc_id: uuid.UUID, media_id: u
         else:
             if hierarchy:
                 ingest_hierarchy(db, document, hierarchy, run_id=run.id, media_id=media.id, validation_status="pending")
+                # Garde-fou qualité OCR (non bloquant) : sous le seuil, un flag
+                # 'warning' remonte à la curation Laravel (l'éditeur garde
+                # « Publier quand même »). N'écrase pas les flags de séquence.
+                flag_low_ocr_quality(db, document.id, ocr_quality, run_id=run.id)
 
             run.status = "succeeded"
             run.finished_at = datetime.datetime.utcnow()
+            run.meta = {**(run.meta or {}), "ocr_quality": ocr_quality}
             # Le document entre dans la file de validation : un éditeur doit
             # contrôler le parsing avant publication (curation Laravel).
             document.curation_status = "review"
@@ -2429,6 +2495,12 @@ def promote_run(doc_id: str, run_id: str, db: Session = Depends(get_db), _user: 
     # C'est ICI, et seulement ici, que l'écrasement du contenu a lieu — sur
     # décision humaine explicite (et non plus automatiquement à chaque parsing).
     ingest_hierarchy(db, document, proposed_hierarchy, run_id=run.id, media_id=run.source_media_file_id, validation_status="pending")
+
+    # Le flag qualité OCR n'est émis qu'au moment où le contenu devient live (ici),
+    # à partir du score calculé et stocké au parsing. Non bloquant ('warning').
+    staged_quality = (run.meta or {}).get("ocr_quality")
+    if isinstance(staged_quality, dict):
+        flag_low_ocr_quality(db, document.id, staged_quality, run_id=run.id)
 
     meta = dict(run.meta or {})
     meta.pop("proposed_hierarchy", None)
