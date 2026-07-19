@@ -20,6 +20,7 @@ from src.api.routers import documents as documents_router
 from src.api.auth import AuthenticatedUser, require_editor
 from src.api.config import EXPOSE_API_DOCS, INGESTION_CONSOLE_ENABLED, IS_PRODUCTION, SERVICE_VERSION
 from src.api.schemas import GlobalStatsOut, HealthOut
+from src.api.upload_utils import BodySizeLimitMiddleware, read_upload_capped, sanitize_filename, stream_upload_to_tmp
 from src.db.database import SessionLocal, get_db, init_db
 from src.db.models import Article, ArticleVersion, CurationFlag, ExtractionRun, Institution, LegalDocument, MediaFile, OfficialJournal, StructureNode
 from src.services.mineru_service import mineru_service
@@ -124,6 +125,17 @@ async def add_security_headers(request: Request, call_next):
     if forwarded_proto == "https":
         response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     return response
+
+
+# ---------------------------------------------------------------------------
+# Plafond global du corps de requête (FIX-1) — ajouté EN DERNIER pour s'exécuter
+# EN PREMIER (Starlette empile les middlewares en ordre inverse d'ajout) : le
+# plafond de taille doit intercepter avant tout, y compris avant que le multipart
+# ne soit spoolé sur disque et avant l'authentification. Défense DoS disque : un
+# anonyme ne peut plus remplir le disque avec un corps géant (Content-Length
+# honnête → 413 immédiat ; chunked/menteur → coupé net au comptage des octets).
+# ---------------------------------------------------------------------------
+app.add_middleware(BodySizeLimitMiddleware)
 
 
 # ---------------------------------------------------------------------------
@@ -1629,10 +1641,12 @@ async def _collapse_chunks(files: List[UploadFile], kind: str) -> Tuple[bytes, s
     if not files:
         return b"", f"source.{kind}", []
     if len(files) == 1:
-        data = await files[0].read()
+        data = await read_upload_capped(files[0], label=f"fichier .{kind}")
         return data, (files[0].filename or f"source.{kind}"), []
 
-    items: List[Tuple[str, bytes]] = [(f.filename or "", await f.read()) for f in files]
+    items: List[Tuple[str, bytes]] = [
+        (f.filename or "", await read_upload_capped(f, label=f"fichier .{kind}")) for f in files
+    ]
     if kind == "md":
         merged_text, warnings = merge_markdown_chunks(items)
         return merged_text.encode("utf-8"), "merged.md", warnings
@@ -1675,6 +1689,11 @@ async def upload_document(
     if normalized_role not in {"STOCK", "FLUX"}:
         return JSONResponse(status_code=422, content={"message": "Le role doit etre STOCK ou FLUX."})
 
+    # Le statut de curation d'un upload ne peut être que draft/review : accepter
+    # « published » ici contournerait le garde-fou d'anomalies côté Laravel (S5).
+    if curation_status not in {"draft", "review"}:
+        return JSONResponse(status_code=422, content={"message": "Le statut de curation doit etre draft ou review."})
+
     if normalized_role == "STOCK" and not normalized_stock_code:
         return JSONResponse(status_code=422, content={"message": "Le champ code du stock est obligatoire pour un document de type STOCK."})
 
@@ -1695,66 +1714,88 @@ async def upload_document(
             content={"message": "Un document avec cette cle existe deja.", "document_id": str(existing_document.id)},
         )
 
-    pdf_bytes = await pdf_file.read()
-    if not pdf_bytes:
-        return JSONResponse(status_code=422, content={"message": "Le fichier PDF est vide."})
+    # Le PDF est streamé par morceaux vers un fichier temporaire : plafond
+    # MAX_UPLOAD_MB (413) + validation du magic « %PDF- » (422), sans jamais
+    # charger le fichier entier en mémoire (audit S1).
+    upload = await stream_upload_to_tmp(pdf_file, STORAGE_TMP_DIR)
+    # Le fichier temporaire n'est conservé que s'il est confié à la tâche de
+    # fond MinerU (qui le supprime elle-même en finally) ; sinon nettoyé ici.
+    temp_owned_by_background = False
+    try:
+        if upload.size == 0:
+            return JSONResponse(status_code=422, content={"message": "Le fichier PDF est vide."})
 
-    doc_id = uuid.uuid4()
-    pdf_checksum = compute_sha256(pdf_bytes)
-    pdf_object_key = build_object_key(
-        normalized_role,
-        normalized_stock_code,
-        doc_id,
-        "source/pdf",
-        pdf_file.filename or "document.pdf",
-    )
-    pdf_s3_path = minio_service.upload_bytes(pdf_object_key, pdf_bytes, "application/pdf")
-    if not pdf_s3_path:
-        return JSONResponse(status_code=500, content={"message": "Echec de stockage du PDF dans MinIO."})
+        doc_id = uuid.uuid4()
+        pdf_checksum = upload.sha256
+        pdf_object_key = build_object_key(
+            normalized_role,
+            normalized_stock_code,
+            doc_id,
+            "source/pdf",
+            pdf_file.filename or "document.pdf",
+        )
+        # fput_object streame depuis le fichier temporaire (pas de bytes en mémoire).
+        pdf_s3_path = minio_service.upload_file(pdf_object_key, upload.path, "application/pdf")
+        if not pdf_s3_path:
+            return JSONResponse(status_code=500, content={"message": "Echec de stockage du PDF dans MinIO."})
 
-    resolved_type_code = resolve_document_type_code(db, type_code, normalized_role, title=titre_officiel)
-    institution_id = resolve_institution_id(db, institution_sigle)
+        resolved_type_code = resolve_document_type_code(db, type_code, normalized_role, title=titre_officiel)
+        institution_id = resolve_institution_id(db, institution_sigle)
 
-    new_doc = LegalDocument(
-        id=doc_id,
-        type_code=resolved_type_code,
-        institution_id=institution_id,
-        document_key=resolved_document_key,
-        stock_code=normalized_stock_code,
-        titre_officiel=titre_officiel,
-        reference_nor=reference_nor,
-        date_signature=parse_optional_date(date_signature),
-        date_publication=parse_optional_date(date_publication),
-        date_entree_vigueur=parse_optional_date(date_entree_vigueur),
-        document_role=normalized_role,
-        consolidation_as_of=datetime.datetime.utcnow().date() if normalized_role == "STOCK" else None,
-        statut="vigueur",
-        legal_scope=resolve_legal_scope(titre_officiel, legal_scope),
-        curation_status=curation_status,
-        extraction_status="pending",
-    )
-    merge_metadata(new_doc, {"ingestion_mode": "web_upload"})
+        new_doc = LegalDocument(
+            id=doc_id,
+            type_code=resolved_type_code,
+            institution_id=institution_id,
+            document_key=resolved_document_key,
+            stock_code=normalized_stock_code,
+            titre_officiel=titre_officiel,
+            reference_nor=reference_nor,
+            date_signature=parse_optional_date(date_signature),
+            date_publication=parse_optional_date(date_publication),
+            date_entree_vigueur=parse_optional_date(date_entree_vigueur),
+            document_role=normalized_role,
+            consolidation_as_of=datetime.datetime.utcnow().date() if normalized_role == "STOCK" else None,
+            statut="vigueur",
+            legal_scope=resolve_legal_scope(titre_officiel, legal_scope),
+            curation_status=curation_status,
+            extraction_status="pending",
+        )
+        merge_metadata(new_doc, {"ingestion_mode": "web_upload"})
 
-    pdf_media = build_media_record(
-        document_id=doc_id,
-        object_key=pdf_object_key,
-        file_path=pdf_s3_path,
-        original_filename=pdf_file.filename or "document.pdf",
-        mime_type="application/pdf",
-        file_category="SOURCE_PDF",
-        payload_size=len(pdf_bytes),
-        checksum_sha256=pdf_checksum,
-        description="PDF source depose depuis l'interface web",
-    )
+        pdf_media = build_media_record(
+            document_id=doc_id,
+            object_key=pdf_object_key,
+            file_path=pdf_s3_path,
+            original_filename=pdf_file.filename or "document.pdf",
+            mime_type="application/pdf",
+            file_category="SOURCE_PDF",
+            payload_size=upload.size,
+            checksum_sha256=pdf_checksum,
+            description="PDF source depose depuis l'interface web",
+        )
 
-    db.add(new_doc)
-    db.add(pdf_media)
-    db.flush()
+        db.add(new_doc)
+        db.add(pdf_media)
+        db.flush()
 
-    md_files = [f for f in (md_file or []) if f is not None]
-    json_files = [f for f in (json_file or []) if f is not None]
+        md_files = [f for f in (md_file or []) if f is not None]
+        json_files = [f for f in (json_file or []) if f is not None]
 
-    if md_files or json_files:
+        if not (md_files or json_files):
+            # Aucun artefact fourni : MinerU prend le relai depuis le fichier
+            # temporaire déjà bufferisé (la tâche de fond le supprime en finally).
+            db.commit()
+            temp_owned_by_background = True
+            background_tasks.add_task(
+                process_mineru_extraction,
+                doc_id,
+                pdf_media.id,
+                upload.path,
+                normalized_role,
+                normalized_stock_code,
+            )
+            return JSONResponse(content={"message": "Document depose avec succes", "document_id": str(doc_id)})
+
         provided_formats = []
         merge_info: Dict[str, Any] = {}
         run = ExtractionRun(
@@ -1855,22 +1896,11 @@ async def upload_document(
         db.commit()
 
         asyncio.create_task(notify_clients())
-    else:
-        db.commit()
-        os.makedirs(STORAGE_TMP_DIR, exist_ok=True)
-        temp_pdf_path = os.path.join(STORAGE_TMP_DIR, f"{uuid.uuid4()}_{pdf_file.filename or 'document.pdf'}")
-        with open(temp_pdf_path, "wb") as buffer:
-            buffer.write(pdf_bytes)
-        background_tasks.add_task(
-            process_mineru_extraction,
-            doc_id,
-            pdf_media.id,
-            temp_pdf_path,
-            normalized_role,
-            normalized_stock_code,
-        )
 
-    return JSONResponse(content={"message": "Document depose avec succes", "document_id": str(doc_id)})
+        return JSONResponse(content={"message": "Document depose avec succes", "document_id": str(doc_id)})
+    finally:
+        if not temp_owned_by_background and os.path.exists(upload.path):
+            os.remove(upload.path)
 
 
 @app.post("/api/v1/official-journals/upload", tags=["official-journals"])
@@ -1889,7 +1919,14 @@ async def upload_official_journal(
 ):
     """Crée un Journal Officiel puis charge les actes qu’il contient en `legal_documents`."""
 
+    upload = None
+    temp_owned_by_background = False
     try:
+        # Le statut de curation des actes créés ne peut être que draft/review :
+        # accepter « published » contournerait le garde-fou d'anomalies (S5).
+        if documents_curation_status not in {"draft", "review"}:
+            return JSONResponse(status_code=422, content={"message": "Le statut de curation doit etre draft ou review."})
+
         resolved_publication_date = parse_optional_date(publication_date)
         if not resolved_publication_date:
             return JSONResponse(status_code=422, content={"message": "La date de publication est obligatoire au format YYYY-MM-DD."})
@@ -1904,9 +1941,14 @@ async def upload_official_journal(
         journal = existing_journal
         journal_created = False
 
+        # Le PDF est streamé UNE SEULE fois vers un fichier temporaire (plafond
+        # MAX_UPLOAD_MB + magic « %PDF- ») : il sert à la fois au stockage MinIO
+        # (journal nouveau) et à la relance MinerU éventuelle — l'ancienne double
+        # lecture en mémoire disparaît (audit S1).
+        upload = await stream_upload_to_tmp(pdf_file, STORAGE_TMP_DIR, filename_prefix="jo_")
+
         if not journal:
-            pdf_bytes = await pdf_file.read()
-            if not pdf_bytes:
+            if upload.size == 0:
                 return JSONResponse(status_code=422, content={"message": "Le fichier PDF du JO est vide."})
 
             journal = OfficialJournal(
@@ -1920,7 +1962,7 @@ async def upload_official_journal(
             )
 
             pdf_object_key = build_journal_object_key(journal, pdf_file.filename or "journal-officiel.pdf")
-            pdf_s3_path = minio_service.upload_bytes(pdf_object_key, pdf_bytes, "application/pdf")
+            pdf_s3_path = minio_service.upload_file(pdf_object_key, upload.path, "application/pdf")
             if not pdf_s3_path:
                 return JSONResponse(status_code=500, content={"message": "Echec de stockage du PDF du JO dans MinIO."})
 
@@ -1928,13 +1970,10 @@ async def upload_official_journal(
             db.add(journal)
             db.flush()
             journal_created = True
-        else:
-            # Si le journal existe déjà, on rembobine le fichier PDF au cas où on en aurait besoin
-            pdf_bytes = await pdf_file.read()
 
         markdown_text = ""
         if md_file:
-            md_bytes = await md_file.read()
+            md_bytes = await read_upload_capped(md_file, label="fichier .md")
             if md_bytes:
                 markdown_text = md_bytes.decode("utf-8", errors="ignore")
 
@@ -1942,7 +1981,7 @@ async def upload_official_journal(
         # a pas de markdown, on s'en sert aussi comme repli pour reconstruire le texte.
         page_source_json: Optional[Dict[str, Any]] = None
         if json_file:
-            json_bytes = await json_file.read()
+            json_bytes = await read_upload_capped(json_file, label="fichier .json")
             if json_bytes:
                 try:
                     page_source_json = json.loads(json_bytes.decode("utf-8", errors="ignore"))
@@ -1965,19 +2004,16 @@ async def upload_official_journal(
         elif journal_created or journal.transcription_status in (None, "pending", "failed"):
             # Pas d'artefact fourni : on (re)lance MinerU, y compris pour un JO
             # existant dont la transcription n'a jamais abouti.
-            if not pdf_bytes:
+            if upload.size == 0:
                 return JSONResponse(status_code=422, content={"message": "Le fichier PDF du JO est vide."})
 
-            os.makedirs(STORAGE_TMP_DIR, exist_ok=True)
-            temp_pdf_path = os.path.join(STORAGE_TMP_DIR, f"{uuid.uuid4()}_jo_{pdf_file.filename or 'document.pdf'}")
-            with open(temp_pdf_path, "wb") as buffer:
-                buffer.write(pdf_bytes)
-
             journal.transcription_status = "queued"
+            # La tâche de fond supprime le fichier temporaire elle-même (finally).
+            temp_owned_by_background = True
             background_tasks.add_task(
                 process_mineru_journal_extraction,
                 journal.id,
-                temp_pdf_path
+                upload.path
             )
 
         db.commit()
@@ -1991,15 +2027,23 @@ async def upload_official_journal(
                 "created": journal_created,
             }
         )
-    except Exception as exc:
+    except HTTPException:
+        # Erreurs métier explicites (413/422 du streaming, dates invalides…) :
+        # on les laisse remonter telles quelles au lieu de les masquer en 500.
         db.rollback()
-        import traceback
-        error_details = traceback.format_exc()
-        print(f"ERREUR 500 dans upload_official_journal: {error_details}")
+        raise
+    except Exception:
+        db.rollback()
+        # Traceback réservée aux logs serveur : aucun détail interne ne doit
+        # sortir dans la réponse (audit P0.8/S3).
+        logger.exception("ERREUR 500 dans upload_official_journal")
         return JSONResponse(
             status_code=500,
-            content={"message": f"Erreur interne du serveur: {str(exc)}", "details": error_details}
+            content={"message": "Erreur interne du serveur."}
         )
+    finally:
+        if upload is not None and not temp_owned_by_background and os.path.exists(upload.path):
+            os.remove(upload.path)
 
 
 @app.get("/api/v1/stream", tags=["stream"])
@@ -2163,7 +2207,10 @@ async def reprocess_document(
         return JSONResponse(status_code=500, content={"message": "Impossible de relire le PDF source depuis MinIO."})
 
     os.makedirs(STORAGE_TMP_DIR, exist_ok=True)
-    temp_pdf_path = os.path.join(STORAGE_TMP_DIR, f"{uuid.uuid4()}_{pdf_media.original_filename or 'document.pdf'}")
+    # original_filename vient du client à l'upload : on l'assainit avant de le
+    # réutiliser dans un chemin local (audit S8).
+    safe_pdf_name = sanitize_filename(pdf_media.original_filename)
+    temp_pdf_path = os.path.join(STORAGE_TMP_DIR, f"{uuid.uuid4()}_{safe_pdf_name}")
     with open(temp_pdf_path, "wb") as buffer:
         buffer.write(pdf_bytes)
 
