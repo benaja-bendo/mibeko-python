@@ -2,6 +2,7 @@ import asyncio
 import datetime
 import hashlib
 import json
+import logging
 import os
 import re
 import uuid
@@ -17,7 +18,7 @@ from sqlalchemy.orm import Session
 
 from src.api.routers import documents as documents_router
 from src.api.auth import AuthenticatedUser, require_editor
-from src.api.config import EXPOSE_API_DOCS, INGESTION_CONSOLE_ENABLED, SERVICE_VERSION
+from src.api.config import EXPOSE_API_DOCS, INGESTION_CONSOLE_ENABLED, IS_PRODUCTION, SERVICE_VERSION
 from src.api.schemas import GlobalStatsOut, HealthOut
 from src.db.database import SessionLocal, get_db, init_db
 from src.db.models import Article, ArticleVersion, CurationFlag, ExtractionRun, Institution, LegalDocument, MediaFile, OfficialJournal, StructureNode
@@ -27,6 +28,8 @@ from src.extractor.parser import LegalDocumentParser
 from src.extractor.chunk_merger import merge_json_chunks, merge_markdown_chunks
 from psycopg2.extras import DateRange
 from sqlalchemy_utils import Ltree
+
+logger = logging.getLogger("mibeko.api")
 
 event_queues = []
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -54,15 +57,21 @@ app = FastAPI(
 # le middleware CORS, cf. unhandled_exception_handler plus bas).
 # ---------------------------------------------------------------------------
 ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://localhost:5174",
-    "http://127.0.0.1:5173",
-    "http://localhost:3000",
     "https://mibeko.fr",
     "https://www.mibeko.fr",
     "https://app.mibeko.fr",
     "https://www.app.mibeko.fr",
 ]
+
+# Les origines de développement (Vite, etc.) ne sont servies qu'en dehors de
+# la production : inutile d'autoriser localhost sur python.mibeko.fr (S10).
+if not IS_PRODUCTION:
+    ALLOWED_ORIGINS += [
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "http://127.0.0.1:5173",
+        "http://localhost:3000",
+    ]
 
 app.add_middleware(
     CORSMiddleware,
@@ -79,16 +88,16 @@ app.add_middleware(
 # middleware CORS : la réponse 500 partait donc sans en-tête Access-Control-
 # Allow-Origin, et le navigateur l'affichait comme une « erreur CORS » trompeuse
 # masquant le vrai 500. On logge ici la traceback (diagnostic) et on ré-attache
-# l'en-tête CORS pour que le front reçoive le vrai message d'erreur.
+# l'en-tête CORS. La réponse reste générique : les détails internes (str(exc),
+# traceback) ne sortent jamais vers le client (audit P0.8/S3), ils vont
+# uniquement dans les logs serveur.
 # ---------------------------------------------------------------------------
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception):
-    import traceback
-    error_details = traceback.format_exc()
-    print(f"ERREUR 500 non gérée sur {request.method} {request.url.path}:\n{error_details}")
+    logger.error("ERREUR 500 non gérée sur %s %s", request.method, request.url.path, exc_info=exc)
     response = JSONResponse(
         status_code=500,
-        content={"message": "Erreur interne du serveur.", "error": str(exc)},
+        content={"message": "Erreur interne du serveur."},
     )
     origin = request.headers.get("origin")
     if origin in ALLOWED_ORIGINS:
@@ -209,12 +218,22 @@ def build_media_record(
 
 
 def parse_optional_date(raw_value: Optional[str]) -> Optional[datetime.date]:
-    """Convertit une chaine ISO simple en date Python, sinon retourne None."""
+    """Convertit une chaine ISO simple en date Python, sinon retourne None.
+
+    Une valeur mal formée renvoie un 422 explicite au lieu de laisser la
+    ValueError remonter en 500 (audit S13).
+    """
 
     if not raw_value:
         return None
 
-    return datetime.date.fromisoformat(raw_value)
+    try:
+        return datetime.date.fromisoformat(raw_value.strip())
+    except ValueError:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Date invalide « {raw_value} » : format attendu YYYY-MM-DD.",
+        )
 
 
 def resolve_document_type_code(
