@@ -19,7 +19,7 @@ Le corpus juridique suit la chaîne : **PDF source → JSON MinerU → Markdown 
    - `cloud` (défaut) : API SaaS MinerU (`https://mineru.net/api/v4`), asynchrone (soumission puis récupération du résultat) ;
    - `local` : serveur `mineru-api` auto-hébergé (harnais de dev `../minerU-docker`), synchrone, langue OCR `fr`.
    Les deux backends exposent la même interface (`submit_pdf`, `get_results`, `download_result`).
-3. **Parsing structurel → PostgreSQL** — `POST /api/v1/documents/{doc_id}/parse` déclenche `LegalDocumentParser` (`src/extractor/parser.py`, PyMuPDF + spaCy) qui reconstruit la hiérarchie (nœuds structurels, articles, versions) depuis le `.md` ou le `.json`, puis l'insère en base. Le parsing détecte aussi les anomalies de numérotation d'articles (trous, doublons) et génère des `CurationFlag`. Un document sans structure détectable (circulaire, discours, proclamation…) bascule sur un article « Unique » contenant le texte intégral, afin de rester citable et publiable.
+3. **Parsing structurel → PostgreSQL** — `POST /api/v1/documents/{doc_id}/parse` déclenche `LegalDocumentParser` (`src/extractor/parser.py`) qui reconstruit la hiérarchie (nœuds structurels, articles, versions) depuis le `.md` ou le `.json`, puis l'insère en base. Le parsing détecte aussi les anomalies de numérotation d'articles (trous, doublons) et génère des `CurationFlag`. Un document sans structure détectable (circulaire, discours, proclamation…) bascule sur un article « Unique » contenant le texte intégral, afin de rester citable et publiable.
 
 Après parsing, le document passe en `curation_status = review` : un éditeur doit contrôler le résultat côté Laravel avant publication. Seuls les `CurationFlag` de sévérité `blocking` empêchent la publication.
 
