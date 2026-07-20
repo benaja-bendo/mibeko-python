@@ -7,8 +7,9 @@ from pathlib import Path
 
 import pytest
 
+import src.structuration.structurer as structurer
 from src.acquisition.manifest import ManifestEntry
-from src.db.models import CurationFlag
+from src.db.models import CurationFlag, MediaFile
 from src.structuration.structurer import structure_document
 
 CLEAN_MD = "ARTICLE PREMIER : La presente loi regit les relations de travail."
@@ -77,6 +78,23 @@ class NatureAbsenteMistralClient:
 class ValidMetadataMistralClient:
     async def extract_metadata(self, texte, instructions):
         return {"nature": "Loi", "numero": "12-2026", "date_signature": None, "date_publication": None, "autorite": None}
+
+
+class FakeMinioService:
+    """Double minimal de minio_service : mémorise les appels, aucun réseau réel.
+
+    `fail_on` simule un échec d'upload pour un content_type donné (ex. "application/pdf").
+    """
+
+    def __init__(self, fail_on: set | None = None):
+        self.fail_on = fail_on or set()
+        self.uploads: list[tuple[str, str, str]] = []
+
+    def upload_file(self, object_name, file_path, content_type="application/pdf"):
+        self.uploads.append((object_name, file_path, content_type))
+        if content_type in self.fail_on:
+            return None
+        return f"s3://fake-bucket/{object_name}"
 
 
 class CapturingMistralClient(ValidMetadataMistralClient):
@@ -249,6 +267,55 @@ def test_markdown_absent_des_deux_emplacements_mentionne_les_deux_chemins(tmp_pa
     assert "markdown introuvable" in result["motif"]
     assert str(data_dir / "pipeline" / "md" / "sgg-jo" / "fantome.md") in result["motif"]
     assert str(data_dir / "pipeline" / "md" / "fantome.md") in result["motif"]
+
+
+def test_structuration_reussie_televerse_pdf_markdown_json_vers_minio(tmp_path: Path, monkeypatch):
+    """Régression : structure_document doit téléverser PDF+markdown+JSON vers
+    MinIO comme le flux d'upload manuel (src/api/main.py), pas seulement
+    enregistrer des chemins locaux à la machine d'ingestion — sinon
+    PdfProxyController (Laravel) ne retrouve aucun PDF source."""
+    data_dir = tmp_path / "data"
+    entry = _seed_entry(data_dir, "sgg-jo/congo-jo-2026-27")
+    json_path = data_dir / "pipeline" / "json" / f"{entry.id}.json"
+    json_path.parent.mkdir(parents=True, exist_ok=True)
+    json_path.write_text("{}", encoding="utf-8")
+    db = FakeSession()
+    fake_minio = FakeMinioService()
+
+    monkeypatch.setattr(structurer, "minio_service", fake_minio)
+    monkeypatch.setattr(structurer, "ingest_hierarchy", lambda *args, **kwargs: None)
+
+    result = structure_document(db, data_dir, entry, mistral_client=ValidMetadataMistralClient())
+
+    assert result["statut"] == "structure"
+    assert db.committed is True
+
+    media_by_category = {
+        obj.file_category: obj for obj in db.added if isinstance(obj, MediaFile)
+    }
+    assert set(media_by_category) == {"SOURCE_PDF", "EXTRACTION_MARKDOWN", "EXTRACTION_JSON"}
+    assert media_by_category["SOURCE_PDF"].mime_type == "application/pdf"
+    assert media_by_category["SOURCE_PDF"].file_path.startswith("s3://")
+    assert media_by_category["EXTRACTION_MARKDOWN"].mime_type == "text/markdown"
+    assert media_by_category["EXTRACTION_JSON"].mime_type == "application/json"
+    assert len(fake_minio.uploads) == 3
+
+
+def test_echec_televersement_minio_du_pdf_annule_la_creation_du_document(tmp_path: Path, monkeypatch):
+    data_dir = tmp_path / "data"
+    entry = _seed_entry(data_dir, "sgg-jo/congo-jo-2026-28")
+    db = FakeSession()
+    fake_minio = FakeMinioService(fail_on={"application/pdf"})
+
+    monkeypatch.setattr(structurer, "minio_service", fake_minio)
+    monkeypatch.setattr(structurer, "ingest_hierarchy", lambda *args, **kwargs: None)
+
+    result = structure_document(db, data_dir, entry, mistral_client=ValidMetadataMistralClient())
+
+    assert result["statut"] == "erreur"
+    assert "MinIO" in result["motif"]
+    assert db.rolled_back is True
+    assert db.committed is False
 
 
 def test_preambule_trop_court_envoie_le_debut_du_markdown_sans_marqueurs_de_page(tmp_path: Path):

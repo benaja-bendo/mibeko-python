@@ -25,9 +25,18 @@ from typing import Any, Dict, Optional
 from sqlalchemy.orm import Session
 
 from src.acquisition.manifest import ManifestEntry, sha256_file
-from src.api.main import build_document_key, ingest_hierarchy, merge_metadata, resolve_legal_scope, sanitize_path_component
-from src.db.models import CurationFlag, ExtractionRun, LegalDocument, MediaFile
+from src.api.main import (
+    build_document_key,
+    build_media_record,
+    build_object_key,
+    ingest_hierarchy,
+    merge_metadata,
+    resolve_legal_scope,
+    sanitize_path_component,
+)
+from src.db.models import CurationFlag, ExtractionRun, LegalDocument
 from src.extractor.parser import LegalDocumentParser
+from src.services.minio_service import minio_service
 from src.services.mistral_service import mistral_service as default_mistral_client
 from src.structuration.schema import validate_texte_juridique
 
@@ -235,25 +244,62 @@ def structure_document(
         db.add(document)
         db.flush()
 
-        markdown_media = MediaFile(
+        # Les artefacts doivent vivre dans MinIO comme pour le flux d'upload
+        # manuel (src/api/main.py) : sans ça, PdfProxyController (Laravel) ne
+        # retrouve aucun PDF source, et media_files pointe vers des chemins
+        # locaux à la machine d'ingestion, illisibles depuis MinIO.
+        pdf_local_path = data_dir / entry.fichier
+
+        pdf_object_key = build_object_key(document_role, stock_code, document.id, "source/pdf", pdf_local_path.name)
+        pdf_s3_path = minio_service.upload_file(pdf_object_key, str(pdf_local_path), "application/pdf")
+        if not pdf_s3_path:
+            raise RuntimeError("échec de stockage MinIO pour le PDF source")
+        pdf_media = build_media_record(
             document_id=document.id,
-            file_path=str(md_path),
-            object_key=str(md_path),
+            object_key=pdf_object_key,
+            file_path=pdf_s3_path,
+            original_filename=pdf_local_path.name,
+            mime_type="application/pdf",
+            file_category="SOURCE_PDF",
+            payload_size=entry.size_bytes,
+            checksum_sha256=entry.sha256,
+            description="PDF source acquis par l'usine à textes",
+        )
+        db.add(pdf_media)
+
+        md_object_key = build_object_key(document_role, stock_code, document.id, "extractions/markdown", md_path.name)
+        md_s3_path = minio_service.upload_file(md_object_key, str(md_path), "text/markdown")
+        if not md_s3_path:
+            raise RuntimeError("échec de stockage MinIO pour le markdown")
+        markdown_media = build_media_record(
+            document_id=document.id,
+            object_key=md_object_key,
+            file_path=md_s3_path,
+            original_filename=md_path.name,
+            mime_type="text/markdown",
             file_category="EXTRACTION_MARKDOWN",
+            payload_size=md_path.stat().st_size,
             checksum_sha256=sha256_file(md_path),
-            file_size=md_path.stat().st_size,
+            description="Extraction markdown (usine à textes)",
         )
         db.add(markdown_media)
 
         json_media = None
         if json_path is not None:
-            json_media = MediaFile(
+            json_object_key = build_object_key(document_role, stock_code, document.id, "extractions/json", json_path.name)
+            json_s3_path = minio_service.upload_file(json_object_key, str(json_path), "application/json")
+            if not json_s3_path:
+                raise RuntimeError("échec de stockage MinIO pour le JSON")
+            json_media = build_media_record(
                 document_id=document.id,
-                file_path=str(json_path),
-                object_key=str(json_path),
+                object_key=json_object_key,
+                file_path=json_s3_path,
+                original_filename=json_path.name,
+                mime_type="application/json",
                 file_category="EXTRACTION_JSON",
+                payload_size=json_path.stat().st_size,
                 checksum_sha256=sha256_file(json_path),
-                file_size=json_path.stat().st_size,
+                description="Extraction JSON MinerU (usine à textes)",
             )
             db.add(json_media)
         db.flush()
