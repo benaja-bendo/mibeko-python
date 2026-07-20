@@ -80,6 +80,20 @@ class ValidMetadataMistralClient:
         return {"nature": "Loi", "numero": "12-2026", "date_signature": None, "date_publication": None, "autorite": None}
 
 
+class MultiAutoriteMistralClient:
+    """Simule un acte cosigné : Mistral renvoie `autorite` en liste (cas réel
+    observé sur ~23% des JO du dry-run complet, ex. arrêtés interministériels)."""
+
+    async def extract_metadata(self, texte, instructions):
+        return {
+            "nature": "Arrêté",
+            "numero": "1234",
+            "date_signature": None,
+            "date_publication": None,
+            "autorite": ["La ministre des transports", "Le ministre du budget"],
+        }
+
+
 class FakeMinioService:
     """Double minimal de minio_service : mémorise les appels, aucun réseau réel.
 
@@ -267,6 +281,20 @@ def test_markdown_absent_des_deux_emplacements_mentionne_les_deux_chemins(tmp_pa
     assert "markdown introuvable" in result["motif"]
     assert str(data_dir / "pipeline" / "md" / "sgg-jo" / "fantome.md") in result["motif"]
     assert str(data_dir / "pipeline" / "md" / "fantome.md") in result["motif"]
+
+
+def test_autorite_en_liste_est_jointe_en_chaine_unique(tmp_path: Path):
+    """Régression dry-run complet (66 JO) : 15/17 échecs venaient d'un acte
+    cosigné où Mistral renvoie `autorite` en liste au lieu d'une chaîne —
+    la validation du schéma échouait alors qu'aucune information n'était
+    réellement en cause."""
+    data_dir = tmp_path / "data"
+    entry = _seed_entry(data_dir, "sgg-jo/congo-jo-2026-29")
+    db = FakeSession()
+
+    result = structure_document(db, data_dir, entry, mistral_client=MultiAutoriteMistralClient(), dry_run=True)
+
+    assert result["statut"] == "structure"
 
 
 def test_structuration_reussie_televerse_pdf_markdown_json_vers_minio(tmp_path: Path, monkeypatch):

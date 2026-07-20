@@ -164,6 +164,13 @@ def structure_document(
             logger.warning("structuration %s : %s (tentative %d/2)", entry.id, last_error, attempt + 1)
             continue
 
+        if isinstance(llm_metadata, dict) and isinstance(llm_metadata.get("autorite"), list):
+            # Acte cosigné par plusieurs autorités (ex. deux ministres) :
+            # Mistral renvoie alors une liste au lieu d'une chaîne unique.
+            # Jointure sans perte d'information, pas une invention.
+            autorites = [str(a).strip() for a in llm_metadata["autorite"] if str(a).strip()]
+            llm_metadata["autorite"] = "; ".join(autorites) or None
+
         try:
             nature = llm_metadata.get("nature") or NATURE_PAR_TYPE_SOURCE.get(entry.type_source)
             nature_depuis_manifeste = llm_metadata.get("nature") is None and nature is not None
