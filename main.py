@@ -338,5 +338,92 @@ def structure_batch(source_key, limit, dry_run, force, include_hors_perimetre):
         db.close()
 
 
+@cli.command("prod-preflight")
+def prod_preflight():
+    """Contrôle une session de diagnostic sur la PROD : prouve la lecture seule puis l'état des lieux."""
+    from src.db.prod_readonly import (
+        CibleProdAmbigue,
+        ConfigurationProdManquante,
+        LectureSeuleNonProuvee,
+        SQLSTATE_LECTURE_SEULE,
+        assert_read_only,
+        charger_cible,
+        creer_engine,
+        etat_des_lieux,
+    )
+
+    click.secho("\n  ███  PRODUCTION  ███\n", fg="red", bold=True)
+
+    try:
+        cible = charger_cible()
+    except ConfigurationProdManquante as exc:
+        click.secho(f"Configuration incomplète : {exc}", fg="red")
+        raise SystemExit(1)
+    except CibleProdAmbigue as exc:
+        click.secho(f"Cible ambiguë : {exc}", fg="red")
+        raise SystemExit(1)
+
+    # Le mot de passe n'est jamais affiché, et le DSN complet jamais journalisé.
+    click.echo(f"  Cible : {cible.resume()}")
+    click.echo("  Mode attendu : lecture seule\n")
+
+    engine = creer_engine(cible)
+
+    try:
+        sqlstate = assert_read_only(engine)
+    except LectureSeuleNonProuvee as exc:
+        click.secho(f"Lecture seule NON prouvée : {exc}", fg="red")
+        raise SystemExit(1)
+    except Exception as exc:
+        click.secho(f"Connexion impossible : {exc}", fg="red")
+        click.secho(
+            f"Le tunnel SSH est-il ouvert ? Vérifier : lsof -nP -iTCP:{cible.port} -sTCP:LISTEN",
+            fg="yellow",
+        )
+        raise SystemExit(1)
+
+    if sqlstate == SQLSTATE_LECTURE_SEULE:
+        click.secho("Lecture seule prouvée (SQLSTATE 25006).", fg="green")
+    else:
+        click.secho(f"Écriture refusée par privilège insuffisant (SQLSTATE {sqlstate}).", fg="green")
+        click.secho(
+            "La session n'est pas marquée en lecture seule, mais le rôle ne peut pas écrire. "
+            "Recommandé : ALTER ROLE ... SET default_transaction_read_only = on.",
+            fg="yellow",
+        )
+
+    etat = etat_des_lieux(engine)
+
+    click.secho(f"\nPostgreSQL : {etat['version_postgres']}", fg="cyan")
+    for nom, presente in etat["extensions"].items():
+        click.secho(f"    {nom:<12} {'oui' if presente else 'NON'}", fg="green" if presente else "red")
+
+    click.secho("\nDocuments par statut de curation (vivants / soft-deleted) :", fg="cyan")
+    for statut, vivants, supprimes in etat["documents_par_statut"]:
+        click.echo(f"    {statut or '(nul)':<12} {vivants:>6} / {supprimes}")
+
+    click.secho("\nAnomalies non résolues par gravité :", fg="cyan")
+    if etat["anomalies_non_resolues"]:
+        for severity, total in etat["anomalies_non_resolues"]:
+            click.echo(f"    {severity or '(nul)':<12} {total}")
+    else:
+        click.echo("    (aucune)")
+
+    click.secho("\nCompteurs :", fg="cyan")
+    click.echo(f"    Articles vivants          : {etat['articles_vivants']}")
+    click.echo(f"    Articles soft-deleted     : {etat['articles_supprimes']}")
+    click.echo(f"    Versions d'articles       : {etat['versions_articles']}")
+    click.echo(f"    Versions sans embedding   : {etat['versions_sans_embedding']}")
+    click.echo(f"    Journaux officiels        : {etat['journaux_officiels']}")
+    click.echo(f"    Fichiers média            : {etat['fichiers_media']}")
+
+    click.secho("\nRègles de la session :", fg="yellow")
+    click.echo("    · Lecture seule par défaut : le diagnostic ne modifie jamais la production.")
+    click.echo("    · Toute écriture exige une autorisation humaine explicite, opération par opération.")
+    click.echo("    · Une autorisation ne vaut que pour l'opération nommée, jamais pour la suivante.")
+    click.echo("    · Toute écriture est précédée d'un dump frais et livrée sous forme rejouable.")
+    click.echo("    · La publication passe par l'API Laravel, jamais par un UPDATE de curation_status.")
+
+
 if __name__ == "__main__":
     cli()

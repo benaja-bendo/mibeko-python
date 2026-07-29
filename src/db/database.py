@@ -42,6 +42,25 @@ DB_PASSWORD = _credential_env("DB_PASSWORD", "root")
 
 DATABASE_URL = f"postgresql://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_DATABASE}"
 
+# Le DSN ne contient qu'un host:port : rien dans le code ne permet de savoir si l'on
+# parle au développement ou à la production. On journalise donc systématiquement la
+# cible (jamais le mot de passe), et on hausse le ton dès qu'elle n'est pas la cible
+# de développement attendue — typiquement une production atteinte par tunnel SSH.
+_CIBLE_DEV = ("127.0.0.1", "5433")
+
+if (DB_HOST, DB_PORT) == _CIBLE_DEV:
+    logger.info("Base cible : %s@%s:%s/%s (développement).", DB_USERNAME, DB_HOST, DB_PORT, DB_DATABASE)
+else:
+    logger.warning(
+        "Base cible NON standard : %s@%s:%s/%s — s'il s'agit de la PRODUCTION "
+        "(tunnel SSH), rappel : la ré-ingestion purge physiquement les articles et "
+        "DELETE /documents/{id} supprime aussi les objets MinIO, sans retour possible.",
+        DB_USERNAME,
+        DB_HOST,
+        DB_PORT,
+        DB_DATABASE,
+    )
+
 engine = create_engine(DATABASE_URL, echo=False)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
