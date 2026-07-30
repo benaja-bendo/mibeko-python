@@ -8,8 +8,8 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 def data_dir() -> Path:
-    """Dossier data/ du monorepo (surchageable via MIBEKO_DATA_DIR)."""
-    return Path(os.getenv("MIBEKO_DATA_DIR", REPO_ROOT.parent / "data")).resolve()
+    """Dossier data/ (mibeko-python/data, surchargeable via MIBEKO_DATA_DIR)."""
+    return Path(os.getenv("MIBEKO_DATA_DIR", REPO_ROOT / "data")).resolve()
 
 
 def sources_dir() -> Path:

@@ -192,7 +192,7 @@ def split_compilation_md(md_path, boundaries_path, outdir):
 
 
 @cli.command("backfill-manifest")
-@click.option('--data-dir', 'data_dir_opt', default=None, help='Dossier data/ (défaut : ../data ou MIBEKO_DATA_DIR)')
+@click.option('--data-dir', 'data_dir_opt', default=None, help='Dossier data/ (défaut : mibeko-python/data ou MIBEKO_DATA_DIR)')
 def backfill_manifest(data_dir_opt):
     """Rétro-remplit les manifestes de provenance depuis data/sources/ existant."""
     from pathlib import Path

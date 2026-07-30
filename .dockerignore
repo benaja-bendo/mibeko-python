@@ -7,4 +7,5 @@ venv
 .git
 .github
 storage/tmp
+data
 

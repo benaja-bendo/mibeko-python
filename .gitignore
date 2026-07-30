@@ -124,7 +124,14 @@ env/
 storage/documents/
 storage/tmp/
 
-# Data directory
-data/*
-!data/.keep
+# Data directory (data/) : corpus juridique local.
+# Liste blanche plutôt que liste noire : tout est ignoré par défaut (PDF, MinerU,
+# métriques — lourd et régénérable) SAUF la provenance et le carnet, qui sont la
+# seule trace de traçabilité du corpus et doivent être versionnés.
+data/**
+!data/**/
+!data/manifests/*.jsonl
+!data/corpus/corpus-v1.yaml
+!data/**/README.md
+!data/**/.keep
 

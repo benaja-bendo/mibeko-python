@@ -1,0 +1,136 @@
+# Carnet de commandes de l'usine à textes — v1
+#
+# L'usine ne traite QUE ce qui figure ici (règle mission). Structure et
+# proposition initiale rédigées en Phase 1 ; le CONTENU est validé et complété
+# par Benji. Les champs `<à compléter>` bloquent l'acquisition du texte
+# concerné (ignoré avec un message), pas celle du reste.
+#
+# Commandes :
+#   python main.py acquire --dry-run          # découverte sans téléchargement
+#   python main.py acquire [--source <id>]    # acquisition idempotente
+#   python main.py ohada-recon                # rapport d'URLs OHADA à valider
+
+version: 1
+
+regles:
+  sources_autorisees: [sgg.cg, ohada.org]
+  interdits: >
+    Consolidations d'éditeurs privés (ex. Droit-Afrique) : point de comparaison
+    manuel uniquement, jamais une source d'acquisition.
+
+# ---------------------------------------------------------------------------
+# Séries : acquisition par lot.
+# ---------------------------------------------------------------------------
+series:
+  - id: jo-recents
+    type: journal_officiel
+    description: >
+      Journaux officiels récents (traçabilité RAG : citations, n°, dates) +
+      éditions spéciales. Périmètre MVP conseillé par docs/data/corpus-mvp-sources.md.
+    annees: [2024, 2025, 2026]
+    # Pages d'index à scanner (liens /JO/{AAAA}/….pdf). La page des éditions
+    # spéciales est connue ; ajouter ici la page d'archives des numéros
+    # ordinaires quand elle sera identifiée au premier run.
+    index_pages:
+      - https://www.sgg.cg/1/152/fr/journal-officiel/journaux-speciaux.html
+    # Mode par défaut (recon du 04/07/2026) : autoindex Apache ouvert sur
+    # /JO/{annee}/ — liste tous les PDF réellement présents, y compris les
+    # variantes à suffixe imprévisible (-2, -13-5, -interactif…). Ne jamais
+    # reconstruire un nom de fichier à partir du seul numéro.
+    autoindex:
+      actif: true
+    # Filet, utilisé seulement si l'autoindex est fermé pour une année donnée :
+    # sonde congo-jo-{annee}-{n}.pdf (HEAD, poli), n croissant, arrêt après
+    # 5 absences consécutives.
+    enumeration:
+      actif: true
+      max_numero: 60
+      stop_apres_absents: 5
+
+# ---------------------------------------------------------------------------
+# Textes unitaires : URL explicite obligatoire (validée humainement).
+# ---------------------------------------------------------------------------
+textes:
+  - id: constitution-2015
+    titre: Constitution du 25 octobre 2015 (et révision 2022)
+    categorie: constitutionnel
+    role: STOCK
+    priorite: P0
+    manifeste: sgg-autres
+    dest: sgg/constitution
+    type_source: constitution
+    source:
+      # Page SGG : https://www.sgg.cg/fr/journal-officiel/constitution.html
+      # (le PDF est déjà dans data/sources/sgg/constitution/ — entrée rétro-remplie ;
+      # compléter l'URL exacte du PDF pour la provenance définitive)
+      url: "https://www.sgg.cg/fr/journal-officiel/constitution.html"
+
+  # --- Codes nationaux prioritaires (travail, famille, pénal, foncier) -----
+  # Les PDF sont pour la plupart déjà dans data/sources/sgg/codes/ (rétro-
+  # remplis au manifeste). Compléter l'URL sgg.cg de chacun (via
+  # https://www.sgg.cg/fr/recherche.html) pour boucler la provenance.
+  - id: code-travail
+    titre: Code du travail (loi n° 45-75 et textes modificatifs)
+    categorie: travail
+    role: STOCK
+    priorite: P0
+    manifeste: sgg-codes
+    dest: sgg/codes
+    type_source: code
+    source: {url: "<à compléter>"}
+
+  - id: code-famille
+    titre: Code de la famille (loi n° 073/84)
+    categorie: famille
+    role: STOCK
+    priorite: P0
+    manifeste: sgg-codes
+    dest: sgg/codes
+    type_source: code
+    source: {url: "<à compléter>"}
+
+  - id: code-penal
+    titre: Code pénal
+    categorie: penal
+    role: STOCK
+    priorite: P1
+    manifeste: sgg-codes
+    dest: sgg/codes
+    type_source: code
+    source: {url: "<à compléter>"}
+
+  - id: code-procedure-penale
+    titre: Code de procédure pénale
+    categorie: penal
+    role: STOCK
+    priorite: P1
+    manifeste: sgg-codes
+    dest: sgg/codes
+    type_source: code
+    source: {url: "<à compléter>"}
+
+  - id: regime-foncier
+    titre: Textes fonciers / domaine (à préciser)
+    categorie: foncier
+    role: STOCK
+    priorite: P2
+    manifeste: sgg-codes
+    dest: sgg/codes
+    type_source: code
+    source: {url: "<à compléter>"}
+
+# ---------------------------------------------------------------------------
+# OHADA : en attente du rapport de reconnaissance (python main.py ohada-recon).
+# Reporter ici les URLs validées des Actes uniformes en vigueur (commercial
+# général, sociétés & GIE, sûretés, recouvrement & exécution, procédures
+# collectives, comptable, arbitrage, médiation, transport).
+# ---------------------------------------------------------------------------
+# textes:
+#   - id: au-droit-commercial-general
+#     …
+
+# ---------------------------------------------------------------------------
+# Hors carnet v1 (décision Phase 1) : les 297 traités internationaux/CEMAC
+# déjà téléchargés restent au manifeste (provenance) mais ne sont pas dans le
+# périmètre d'ingestion v1.
+# ---------------------------------------------------------------------------
