@@ -1,4 +1,6 @@
 import os
+from datetime import datetime
+
 import click
 import uvicorn
 
@@ -423,6 +425,133 @@ def prod_preflight():
     click.echo("    · Une autorisation ne vaut que pour l'opération nommée, jamais pour la suivante.")
     click.echo("    · Toute écriture est précédée d'un dump frais et livrée sous forme rejouable.")
     click.echo("    · La publication passe par l'API Laravel, jamais par un UPDATE de curation_status.")
+
+
+@cli.command("push-corpus")
+@click.option("--execute", "executer", is_flag=True,
+              help="Écrit réellement dans la cible (défaut : dry-run, aucune écriture).")
+@click.option("--limit", "limite", type=int, default=None,
+              help="Ne pousser que les N premiers documents du plan (lot pilote).")
+@click.option("--rapport", "rapport_chemin", default=None,
+              help="Chemin du rapport JSON (défaut : data/pipeline/meta/push-<horodatage>.json).")
+def push_corpus(executer, limite, rapport_chemin):
+    """Pousse le corpus validé du dev vers la PROD, de façon additive (staging only).
+
+    Dry-run par défaut : le plan est calculé via le profil de lecture seule
+    (PROD_RO_*), aucune écriture. Avec --execute, les identifiants d'écriture
+    PROD_RW_DB_* et PROD_RW_MINIO_* doivent être exportés dans le shell — jamais
+    dans un fichier — et une confirmation interactive est exigée.
+    """
+    from src.db.prod_readonly import (
+        SQLSTATE_LECTURE_SEULE,
+        assert_read_only,
+        charger_cible,
+        creer_engine,
+    )
+    from src.promotion.push_corpus import (
+        CibleProdAmbigue,
+        ConfigurationProdManquante,
+        charger_cible_ecriture,
+        charger_documents_source,
+        charger_etat_cible,
+        construire_plan,
+        creer_client_minio_ecriture,
+        creer_client_minio_source,
+        creer_engine_source,
+        executer_push,
+    )
+
+    click.secho("\n  ███  PUSH CORPUS → PRODUCTION  ███\n", fg="red", bold=True)
+
+    try:
+        engine_source = creer_engine_source()
+
+        # Le plan se calcule TOUJOURS sur le profil de lecture seule : même en
+        # mode --execute, on prouve d'abord que ce profil ne peut pas écrire —
+        # préflight intégré, pas optionnel.
+        cible_ro = charger_cible()
+        engine_ro = creer_engine(cible_ro)
+        sqlstate = assert_read_only(engine_ro)
+    except (ConfigurationProdManquante, CibleProdAmbigue) as exc:
+        click.secho(f"Refus : {exc}", fg="red")
+        raise SystemExit(1)
+    if sqlstate == SQLSTATE_LECTURE_SEULE:
+        click.secho("Préflight : lecture seule prouvée (SQLSTATE 25006).", fg="green")
+
+    documents, journaux = charger_documents_source(engine_source)
+    plan = construire_plan(documents, journaux, charger_etat_cible(engine_ro))
+
+    click.secho(f"\n  Source : {len(documents)} documents vivants", fg="cyan")
+    click.secho(f"  À pousser : {len(plan.a_pousser)}"
+                + (f" (limité à {limite})" if limite else ""), fg="cyan")
+    click.secho(f"  Écartés : {len(plan.ecartes)}", fg="cyan")
+    for doc, motif in plan.ecartes:
+        click.echo(f"    − {doc.libelle()} : {motif}")
+    if plan.journaux_a_creer:
+        click.secho(f"  Journaux officiels à créer : {len(plan.journaux_a_creer)}", fg="cyan")
+    if plan.remap_journaux:
+        click.secho(f"  Journaux rattachés à une fiche existante : {len(plan.remap_journaux)}", fg="cyan")
+
+    if rapport_chemin is None:
+        meta_dir = os.path.join(os.getenv("MIBEKO_DATA_DIR", "data/"), "pipeline", "meta")
+        os.makedirs(meta_dir, exist_ok=True)
+        horodatage = datetime.now().strftime("%Y%m%d-%H%M%S")
+        rapport_chemin = os.path.join(meta_dir, f"push-{horodatage}.json")
+
+    if not executer:
+        rapport = executer_push(
+            engine_source, engine_ro, plan, dry_run=True, limite=limite,
+            rapport_chemin=rapport_chemin,
+        )
+        total_lignes = sum(sum(e["tables"].values()) for e in rapport["documents"])
+        total_objets = sum(len(e["objets"]) for e in rapport["documents"])
+        click.secho(
+            f"\nDRY-RUN — aucune écriture. {len(rapport['documents'])} documents, "
+            f"{total_lignes} lignes et {total_objets} objets MinIO seraient poussés.",
+            fg="yellow",
+        )
+        click.echo(f"Rapport : {rapport_chemin}")
+        click.secho("\nPour exécuter : exporter PROD_RW_DB_* et PROD_RW_MINIO_* dans le "
+                    "shell (jamais dans un fichier), prendre un dump frais (runbook §4), "
+                    "puis relancer avec --execute.", fg="yellow")
+        return
+
+    # ------------------------------ Mode écriture ------------------------------
+    try:
+        engine_rw = charger_cible_ecriture()
+        minio_source = creer_client_minio_source()
+        minio_cible = creer_client_minio_ecriture()
+    except (ConfigurationProdManquante, CibleProdAmbigue) as exc:
+        click.secho(f"Refus : {exc}", fg="red")
+        raise SystemExit(1)
+
+    # La cible RW doit être LA MÊME base que celle inspectée en RO : on compare
+    # un invariant lisible plutôt que de faire confiance aux variables.
+    from sqlalchemy import text
+    with engine_rw.connect() as cnx_rw, engine_ro.connect() as cnx_ro:
+        compte = "select count(*) from legal_documents"
+        if cnx_rw.execute(text(compte)).scalar() != cnx_ro.execute(text(compte)).scalar():
+            click.secho("Refus : la cible RW ne répond pas comme la cible RO — "
+                        "les deux profils ne visent pas la même base.", fg="red")
+            raise SystemExit(1)
+
+    click.secho(f"\n  {len(plan.a_pousser[:limite] if limite else plan.a_pousser)} "
+                "documents vont être ÉCRITS en production (staging, draft).", fg="red")
+    saisie = click.prompt("Taper PRODUCTION pour confirmer", default="", show_default=False)
+    if saisie != "PRODUCTION":
+        click.secho("Annulé.", fg="yellow")
+        raise SystemExit(1)
+
+    rapport = executer_push(
+        engine_source, engine_rw, plan,
+        client_minio_source=minio_source, client_minio_cible=minio_cible,
+        dry_run=False, limite=limite, rapport_chemin=rapport_chemin,
+    )
+    total_lignes = sum(sum(e["tables"].values()) for e in rapport["documents"])
+    click.secho(f"\nPoussé : {len(rapport['documents'])} documents, {total_lignes} lignes.",
+                fg="green")
+    click.echo(f"Rapport : {rapport_chemin}")
+    click.secho("Vérifier ensuite avec prod-preflight, puis publier via l'éditeur.", fg="yellow")
 
 
 if __name__ == "__main__":
