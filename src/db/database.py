@@ -44,17 +44,25 @@ DATABASE_URL = f"postgresql://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{D
 
 # Le DSN ne contient qu'un host:port : rien dans le code ne permet de savoir si l'on
 # parle au développement ou à la production. On journalise donc systématiquement la
-# cible (jamais le mot de passe), et on hausse le ton dès qu'elle n'est pas la cible
-# de développement attendue — typiquement une production atteinte par tunnel SSH.
+# cible (jamais le mot de passe), et on hausse le ton UNIQUEMENT dans le cas
+# accidentel : un environnement local dont la cible n'est pas le Postgres de dev —
+# typiquement une production atteinte par tunnel SSH. Sur le VPS (APP_ENV absent →
+# production, même règle que src/api/config.py), la cible interne postgres:5432 est
+# nominale : une alerte à chaque démarrage serait un faux positif permanent, qui
+# apprendrait à ignorer les vraies.
 _CIBLE_DEV = ("127.0.0.1", "5433")
+_EN_PRODUCTION = os.getenv("APP_ENV", "production").strip().lower() in ("production", "prod")
 
 if (DB_HOST, DB_PORT) == _CIBLE_DEV:
     logger.info("Base cible : %s@%s:%s/%s (développement).", DB_USERNAME, DB_HOST, DB_PORT, DB_DATABASE)
+elif _EN_PRODUCTION:
+    logger.info("Base cible : %s@%s:%s/%s (production).", DB_USERNAME, DB_HOST, DB_PORT, DB_DATABASE)
 else:
     logger.warning(
-        "Base cible NON standard : %s@%s:%s/%s — s'il s'agit de la PRODUCTION "
-        "(tunnel SSH), rappel : la ré-ingestion purge physiquement les articles et "
-        "DELETE /documents/{id} supprime aussi les objets MinIO, sans retour possible.",
+        "Base cible NON standard pour un environnement local : %s@%s:%s/%s — s'il "
+        "s'agit de la PRODUCTION (tunnel SSH), rappel : la ré-ingestion purge "
+        "physiquement les articles et DELETE /documents/{id} supprime aussi les "
+        "objets MinIO, sans retour possible.",
         DB_USERNAME,
         DB_HOST,
         DB_PORT,
