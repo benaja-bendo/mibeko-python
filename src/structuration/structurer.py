@@ -40,6 +40,7 @@ from src.services.minio_service import minio_service
 from src.services.mistral_service import mistral_service as default_mistral_client
 from src.structuration.journals import ensure_official_journal, titre_jo_depuis_manifeste
 from src.structuration.schema import validate_texte_juridique
+from src.structuration.typage import deduire_type_code
 
 logger = logging.getLogger("mibeko.structuration")
 
@@ -282,6 +283,9 @@ def structure_document(
             date_signature=date_signature,
             date_publication=date_publication,
             legal_scope=resolve_legal_scope(titre_officiel),
+            # Sans type_code, la recherche publique (INNER JOIN document_types)
+            # ignore le document même publié : on type toujours, TEXTE en filet.
+            type_code=deduire_type_code(nature, titre_officiel),
             curation_status="draft",
             extraction_status="completed",
         )

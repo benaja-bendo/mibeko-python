@@ -577,5 +577,81 @@ def push_corpus(executer, limite, rapport_chemin):
     click.secho("Vérifier ensuite avec prod-preflight, puis publier via l'éditeur.", fg="yellow")
 
 
+@cli.command("backfill-type-codes")
+@click.option("--target", "cible_nom", type=click.Choice(["dev", "prod"]), default="dev",
+              help="Base à corriger : dev (défaut) ou prod (PROD_RW_DB_* exportés en shell).")
+@click.option("--execute", "executer", is_flag=True,
+              help="Écrit réellement (défaut : dry-run, aucune écriture).")
+def backfill_type_codes(cible_nom, executer):
+    """Pose le type_code manquant des documents (déduit du titre, TEXTE en filet).
+
+    Sans type_code, la recherche publique ignore un document même publié
+    (INNER JOIN document_types). Ne touche jamais un type déjà posé. Crée la
+    ligne référentielle JO (Journal officiel) si elle manque.
+    """
+    from sqlalchemy import text
+
+    from src.promotion.push_corpus import charger_cible_ecriture, creer_engine_source
+    from src.structuration.typage import TYPE_JO, planifier_backfill
+
+    if cible_nom == "prod":
+        try:
+            engine = charger_cible_ecriture()
+        except Exception as exc:
+            click.secho(f"Refus : {exc}", fg="red")
+            raise SystemExit(1)
+        click.secho("\n  ███  BACKFILL TYPE_CODE → PRODUCTION  ███\n", fg="red", bold=True)
+    else:
+        engine = creer_engine_source()
+        click.secho("\n  Backfill type_code — base de développement\n", fg="cyan")
+
+    with engine.connect() as cnx:
+        documents = cnx.execute(
+            text("select id::text, titre_officiel from legal_documents "
+                 "where type_code is null and deleted_at is null order by created_at")
+        ).fetchall()
+        types_existants = {c for (c,) in cnx.execute(text("select code from document_types"))}
+
+    plan = planifier_backfill([(d[0], d[1]) for d in documents])
+    click.echo(f"  Documents sans type : {len(documents)}")
+    for code in sorted(plan):
+        click.echo(f"    {code:<6} {len(plan[code]):>4}")
+        for _, titre in plan[code][:2]:
+            click.echo(f"           ex. {titre[:64]}")
+    jo_a_creer = "JO" in plan and "JO" not in types_existants
+    if jo_a_creer:
+        click.secho("  Ligne référentielle à créer : JO (Journal officiel)", fg="cyan")
+
+    if not executer:
+        click.secho("\nDRY-RUN — aucune écriture. Relancer avec --execute pour appliquer.",
+                    fg="yellow")
+        return
+
+    if cible_nom == "prod":
+        saisie = click.prompt("Taper PRODUCTION pour confirmer", default="", show_default=False)
+        if saisie != "PRODUCTION":
+            click.secho("Annulé.", fg="yellow")
+            raise SystemExit(1)
+
+    with engine.begin() as cnx:
+        if jo_a_creer:
+            code, nom, niveau = TYPE_JO
+            cnx.execute(
+                text("insert into document_types (code, nom, niveau_hierarchique, created_at, updated_at) "
+                     "values (:c, :n, :h, now(), now()) on conflict (code) do nothing"),
+                {"c": code, "n": nom, "h": niveau},
+            )
+        total = 0
+        for code, docs in plan.items():
+            ids = [doc_id for doc_id, _ in docs]
+            resultat = cnx.execute(
+                text("update legal_documents set type_code = :code, updated_at = now() "
+                     "where id = any(cast(:ids as uuid[])) and type_code is null"),
+                {"code": code, "ids": ids},
+            )
+            total += resultat.rowcount
+    click.secho(f"\n{total} documents typés.", fg="green")
+
+
 if __name__ == "__main__":
     cli()
