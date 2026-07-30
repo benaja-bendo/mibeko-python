@@ -362,3 +362,206 @@ def test_preambule_trop_court_envoie_le_debut_du_markdown_sans_marqueurs_de_page
     assert texte_envoye  # non vide malgré le préambule quasi inexistant
     assert "Loi n° 12-2026" in texte_envoye
     assert "[[MIBEKO_PAGE:" not in texte_envoye
+
+
+class DatedMetadataMistralClient:
+    async def extract_metadata(self, texte, instructions):
+        return {
+            "nature": "Code",
+            "numero": None,
+            "date_signature": "1975-03-15",
+            "date_publication": "1975-04-01",
+            "autorite": None,
+        }
+
+
+def test_stock_recoit_consolidation_as_of_sinon_contrainte_db_violee(tmp_path: Path, monkeypatch):
+    """Régression (bug trouvé au rechargement complet du 21/07/2026) : la
+    contrainte chk_legal_documents_role_logic exige consolidation_as_of NOT NULL
+    pour un STOCK — sans elle, TOUTE structuration de code échouait en
+    CheckViolation. La date de publication du texte est préférée, puis la
+    signature, puis la date du jour (même repli que l'upload manuel)."""
+    from src.db.models import LegalDocument
+
+    data_dir = tmp_path / "data"
+    entry = _seed_entry(data_dir, "sgg-codes/congo-code-1975-travail", type_source="code")
+    db = FakeSession()
+
+    monkeypatch.setattr(structurer, "minio_service", FakeMinioService())
+    monkeypatch.setattr(structurer, "ingest_hierarchy", lambda *args, **kwargs: None)
+
+    result = structure_document(db, data_dir, entry, mistral_client=DatedMetadataMistralClient())
+
+    assert result["statut"] == "structure"
+    document = next(obj for obj in db.added if isinstance(obj, LegalDocument))
+    assert document.document_role == "STOCK"
+    assert str(document.consolidation_as_of) == "1975-04-01"  # date_publication d'abord
+
+
+def test_flux_garde_consolidation_as_of_null(tmp_path: Path, monkeypatch):
+    """Le pendant FLUX de la contrainte : consolidation_as_of doit rester NULL."""
+    from src.db.models import LegalDocument
+
+    data_dir = tmp_path / "data"
+    entry = _seed_entry(data_dir, "sgg-jo/congo-jo-2026-30")
+    db = FakeSession()
+
+    monkeypatch.setattr(structurer, "minio_service", FakeMinioService())
+    monkeypatch.setattr(structurer, "ingest_hierarchy", lambda *args, **kwargs: None)
+
+    result = structure_document(db, data_dir, entry, mistral_client=ValidMetadataMistralClient())
+
+    assert result["statut"] == "structure"
+    document = next(obj for obj in db.added if isinstance(obj, LegalDocument))
+    assert document.document_role == "FLUX"
+    assert document.consolidation_as_of is None
+
+
+def test_stock_sans_aucune_date_llm_replie_sur_la_date_du_jour(tmp_path: Path, monkeypatch):
+    from src.db.models import LegalDocument
+
+    data_dir = tmp_path / "data"
+    entry = _seed_entry(data_dir, "sgg-codes/congo-code-sans-date", type_source="code")
+    db = FakeSession()
+
+    monkeypatch.setattr(structurer, "minio_service", FakeMinioService())
+    monkeypatch.setattr(structurer, "ingest_hierarchy", lambda *args, **kwargs: None)
+
+    result = structure_document(db, data_dir, entry, mistral_client=ValidMetadataMistralClient())
+
+    assert result["statut"] == "structure"
+    document = next(obj for obj in db.added if isinstance(obj, LegalDocument))
+    assert document.document_role == "STOCK"
+    assert document.consolidation_as_of is not None
+
+
+class ListeSommaireMistralClient:
+    """Simule le sommaire d'un JO multi-actes : Mistral renvoie une LISTE
+    d'objets (un par acte) au lieu de l'objet unique attendu — cas réel observé
+    sur 3 JO au rechargement complet du 21/07/2026."""
+
+    async def extract_metadata(self, texte, instructions):
+        return [
+            {"nature": "loi", "numero": "24-2023", "date_signature": None, "date_publication": None, "autorite": None},
+            {"nature": "décret", "numero": "2023-1577", "date_signature": None, "date_publication": None, "autorite": None},
+        ]
+
+
+def test_sommaire_en_liste_replie_sur_jo_numero_annee_du_manifeste(tmp_path: Path, monkeypatch):
+    """Régression : une réponse LLM en liste plantait en AttributeError
+    ('list' object has no attribute 'get') avec un message trompeur. Pour un JO
+    dont le manifeste porte jo_numero/jo_annee, l'identité du journal doit se
+    replier sur le manifeste, pas échouer."""
+    from src.db.models import LegalDocument
+
+    data_dir = tmp_path / "data"
+    entry = _seed_entry(data_dir, "sgg-jo/congo-jo-2023-39")
+    entry.jo_numero = 39
+    entry.jo_annee = 2023
+    db = FakeSession()
+
+    monkeypatch.setattr(structurer, "minio_service", FakeMinioService())
+    monkeypatch.setattr(structurer, "ingest_hierarchy", lambda *args, **kwargs: None)
+
+    result = structure_document(db, data_dir, entry, mistral_client=ListeSommaireMistralClient())
+
+    assert result["statut"] == "structure"
+    document = next(obj for obj in db.added if isinstance(obj, LegalDocument))
+    assert document.titre_officiel == "Journal officiel n° 39-2023"
+
+
+def test_sommaire_en_liste_sans_jo_numero_echoue_avec_message_clair(tmp_path: Path):
+    """Sans jo_numero/jo_annee, l'échec doit être un message explicite, pas un
+    AttributeError déguisé en « validation du schéma en échec »."""
+    data_dir = tmp_path / "data"
+    entry = _seed_entry(data_dir, "sgg-lois/loi-mystere", type_source="loi")
+
+    db = FakeSession()
+    result = structure_document(db, data_dir, entry, mistral_client=ListeSommaireMistralClient(), dry_run=True)
+
+    assert result["statut"] == "erreur"
+    assert "liste d'actes" in result["motif"]
+    assert "no attribute" not in result["motif"]
+
+
+def test_structuration_jo_cree_et_rattache_la_fiche_official_journal(tmp_path: Path, monkeypatch):
+    """Régression (constat du 21/07/2026) : les JO ingérés par le pipeline
+    n'apparaissaient pas dans /editor/journals car aucune fiche
+    official_journals n'était créée ni rattachée. Le titre de la fiche vient du
+    MANIFESTE (jo_numero/jo_annee), pas du LLM qui titre souvent le JO d'après
+    le premier acte de son sommaire."""
+    from src.db.models import LegalDocument, OfficialJournal
+
+    data_dir = tmp_path / "data"
+    entry = _seed_entry(data_dir, "sgg-jo/congo-jo-2026-31")
+    entry.jo_numero = 31
+    entry.jo_annee = 2026
+
+    class DatedJoMistralClient:
+        async def extract_metadata(self, texte, instructions):
+            return {"nature": "Loi", "numero": "12-2026", "date_signature": None,
+                    "date_publication": "2026-07-02", "autorite": None}
+
+    db = FakeSession()
+    monkeypatch.setattr(structurer, "minio_service", FakeMinioService())
+    monkeypatch.setattr(structurer, "ingest_hierarchy", lambda *args, **kwargs: None)
+
+    result = structure_document(db, data_dir, entry, mistral_client=DatedJoMistralClient())
+
+    assert result["statut"] == "structure"
+    document = next(obj for obj in db.added if isinstance(obj, LegalDocument))
+    journal = next(obj for obj in db.added if isinstance(obj, OfficialJournal))
+    assert journal.title == "Journal officiel n° 31-2026"
+    assert journal.number == "31"
+    assert str(journal.publication_date) == "2026-07-02"
+    assert journal.file_path.startswith("s3://")
+    assert document.official_journal_id == journal.id
+    # L'identité du DOCUMENT vient aussi du manifeste : le LLM (« Loi n° 12-2026 »,
+    # premier acte du sommaire) ne doit plus titrer le journal, et un JO ne
+    # porte pas de reference_nor (collisions d'unicité avec de vrais actes).
+    assert document.titre_officiel == "Journal officiel n° 31-2026"
+    assert document.reference_nor is None
+
+
+def test_structuration_jo_sans_date_ne_cree_pas_de_fiche(tmp_path: Path, monkeypatch):
+    """Sans date de publication réelle, AUCUNE fiche n'est créée (date NOT NULL
+    en base ; une date inventée serait une fausse provenance) — complétion
+    manuelle via /editor/journals."""
+    from src.db.models import OfficialJournal
+
+    data_dir = tmp_path / "data"
+    entry = _seed_entry(data_dir, "sgg-jo/congo-jo-1959-99")
+    entry.jo_numero = 99
+    entry.jo_annee = 1959
+
+    db = FakeSession()
+    monkeypatch.setattr(structurer, "minio_service", FakeMinioService())
+    monkeypatch.setattr(structurer, "ingest_hierarchy", lambda *args, **kwargs: None)
+
+    result = structure_document(db, data_dir, entry, mistral_client=ValidMetadataMistralClient())
+
+    assert result["statut"] == "structure"
+    assert not any(isinstance(obj, OfficialJournal) for obj in db.added)
+
+
+def test_titre_jo_depuis_manifeste_couvre_la_grammaire_sgg():
+    """Le titre JO est déterministe depuis le manifeste et reste UNIQUE entre
+    variantes d'un même numéro (volumes, spécial, doublon, zéro-padding)."""
+    from src.structuration.journals import titre_jo_depuis_manifeste
+
+    def entry(numero, annee):
+        from src.acquisition.manifest import ManifestEntry
+        return ManifestEntry(id="sgg-jo/x", fichier="sources/x.pdf", sha256="0" * 64,
+                             size_bytes=1, type_source="journal_officiel", statut="parse",
+                             jo_numero=str(numero), jo_annee=annee)
+
+    assert titre_jo_depuis_manifeste(entry(39, 2023), "congo-jo-2023-39") == "Journal officiel n° 39-2023"
+    assert titre_jo_depuis_manifeste(entry(2, 1959), "congo-jo-1959-02") == "Journal officiel n° 2-1959"  # zéro-padding
+    assert titre_jo_depuis_manifeste(entry(5, 2025), "congo-jo-2025-5-volume-xxv") == "Journal officiel n° 5-2025 — volume xxv"
+    assert titre_jo_depuis_manifeste(entry(7, 1961), "congo-jo-1961-07-sp") == "Journal officiel n° 7-1961 — spécial"
+    assert titre_jo_depuis_manifeste(entry(24, 2022), "congo-jo-2022-24-2") == "Journal officiel n° 24-2022 — 2"
+    assert titre_jo_depuis_manifeste(entry(1, 2020), "CongoConjSurvivant") == "Journal officiel n° 1-2020 — CongoConjSurvivant"
+    # Deux volumes du même numéro → titres distincts → document_key distincts.
+    t1 = titre_jo_depuis_manifeste(entry(5, 2025), "congo-jo-2025-5-volume-i")
+    t2 = titre_jo_depuis_manifeste(entry(5, 2025), "congo-jo-2025-5-volume-ii")
+    assert t1 != t2

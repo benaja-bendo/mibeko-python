@@ -253,6 +253,29 @@ def ohada_recon(out):
     click.secho("→ Valider ce rapport avant d'inscrire les URLs dans le carnet.", fg="yellow")
 
 
+@cli.command("link-journals")
+@click.option('--dry-run', is_flag=True, help="Montre le plan de rattachement, aucune écriture")
+def link_journals(dry_run):
+    """Rattache les JO déjà ingérés au référentiel official_journals. Idempotent."""
+    import json as _json
+    from src.acquisition.config import data_dir
+    from src.db.database import SessionLocal
+    from src.structuration.journals import backfill_journals
+
+    db = SessionLocal()
+    try:
+        summary = backfill_journals(db, data_dir(), dry_run=dry_run)
+        click.echo(_json.dumps(summary, ensure_ascii=False, indent=2))
+        verbe = "à rattacher" if dry_run else "rattaché(s)"
+        click.secho(
+            f"{summary['rattaches']} JO {verbe} · déjà rattachés : {summary['deja_rattaches']} · "
+            f"sans date/numéro : {len(summary['sans_date_ou_numero'])} (complétion manuelle via /editor/journals)",
+            fg="cyan" if dry_run else "green",
+        )
+    finally:
+        db.close()
+
+
 @cli.command("process-batch")
 @click.option('--source', 'source_key', default=None, help="Limiter à un manifeste (ex. sgg-jo)")
 @click.option('--limit', default=None, type=int, help='Plafond de documents traités pour cette exécution')

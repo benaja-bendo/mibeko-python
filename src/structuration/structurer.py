@@ -38,6 +38,7 @@ from src.db.models import CurationFlag, ExtractionRun, LegalDocument
 from src.extractor.parser import LegalDocumentParser
 from src.services.minio_service import minio_service
 from src.services.mistral_service import mistral_service as default_mistral_client
+from src.structuration.journals import ensure_official_journal, titre_jo_depuis_manifeste
 from src.structuration.schema import validate_texte_juridique
 
 logger = logging.getLogger("mibeko.structuration")
@@ -164,6 +165,28 @@ def structure_document(
             logger.warning("structuration %s : %s (tentative %d/2)", entry.id, last_error, attempt + 1)
             continue
 
+        if isinstance(llm_metadata, list):
+            # Sommaire de JO multi-actes : Mistral décrit chaque acte du
+            # sommaire (liste d'objets) au lieu du journal lui-même. L'identité
+            # du JO est déjà dans le manifeste — repli dessus, comme pour la
+            # nature. Sans jo_numero/jo_annee : erreur claire (avant ce garde,
+            # le .get() plantait en AttributeError et le retry était vain).
+            if entry.jo_numero and entry.jo_annee:
+                llm_metadata = {
+                    "nature": None,  # comblée par NATURE_PAR_TYPE_SOURCE ci-dessous
+                    "numero": f"{entry.jo_numero}-{entry.jo_annee}",
+                    "date_signature": None,
+                    "date_publication": None,
+                    "autorite": None,
+                }
+            else:
+                last_error = (
+                    "réponse LLM inattendue : liste d'actes (sommaire multi-actes ?) "
+                    "sans jo_numero/jo_annee au manifeste pour identifier le document"
+                )
+                logger.warning("structuration %s : %s (tentative %d/2)", entry.id, last_error, attempt + 1)
+                continue
+
         if isinstance(llm_metadata, dict) and isinstance(llm_metadata.get("autorite"), list):
             # Acte cosigné par plusieurs autorités (ex. deux ministres) :
             # Mistral renvoie alors une liste au lieu d'une chaîne unique.
@@ -212,7 +235,19 @@ def structure_document(
     document_role = "STOCK" if entry.type_source in STOCK_TYPE_SOURCES else "FLUX"
     stock_code = sanitize_path_component(basename)[:100] if document_role == "STOCK" else None
     numero = llm_metadata.get("numero")
-    if numero:
+    est_jo_du_manifeste = bool(
+        entry.type_source == "journal_officiel" and entry.jo_numero and entry.jo_annee
+    )
+    if est_jo_du_manifeste:
+        # L'identité d'un JO vient du MANIFESTE, jamais du LLM : l'extraction
+        # d'en-tête décrit souvent le premier acte du sommaire (51/65 JO mal
+        # titrés au rechargement du 21/07/2026). Titre déterministe → clé
+        # d'unicité stable entre rejeux, variante (volume/spécial) préservée.
+        # reference_nor reste vide : un journal n'est pas un acte, et son
+        # numéro y provoquerait des collisions d'unicité avec de vrais actes.
+        titre_officiel = titre_jo_depuis_manifeste(entry, basename)
+        numero = None
+    elif numero:
         titre_officiel = f"{nature} n° {numero}"
     else:
         # Le basename garantit l'unicité du document_key : deux JO intitulés
@@ -226,15 +261,26 @@ def structure_document(
 
     json_path = _resolve_artefact(data_dir, "json", entry.id)
 
+    date_signature = _parse_iso_date(llm_metadata.get("date_signature"))
+    date_publication = _parse_iso_date(llm_metadata.get("date_publication"))
+    # La contrainte DB chk_legal_documents_role_logic exige consolidation_as_of
+    # NOT NULL pour un STOCK (et NULL pour un FLUX). Même repli que l'upload
+    # manuel (api/main.py : date du jour), en préférant les dates réelles du
+    # texte quand le LLM les a extraites.
+    consolidation_as_of = None
+    if document_role == "STOCK":
+        consolidation_as_of = date_publication or date_signature or datetime.datetime.utcnow().date()
+
     try:
         document = LegalDocument(
             titre_officiel=titre_officiel,
             document_role=document_role,
             document_key=document_key,
             stock_code=stock_code,
-            reference_nor=llm_metadata.get("numero"),
-            date_signature=_parse_iso_date(llm_metadata.get("date_signature")),
-            date_publication=_parse_iso_date(llm_metadata.get("date_publication")),
+            consolidation_as_of=consolidation_as_of,
+            reference_nor=numero,
+            date_signature=date_signature,
+            date_publication=date_publication,
             legal_scope=resolve_legal_scope(titre_officiel),
             curation_status="draft",
             extraction_status="completed",
@@ -261,6 +307,12 @@ def structure_document(
         pdf_s3_path = minio_service.upload_file(pdf_object_key, str(pdf_local_path), "application/pdf")
         if not pdf_s3_path:
             raise RuntimeError("échec de stockage MinIO pour le PDF source")
+
+        # Fiche référentiel official_journals (page /editor/journals) : le flux
+        # d'upload manuel la crée toujours, le pipeline doit faire pareil —
+        # sinon les JO ingérés restent invisibles de la page Journaux officiels.
+        if entry.type_source == "journal_officiel":
+            ensure_official_journal(db, entry, document, pdf_s3_path)
         pdf_media = build_media_record(
             document_id=document.id,
             object_key=pdf_object_key,
