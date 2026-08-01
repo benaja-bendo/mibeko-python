@@ -20,7 +20,7 @@ Rien n'est instancié au niveau module : l'engine et le client MinIO sont constr
 dans des fonctions, afin qu'importer ce fichier ne provoque aucune connexion.
 
 Prérequis : ``ssh -N -L 5434:127.0.0.1:5432 ubuntu@<IP_VPS>``.
-Voir ``docs/infra/acces-prod-diagnostic.md``.
+Voir ``docs/infra/production.md``.
 """
 
 import logging

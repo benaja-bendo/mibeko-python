@@ -1,6 +1,6 @@
 """Pousse le corpus validé du développement vers la production, de façon ADDITIVE.
 
-Doctrine (cf. docs/infra/acces-prod-diagnostic.md et docs/missions/mission-usine-a-textes.md)
+Doctrine (cf. docs/infra/production.md et docs/missions/mission-usine-a-textes.md)
 --------------------------------------------------------------------------------------------
 - **Additif, jamais destructif** : on n'ajoute que des documents absents de la cible ;
   les documents existants de la production ne sont jamais modifiés ni supprimés. La
