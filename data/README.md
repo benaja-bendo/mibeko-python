@@ -69,4 +69,4 @@ cd mibeko-python && git add -An data/
 
 ## Historique
 
-21 juillet 2026 : fusion de deux dossiers `data/` (un à la racine du monorepo, un résidu de test ici) en un seul. Détail dans `_archive-data-migration-20260721/README.md` à la racine du monorepo.
+21 juillet 2026 : fusion de deux dossiers `data/` (un à la racine du monorepo, un résidu de test ici) en un seul. Le filet de sécurité de cette migration (`_archive-data-migration-20260721/`, 20 Mo) a été supprimé le 1er août 2026 après vérification : les 481 entrées de provenance y étaient identiques (`id` + `sha256`) à celles d'ici, les 3 PDF qu'il conservait étaient des doublons au SHA-256 près de fichiers déjà présents dans `sources/`, et l'artefact récupéré à l'époque (`sgg-codes/congo-code-1975-travail`) est bien intégré au corpus.

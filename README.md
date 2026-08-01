@@ -19,7 +19,7 @@ Pour le détail, voir la [documentation technique](docs/README.md) : [architectu
 - Python 3.10+ (image Docker de production : `python:3.11-slim`).
 - **PostgreSQL** accessible (dev local : port 5433 ; le schéma est piloté par Laravel — le service ne crée aucune table).
 - **MinIO** pour le stockage S3.
-- Une clé MinerU (backend `cloud`) ou un serveur MinerU local (harnais `../minerU-docker`, backend `local`).
+- Une clé MinerU (backend `cloud`) ou un serveur MinerU local (harnais `mineru-local/`, backend `local`).
 
 ## Installation
 

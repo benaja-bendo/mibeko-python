@@ -17,7 +17,7 @@ Le corpus juridique suit la chaîne : **PDF source → JSON MinerU → Markdown 
    - Si des `.md` ou `.json` sont fournis, le document **court-circuite MinerU** : les artefacts sont stockés directement. Plusieurs morceaux (gros document découpé avant MinerU, ex. Code Bleu OHADA) sont fusionnés en un artefact unique à pagination globale via `src/extractor/chunk_merger.py`.
 2. **Extraction OCR (MinerU)** — `src/services/mineru_service.py` sait cibler deux backends selon la variable `MINERU_BACKEND` :
    - `cloud` (défaut) : API SaaS MinerU (`https://mineru.net/api/v4`), asynchrone (soumission puis récupération du résultat) ;
-   - `local` : serveur `mineru-api` auto-hébergé (harnais de dev `../minerU-docker`), synchrone, langue OCR `fr`.
+   - `local` : serveur `mineru-api` auto-hébergé (harnais de dev `mineru-local/`), synchrone, langue OCR `fr`.
    Les deux backends exposent la même interface (`submit_pdf`, `get_results`, `download_result`).
 3. **Parsing structurel → PostgreSQL** — `POST /api/v1/documents/{doc_id}/parse` déclenche `LegalDocumentParser` (`src/extractor/parser.py`) qui reconstruit la hiérarchie (nœuds structurels, articles, versions) depuis le `.md` ou le `.json`, puis l'insère en base. Le parsing détecte aussi les anomalies de numérotation d'articles (trous, doublons) et génère des `CurationFlag`. Un document sans structure détectable (circulaire, discours, proclamation…) bascule sur un article « Unique » contenant le texte intégral, afin de rester citable et publiable.
 
