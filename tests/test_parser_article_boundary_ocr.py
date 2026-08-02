@@ -16,7 +16,12 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.extractor.parser import ARTICLE_PATTERN, LegalDocumentParser, _is_page_banner_noise  # noqa: E402
+from src.extractor.parser import (  # noqa: E402
+    ARTICLE_PATTERN,
+    LegalDocumentParser,
+    _article_match_groups,
+    _is_page_banner_noise,
+)
 
 
 def _articles(hierarchy):
@@ -54,8 +59,22 @@ def test_article_pluriel_avec_numero():
         "Articles 194 : Les co-auteurs et les complices des personnes visées..."
     )
     assert m is not None
-    assert m.group("num") == "194"
-    assert m.group("content") == "Les co-auteurs et les complices des personnes visées..."
+    num, content = _article_match_groups(m)
+    assert num == "194"
+    assert content == "Les co-auteurs et les complices des personnes visées..."
+
+
+def test_pluriel_sans_separateur_est_une_citation_pas_un_en_tete():
+    """Régression réelle (Loi n° 28-2016, prod) : « Articles 74 et 75 de la
+    présente loi doivent être respectés » est une CITATION en prose (pas de
+    deux-points après le numéro), pas un nouvel article « 74 » de contenu
+    « et 75 de la présente loi… ». Contrairement au singulier, le pluriel
+    exige TOUJOURS un séparateur explicite après le numéro — une citation au
+    pluriel est bien plus fréquente qu'un « Article » singulier en milieu de
+    prose, d'où la distinction."""
+    assert ARTICLE_PATTERN.match(
+        "Articles 74 et 75 de la présente loi doivent être respectés."
+    ) is None
 
 
 def test_article_format_deux_points_double():

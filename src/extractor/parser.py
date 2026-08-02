@@ -64,14 +64,34 @@ STRUCTURE_PATTERNS: Dict[str, re.Pattern] = {
 # `open_article` retombe déjà sur un identifiant `SANS_NUM_xxxxx` quand
 # `number` est vide (cf. `ingest_hierarchy`, main.py) — aucun autre correctif
 # nécessaire en aval.
+#
+# Branche PLURIEL séparée (« Articles 194 : ... ») : un séparateur après le
+# numéro y est TOUJOURS obligatoire, contrairement au singulier. Sans cette
+# distinction, une citation en prose (« Articles 74 et 75 de la présente loi
+# doivent être respectés ») était prise à tort pour un nouvel article « 74 »
+# de contenu « et 75 de la présente loi… » — régression découverte en
+# rejouant la structuration du Code Pénal/Loi 28-2016 en prod (remédiation
+# 2026-08-02 phase 5, suite).
 ARTICLE_PATTERN = re.compile(
-    r"^(?:ARTICLES?|ART)\.?\s*(?:"
+    r"^(?:"
+    r"ARTICLES\.?\s*(?:[:.\-–—‐]\s*)?(?P<num_pl>PREMIER|[LDRA]?\.?\s*\d+[a-zA-Z0-9\-]*(?:\s+(?:bis|ter|quater|quinquies|nouveau|nouvelle|nouveaux|nouvelles))?)\s*[:.\-–—‐]+\s*(?P<content_pl>.*)"
+    r"|"
+    r"(?:ARTICLE|ART)\.?\s*(?:"
     r"(?:[:.\-–—‐]\s*)?(?P<num>PREMIER|[LDRA]?\.?\s*\d+[a-zA-Z0-9\-]*(?:\s+(?:bis|ter|quater|quinquies|nouveau|nouvelle|nouveaux|nouvelles))?)"
     r"\s*[:.\-–—‐]*"
     r"|[:.\-–—‐]+"
-    r")\s*(?P<content>.*)$",
+    r")\s*(?P<content>.*)"
+    r")$",
     re.IGNORECASE,
 )
+
+
+def _article_match_groups(match: "re.Match") -> Tuple[Optional[str], str]:
+    """Numéro et contenu capturés par `ARTICLE_PATTERN`, quelle que soit la
+    branche (singulier/pluriel) qui a matché."""
+    num = match.group("num_pl") if match.group("num_pl") is not None else match.group("num")
+    content = match.group("content_pl") if match.group("content_pl") is not None else match.group("content")
+    return num, content
 
 # Formule finale d'un acte : « Fait à Brazzaville, le 18 avril 2026 » suivie du
 # nom du ou des signataires. Isolée en feuille SIGNATURE plutôt que collée au
@@ -391,7 +411,8 @@ class LegalDocumentParser:
 
             article_match = ARTICLE_PATTERN.match(match_line)
             if article_match:
-                open_article(article_match.group("num"), article_match.group("content"))
+                article_num, article_content = _article_match_groups(article_match)
+                open_article(article_num, article_content)
                 continue
 
             structure_match = None
