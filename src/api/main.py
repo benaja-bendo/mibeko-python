@@ -740,19 +740,27 @@ def _dedupe_official_journal_acts(texts: List[Dict[str, str]]) -> List[Dict[str,
     return result
 
 
-# Mots-clés « faibles » : fréquents en plein texte (notes de bas de page,
-# glossaires d'annexes techniques). Ils ne démarrent un acte que s'ils portent un
-# qualificatif d'acte (numéro, date, ou libellé en majuscules).
-_WEAK_ACT_KEYWORDS = {"NOTE", "RAPPORT"}
+def _looks_like_real_act_title(rest_of_line: str) -> bool:
+    """Vrai si la suite du mot-clé ressemble à un vrai titre d'acte (numéro,
+    date, ou libellé en majuscules) — pas une formule de clôture qui finit par
+    se retrouver en tête de ligne après un retour à la ligne du markdown.
 
-
-def _weak_keyword_starts_act(rest_of_line: str) -> bool:
-    """Vrai si la suite d'un mot-clé faible ressemble à un vrai titre d'acte."""
+    Remédiation 2026-08-02 : appliqué à TOUS les mots-clés de `title_regex`,
+    plus seulement à NOTE/RAPPORT (l'ancien `_WEAK_ACT_KEYWORDS`). Confirmé en
+    prod : « le présent arrêté pourra faire l'objet d'une suspension… » et
+    « …sera publié et communiqué partout où besoin sera. » sont des clauses
+    de clôture ordinaires du Journal Officiel congolais qui, une fois la ligne
+    coupée par le rendu markdown, commencent par « arrêté »/« communiqué » —
+    pris à tort pour le début d'un nouvel acte (24 et 21 documents fantômes
+    trouvés dans un seul lot). Un vrai titre d'acte porte TOUJOURS l'un des
+    trois marqueurs ci-dessous ; une clause de clôture, en minuscules et sans
+    numéro ni date propres, n'en porte aucun."""
     if re.search(r"\bN[°ºo]\s*\d", rest_of_line, flags=re.IGNORECASE):
         return True
     if re.search(r"\b\d{1,2}\s+[a-zà-ÿ]+\s+\d{4}\b", rest_of_line, flags=re.IGNORECASE):
         return True
-    # Libellé en majuscules (« RAPPORT DE PRÉSENTATION… ») vs note inline (« Note.- … »).
+    # Libellé en majuscules (« RAPPORT DE PRÉSENTATION… ») vs clause de
+    # clôture en minuscules (« pourra faire l'objet d'une suspension… »).
     return bool(re.match(r"[\s’'A-ZÀ-Ÿ\-]{8,}", rest_of_line))
 
 
@@ -794,8 +802,8 @@ def split_official_journal_markdown(markdown_text: str) -> List[Dict[str, str]]:
         # dispositif, pas un nouvel acte.
         has_substance = title_match and re.search(r"[0-9A-Za-zÀ-ÿ]", cleaned[title_match.end(1):])
         is_act_start = bool(title_match and has_substance and not toc_entry_regex.search(cleaned))
-        if is_act_start and title_match.group(1).upper() in _WEAK_ACT_KEYWORDS:
-            is_act_start = _weak_keyword_starts_act(cleaned[title_match.end(1):])
+        if is_act_start:
+            is_act_start = _looks_like_real_act_title(cleaned[title_match.end(1):])
         if is_act_start:
             flush()
             current_title = cleaned
