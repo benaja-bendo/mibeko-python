@@ -180,6 +180,68 @@ def _media_ref(media: MediaFile) -> Dict[str, Any]:
     }
 
 
+def find_duplicate_source_groups(db, perimetre: list) -> Dict[str, list]:
+    """Regroupe les documents plats du périmètre qui partagent le même PDF
+    source (`media_files.checksum_sha256`, catégorie SOURCE_PDF).
+
+    Root cause du doublonnage constaté en prod le 2026-08-02 (mémoire
+    `duplicate_documents_methodology_0803`, 10 groupes sur un même JO de
+    septembre 2025) : `split_and_persist_journal_acts` n'est idempotent que
+    par `document_key`, lui-même dérivé du `basename` de CHAQUE document plat
+    (nécessaire pour ne jamais fusionner deux VRAIS volumes distincts d'un
+    même numéro de JO — cf. `titre_jo_depuis_manifeste`). Deux documents
+    plats distincts qui recouvrent en réalité le même PDF (une acquisition
+    dupliquée, ex. une fois routée vers `official_journals`, une fois
+    laissée `official_journal_id=NULL`) ne collisionnent donc jamais entre
+    eux : chacun produit son propre jeu complet d'actes.
+
+    Piège documenté (même mémoire) : NE JAMAIS comparer ce checksum à
+    l'échelle des ACTES déjà scindés — il est partagé, sans le vouloir, par
+    tous les actes issus d'un même document plat (un seul PDF référencé par
+    N actes), et ne discrimine alors qu'un « même lot d'ingestion ». Ici la
+    comparaison porte uniquement sur les documents PLATS du périmètre, avant
+    toute scission : un même SHA-256 partagé par deux documents plats
+    DISTINCTS signifie bien « même PDF acquis/ingéré deux fois ». De vrais
+    volumes distincts d'un même numéro de JO ont des fichiers PDF différents,
+    donc des checksums différents — pas de faux positif attendu sur ce cas
+    légitime.
+    """
+    par_checksum: Dict[str, list] = {}
+    for document in perimetre:
+        pdf_media = _media(db, document.id, "SOURCE_PDF")
+        checksum = pdf_media.checksum_sha256 if pdf_media else None
+        if not checksum:
+            continue
+        par_checksum.setdefault(checksum, []).append(document)
+    return {checksum: docs for checksum, docs in par_checksum.items() if len(docs) > 1}
+
+
+def _arreter_si_perimetre_a_risque(perimetre: list, doublons_source: Dict[str, list]) -> None:
+    """Garde-fous bloquants sur le périmètre — chacun s'arrête (`sys.exit`)
+    plutôt que de deviner quoi faire : une décision qui recouvre des données
+    déjà ambiguës (published/STOCK dans le périmètre, ou acquisition
+    dupliquée d'un même JO) revient à un humain, jamais au script."""
+    publies_dans_le_perimetre = [d for d in perimetre if d.curation_status == "published"]
+    stock_dans_le_perimetre = [d for d in perimetre if d.document_role == "STOCK"]
+    if publies_dans_le_perimetre or stock_dans_le_perimetre:
+        print("ARRÊT — intersection avec published/STOCK détectée, en dehors du périmètre autorisé sans validation humaine :")
+        for d in publies_dans_le_perimetre + stock_dans_le_perimetre:
+            print(f"  - {d.id} {d.titre_officiel!r} (curation_status={d.curation_status}, document_role={d.document_role})")
+        sys.exit(1)
+
+    if doublons_source:
+        print(
+            "ARRÊT — documents plats du périmètre partageant le même PDF source (SHA-256) : "
+            "acquisition dupliquée probable du même Journal officiel, à trier à la main avant "
+            "réingestion (cf. scripts/detect_document_duplicates.py) :"
+        )
+        for checksum, docs in doublons_source.items():
+            print(f"  - checksum {checksum} :")
+            for d in docs:
+                print(f"      {d.id} {d.titre_officiel!r} (official_journal_id={d.official_journal_id}, created_at={d.created_at})")
+        sys.exit(1)
+
+
 def reingest_one(db, minio_client, document: LegalDocument, execute: bool) -> Dict[str, Any]:
     base = {"document_id": str(document.id), "titre": document.titre_officiel}
 
@@ -273,13 +335,7 @@ def main() -> None:
     perimetre = find_perimeter(db)
     print(f"Cible : {args.target}. Périmètre : {len(perimetre)} documents (FLUX, type_code=JO, curation_status != published).")
 
-    publies_dans_le_perimetre = [d for d in perimetre if d.curation_status == "published"]
-    stock_dans_le_perimetre = [d for d in perimetre if d.document_role == "STOCK"]
-    if publies_dans_le_perimetre or stock_dans_le_perimetre:
-        print("ARRÊT — intersection avec published/STOCK détectée, en dehors du périmètre autorisé sans validation humaine :")
-        for d in publies_dans_le_perimetre + stock_dans_le_perimetre:
-            print(f"  - {d.id} {d.titre_officiel!r} (curation_status={d.curation_status}, document_role={d.document_role})")
-        sys.exit(1)
+    _arreter_si_perimetre_a_risque(perimetre, find_duplicate_source_groups(db, perimetre))
 
     if args.execute and args.target == "prod":
         print(f"\n  {len(perimetre)} documents PROD vont être scindés (soft-delete + nouveaux actes).")
@@ -291,6 +347,7 @@ def main() -> None:
         # `find_perimeter` doit être rejoué sur la session d'écriture — la
         # session RO précédente ne partage pas sa transaction avec elle.
         perimetre = find_perimeter(db)
+        _arreter_si_perimetre_a_risque(perimetre, find_duplicate_source_groups(db, perimetre))
 
     resultats = [reingest_one(db, minio_client, document, execute=args.execute) for document in perimetre]
 
