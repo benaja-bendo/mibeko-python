@@ -65,6 +65,31 @@ STRUCTURE_PATTERNS: Dict[str, re.Pattern] = {
 # `number` est vide (cf. `ingest_hierarchy`, main.py) — aucun autre correctif
 # nécessaire en aval.
 #
+# Corps du numéro, partagé par les branches singulier/pluriel ci-dessous :
+# - `\d+(?:\.\d+)*` : chiffres, avec continuations décimales optionnelles
+#   (« 1.1.2 » — règlements CEMAC/OHADA à numérotation Titre.Chapitre.Article ;
+#   sans ce `(?:\.\d+)*`, seul le « 1 » de tête était capturé, le reste
+#   (« .1.2 Directives... ») versé à tort dans le contenu de l'article).
+# - Le suffixe optionnel couvre aussi `[a-z]\)?` (« 14 a) », « 150 a »… — Code
+#   Pénal congolais, sous-paragraphes lettrés d'un même article : la lettre
+#   fait partie du numéro réel, pas un doublon du numéro de base. Le texte
+#   source l'écrit tantôt avec parenthèse fermante, tantôt sans — d'où le `?`.
+#   Le lookahead `(?![a-zA-ZÀ-ÿ])` qui suit est nécessaire dès que la
+#   parenthèse est optionnelle : `re.IGNORECASE` fait matcher `[a-z]` sur une
+#   lettre MAJUSCULE aussi, donc sans lui, une seule lettre d'un mot bien plus
+#   long ("D" de « Directives », "D" de « Dérogation ») était absorbée à tort
+#   dans le numéro, tronquant le début du contenu de l'article. Plage
+#   accentuée incluse (« Dérogation ») sinon le "D" passait déjà le lookahead
+#   ASCII-only avant le "é" suivant.
+# - `\d+` de tête est atomique (`(?>...)`) : sans ça, le rejet d'une citation
+#   par virgule (cf. note sur `ARTICLE_PATTERN` plus bas) laissait le moteur
+#   reculer sur un numéro plus court (« 182 » -> « 18 »), créant un faux
+#   article « 18 » au lieu de ne rien matcher du tout.
+_NUMERO_BODY = (
+    r"(?>\d+)(?:\.\d+)*[a-zA-Z0-9\-]*"
+    r"(?:\s+(?:bis|ter|quater|quinquies|sexies|septies|nouveau|nouvelle|nouveaux|nouvelles|[a-z]\)?(?![a-zA-ZÀ-ÿ])))?"
+)
+
 # Branche PLURIEL séparée (« Articles 194 : ... ») : un séparateur après le
 # numéro y est TOUJOURS obligatoire, contrairement au singulier. Sans cette
 # distinction, une citation en prose (« Articles 74 et 75 de la présente loi
@@ -72,12 +97,19 @@ STRUCTURE_PATTERNS: Dict[str, re.Pattern] = {
 # de contenu « et 75 de la présente loi… » — régression découverte en
 # rejouant la structuration du Code Pénal/Loi 28-2016 en prod (remédiation
 # 2026-08-02 phase 5, suite).
+#
+# Côté singulier, un numéro suivi d'une virgule (`(?!\s*,)`) est aussi rejeté :
+# une citation à la chaîne comme « article 182, 183 et 184. » (repli d'un
+# retour à la ligne OCR en tête de ligne) était prise pour un nouvel article
+# « 182 » de contenu « , 183 et 184. » — même famille de faux positif que la
+# citation plurielle ci-dessus, mais avec « article » au singulier donc non
+# couverte par son garde-fou. Trouvé en rejouant le Code Pénal en prod.
 ARTICLE_PATTERN = re.compile(
     r"^(?:"
-    r"ARTICLES\.?\s*(?:[:.\-–—‐]\s*)?(?P<num_pl>PREMIER|[LDRA]?\.?\s*\d+[a-zA-Z0-9\-]*(?:\s+(?:bis|ter|quater|quinquies|nouveau|nouvelle|nouveaux|nouvelles))?)\s*[:.\-–—‐]+\s*(?P<content_pl>.*)"
+    rf"ARTICLES\.?\s*(?:[:.\-–—‐]\s*)?(?P<num_pl>PREMIER|[LDRA]?\.?\s*{_NUMERO_BODY})\s*[:.\-–—‐]+\s*(?P<content_pl>.*)"
     r"|"
     r"(?:ARTICLE|ART)\.?\s*(?:"
-    r"(?:[:.\-–—‐]\s*)?(?P<num>PREMIER|[LDRA]?\.?\s*\d+[a-zA-Z0-9\-]*(?:\s+(?:bis|ter|quater|quinquies|nouveau|nouvelle|nouveaux|nouvelles))?)"
+    rf"(?:[:.\-–—‐]\s*)?(?P<num>PREMIER|[LDRA]?\.?\s*{_NUMERO_BODY})(?!\s*,)"
     r"\s*[:.\-–—‐]*"
     r"|[:.\-–—‐]+"
     r")\s*(?P<content>.*)"

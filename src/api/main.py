@@ -851,6 +851,7 @@ def derive_numero_origine(numero_article: str) -> Optional[str]:
 _LATIN_SUB_SUFFIX_RE = re.compile(r"\b(?:bis|ter|quater|quinquies|sexies|septies)\b", re.IGNORECASE)
 _HYPHEN_SUB_NUMBER_RE = re.compile(r"-\d+$")
 _DECIMAL_SUB_NUMBER_RE = re.compile(r"^\d+\.\d+")
+_LETTERED_SUB_ITEM_RE = re.compile(r"\d\s+[a-z]\)?$", re.IGNORECASE)
 
 
 def ordinal_from_raw_number(raw_number: str) -> Optional[int]:
@@ -863,16 +864,17 @@ def ordinal_from_raw_number(raw_number: str) -> Optional[int]:
     - « X nouveau » → hors séquence, ``None`` : c'est le texte de remplacement
       cité dans un acte modificatif, pas un article séquentiel (sinon faux
       doublon avec l'article d'exécution de même numéro) ;
-    - « 66 bis », « 16-1 », « 1.11 » → hors séquence, ``None`` également :
-      insertions ultérieures légitimes (Code civil, Code Pénal, règlements
-      CEMAC à numérotation décimale) qui partagent le numéro DE BASE d'un
-      article déjà existant sans en être des doublons — remédiation
-      2026-08-02 phase 5, audit ingestion 652→346 flags `article_doublon`
-      dont 285 sur 3 codes STOCK relevaient exactement de ce schéma. Seul le
-      numéro de base (« 66 », « 16 », « 1 ») reste dans la séquence : le
-      contrôle de trous (`find_missing_runs`) continue de le voir présent,
-      la détection de doublons ne voit plus jamais ses insertions comme des
-      répétitions du même ordinal.
+    - « 66 bis », « 16-1 », « 1.11 », « 14 a) » → hors séquence, ``None``
+      également : insertions ultérieures ou sous-paragraphes lettrés
+      légitimes (Code civil, Code Pénal, règlements CEMAC à numérotation
+      décimale) qui partagent le numéro DE BASE d'un article déjà existant
+      sans en être des doublons — remédiation 2026-08-02 phase 5, audit
+      ingestion 652→346 flags `article_doublon` dont 285 sur 3 codes STOCK
+      relevaient exactement de ce schéma. Seul le numéro de base (« 66 »,
+      « 16 », « 1 », « 14 ») reste dans la séquence : le contrôle de trous
+      (`find_missing_runs`) continue de le voir présent, la détection de
+      doublons ne voit plus jamais ses insertions comme des répétitions du
+      même ordinal.
 
     Extrait de `ingest_hierarchy` (`insert_nodes`) pour être réutilisé sans
     duplication par tout script qui reconstruit une séquence d'articles déjà
@@ -887,6 +889,7 @@ def ordinal_from_raw_number(raw_number: str) -> Optional[int]:
         _LATIN_SUB_SUFFIX_RE.search(raw_number)
         or _HYPHEN_SUB_NUMBER_RE.search(raw_number)
         or _DECIMAL_SUB_NUMBER_RE.match(raw_number)
+        or _LETTERED_SUB_ITEM_RE.search(raw_number)
     ):
         return None
     seq_match = re.match(r"(\d+)", raw_number)
