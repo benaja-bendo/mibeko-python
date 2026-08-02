@@ -17,6 +17,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from src.api.main import (  # noqa: E402
     analyze_article_sequence,
     count_series_restarts,
+    derive_numero_origine,
     find_missing_runs,
 )
 
@@ -95,6 +96,76 @@ def test_compilation_still_flags_large_block():
     assert "article_manquant" not in types
     bloc = next(a for a in anomalies if a["type_probleme"] == "bloc_manquant")
     assert "13-99" in bloc["description"]
+
+
+# --- derive_numero_origine (backfill des articles déjà renommés) --------------
+
+def test_derive_numero_origine_suffixe_simple():
+    assert derive_numero_origine("14_doublon_1") == "14"
+
+
+def test_derive_numero_origine_suffixe_a_deux_chiffres():
+    assert derive_numero_origine("14_doublon_11") == "14"
+
+
+def test_derive_numero_origine_numero_non_purement_numerique():
+    assert derive_numero_origine("PREAMBULE_doublon_2") == "PREAMBULE"
+    assert derive_numero_origine("6 bis_doublon_1") == "6 bis"
+
+
+def test_derive_numero_origine_non_suffixe_renvoie_none():
+    assert derive_numero_origine("14") is None
+    assert derive_numero_origine("PREAMBULE") is None
+
+
+# --- audit docs/audit-ingestion-2026-08-02.md, phase 2 : doublons non consécutifs ---
+
+def test_doublon_non_consecutif_detecte_hors_compilation():
+    """« 1 » réapparaît bien plus loin dans une série non compilée (pas de
+    redémarrage) : avant la phase 2, seuls les doublons CONSÉCUTIFS étaient
+    détectés — celui-ci était invisible."""
+    anomalies = analyze_article_sequence(_seq([1, 2, 3, 4, 1, 6]))
+    doublons = [a for a in anomalies if a["type_probleme"] == "article_doublon"]
+    assert len(doublons) == 1
+
+
+def test_plusieurs_doublons_non_consecutifs_tous_comptes():
+    anomalies = analyze_article_sequence(_seq([1, 2, 3, 1, 4, 2, 5]))
+    doublons = [a for a in anomalies if a["type_probleme"] == "article_doublon"]
+    assert len(doublons) == 2  # « 1 » et « 2 » réapparaissent chacun une fois
+
+
+def test_nombre_de_flags_egale_nombre_de_collisions_consecutives_et_non():
+    """Mission « corrections post-audit » phase 2 — critère explicite : le
+    nombre de flags doit égaler le nombre de collisions, ni plus ni moins."""
+    # 3 collisions : "2" consécutif, "5" non consécutif, "1" non consécutif.
+    anomalies = analyze_article_sequence(_seq([1, 2, 2, 3, 5, 4, 5, 1]))
+    doublons = [a for a in anomalies if a["type_probleme"] == "article_doublon"]
+    assert len(doublons) == 3
+
+
+def test_compilation_n_etend_pas_les_doublons_aux_reapparitions_non_consecutives():
+    """En compilation, seuls les doublons CONSÉCUTIFS comptent : la
+    réapparition d'un numéro sur un acte encapsulé différent (numérotation qui
+    redémarre) reste le signal normal d'une nouvelle série, pas une erreur —
+    comportement inchangé par l'extension de la phase 2."""
+    anomalies = analyze_article_sequence(_seq([11, 12, 1, 2, 11, 12, 1, 2]))
+    assert [a for a in anomalies if a["type_probleme"] == "article_doublon"] == []
+    assert "compilation_suspectee" in _types(anomalies)
+
+
+def test_already_flagged_exclut_les_articles_deja_signales_ailleurs():
+    """`already_flagged` (articles déjà couverts par un flag de collision de
+    chaîne posé par `unique_article_number`) ne doit pas produire un second
+    flag pour la même collision vue sous l'angle ordinal."""
+    seq = _seq([1, 2, 2, 3])
+    id_du_second_2 = seq[2][1]
+
+    sans_exclusion = analyze_article_sequence(seq)
+    assert len([a for a in sans_exclusion if a["type_probleme"] == "article_doublon"]) == 1
+
+    avec_exclusion = analyze_article_sequence(seq, already_flagged={id_du_second_2})
+    assert [a for a in avec_exclusion if a["type_probleme"] == "article_doublon"] == []
 
 
 def test_penal_code_like_scrambled_compilation():

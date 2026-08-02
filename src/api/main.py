@@ -823,6 +823,23 @@ def clear_document_structure(db: Session, document_id: uuid.UUID) -> None:
     db.flush()
 
 
+_DOUBLON_SUFFIX_RE = re.compile(r"^(?P<origine>.*)_doublon_(?P<n>\d+)$")
+
+
+def derive_numero_origine(numero_article: str) -> Optional[str]:
+    """Inverse de la logique de suffixage de `unique_article_number`
+    (`ingest_hierarchy`) : retrouve le numéro d'origine d'un `numero_article`
+    déjà suffixé ``_doublon_N``, ou ``None`` s'il n'est pas suffixé.
+
+    Utilisé par `scripts/backfill_doublon_flags.py` (audit
+    docs/audit-ingestion-2026-08-02.md, phase 2) pour rattraper les articles
+    déjà renommés par une ingestion antérieure au correctif, sans re-parser
+    ni re-ingérer quoi que ce soit.
+    """
+    match = _DOUBLON_SUFFIX_RE.match(numero_article)
+    return match.group("origine") if match else None
+
+
 def find_missing_runs(distinct_sorted: List[int]) -> List[Tuple[int, int, int]]:
     """Plages d'entiers ABSENTES dans [min, max] de l'ensemble fourni.
 
@@ -868,6 +885,7 @@ def analyze_article_sequence(
     restart_prev_min: int = 10,
     min_restarts: int = 2,
     max_anomalies: int = 200,
+    already_flagged: Optional[set] = None,
 ) -> List[Dict[str, Any]]:
     """Analyse PURE d'une séquence d'articles (ordinal, id) → anomalies à signaler.
 
@@ -876,7 +894,16 @@ def analyze_article_sequence(
     massifs : « saut de 86 à 553 » alors que l'article 553 a juste été restitué
     trop tôt). Trois familles d'anomalies :
 
-    - ``article_doublon`` : même numéro deux fois de suite (séquentiel, précis) ;
+    - ``article_doublon`` : un même numéro ordinal apparaît plusieurs fois. Hors
+      compilation, TOUTE réapparition compte (consécutive ou non — audit
+      docs/audit-ingestion-2026-08-02.md phase 2 : « 12 » puis, bien plus loin,
+      « 12 bis » partagent le même ordinal sans être adjacents dans la séquence
+      ni entrer en collision de CHAÎNE, donc jamais renommés par
+      ``unique_article_number``). En compilation, seuls les doublons CONSÉCUTIFS
+      restent signalés : la réapparition d'un numéro sur un acte encapsulé
+      différent est le signal normal d'une nouvelle série, pas une erreur — tout
+      signaler produirait exactement le bruit que cette fonction évite déjà pour
+      les petits trous (cf. plus bas) ;
     - ``compilation_suspectee`` : la numérotation redémarre plusieurs fois
       (plusieurs séries) → le document devrait être segmenté avant publication ;
     - ``bloc_manquant`` / ``article_manquant`` : plages absentes calculées sur
@@ -886,30 +913,58 @@ def analyze_article_sequence(
       sont signalés QUE hors compilation (sinon bruit dû à l'entrelacement des
       séries d'une compilation).
 
+    ``already_flagged`` : ensemble d'``article_id`` déjà couverts par un
+    `CurationFlag` `article_doublon` distinct (collision de CHAÎNE détectée et
+    renommée par ``unique_article_number`` — cf. `ingest_hierarchy`). Ces
+    articles sont exclus de la détection ci-dessous pour éviter un double
+    signalement du même défaut (mission « corrections post-audit » phase 2 :
+    un flag par collision, pas deux).
+
     Renvoie une liste de dicts {type_probleme, article_id, description}.
     """
     anomalies: List[Dict[str, Any]] = []
-
-    # 1. Doublons immédiats (séquentiel, précis).
-    prev: Optional[int] = None
-    for number, article_id in sequence:
-        if number is None:
-            continue
-        if prev is not None and number == prev:
-            anomalies.append({
-                "type_probleme": "article_doublon",
-                "article_id": article_id,
-                "description": f"Numéro d'article {number} répété consécutivement.",
-            })
-        prev = number
+    already_flagged = already_flagged or set()
 
     ordinals = [number for number, _ in sequence if number is not None]
     if not ordinals:
         return anomalies[:max_anomalies]
 
-    # 2. Compilation (plusieurs séries de numérotation) ?
+    # 1. Compilation (plusieurs séries de numérotation) ? Calculé AVANT les
+    # doublons : leur détection en dépend (cf. docstring).
     restarts = count_series_restarts(ordinals, restart_low, restart_prev_min)
     is_compilation = restarts >= min_restarts
+
+    # 2. Doublons.
+    if is_compilation:
+        # Cœur inchangé : seuls les doublons consécutifs.
+        prev: Optional[int] = None
+        for number, article_id in sequence:
+            if number is None:
+                continue
+            if prev is not None and number == prev and article_id not in already_flagged:
+                anomalies.append({
+                    "type_probleme": "article_doublon",
+                    "article_id": article_id,
+                    "description": f"Numéro d'article {number} répété consécutivement.",
+                })
+            prev = number
+    else:
+        # Hors compilation, un ordinal ne devrait apparaître qu'une fois où
+        # qu'il soit dans la séquence.
+        seen_ordinals: Dict[int, uuid.UUID] = {}
+        for number, article_id in sequence:
+            if number is None:
+                continue
+            if number in seen_ordinals:
+                if article_id not in already_flagged:
+                    anomalies.append({
+                        "type_probleme": "article_doublon",
+                        "article_id": article_id,
+                        "description": f"Numéro d'article {number} déjà rencontré ailleurs dans ce document.",
+                    })
+            else:
+                seen_ordinals[number] = article_id
+
     if is_compilation:
         anomalies.append({
             "type_probleme": "compilation_suspectee",
@@ -948,25 +1003,35 @@ def flag_article_sequence_anomalies(
     document_id: uuid.UUID,
     sequence: List[Tuple[Optional[int], uuid.UUID]],
     max_flags: int = 200,
+    already_flagged: Optional[set] = None,
 ) -> int:
     """Persiste les anomalies de numérotation d'un document en `curation_flags`.
 
     Garde-fou de curation : tant que ces anomalies ne sont pas résolues, le
     document ne peut pas être publié (cf. `LegalDocumentController`). L'analyse est
     déléguée à `analyze_article_sequence` (pure, testée). Renvoie le nb d'anomalies.
+
+    ``already_flagged`` : cf. `analyze_article_sequence` — articles déjà
+    flagués par `unique_article_number` (collision de chaîne renommée), à ne
+    pas re-signaler ici pour la même collision vue sous l'angle ordinal.
     """
     # Idempotence : on purge nos propres signalements heuristiques NON résolus
     # avant de recalculer (ré-import/replay), sans toucher aux flags résolus par un
     # humain ni aux autres couches (structural/llm). Les flags article-liés
     # partent déjà en CASCADE quand l'article est supprimé ; ceci couvre en plus
     # les flags niveau document (article_id NULL : bloc manquant, compilation).
+    # NB : les flags de collision de `unique_article_number` (posés juste avant
+    # cet appel, cf. `ingest_hierarchy`) sont volontairement `source="heuristic"`
+    # eux aussi — non purgés ici : cette requête ne vise QUE ceux déjà en base
+    # avant l'appel courant (rejeu), les flags fraîchement ajoutés dans cette
+    # même transaction n'y sont pas encore visibles côté SQL.
     db.query(CurationFlag).filter(
         CurationFlag.document_id == document_id,
         CurationFlag.source == "heuristic",
         CurationFlag.resolved.is_(False),
     ).delete(synchronize_session=False)
 
-    anomalies = analyze_article_sequence(sequence, max_anomalies=max_flags)
+    anomalies = analyze_article_sequence(sequence, max_anomalies=max_flags, already_flagged=already_flagged)
     for anomaly in anomalies:
         db.add(CurationFlag(
             document_id=document_id,
@@ -1016,20 +1081,31 @@ def ingest_hierarchy(
 
     clear_document_structure(db, document.id)
     seen_article_numbers: Dict[str, int] = {}
+    rename_collisions: List[Dict[str, Any]] = []
     table_counter = {"n": 0}
     article_sequence: List[Tuple[Optional[int], uuid.UUID]] = []
 
-    def unique_article_number(base: str) -> str:
+    def unique_article_number(base: str, node_id: uuid.UUID) -> str:
         """Garantit l'unicité de (document_id, numero_article).
 
-        Suffixe ``_doublon_N`` en cas de collision. S'applique aux vrais articles
+        Suffixe ``_doublon_N`` en cas de collision — la contrainte unique
+        uq_articles_document_numero l'exige. S'applique aux vrais articles
         homonymes MAIS AUSSI aux feuilles PREAMBULE/SIGNATURE multiples : un acte
-        compilé (Code bleu, recueil) peut contenir plusieurs préambules/signatures,
-        sinon violation de la contrainte unique uq_articles_document_numero.
+        compilé (Code bleu, recueil) peut contenir plusieurs préambules/signatures.
+
+        Le renommage n'est JAMAIS silencieux (audit
+        docs/audit-ingestion-2026-08-02.md, phase 2 : sur les 62 documents
+        rescindés en phase 1, 5 525 renommages n'avaient donné lieu qu'à 315
+        signalements individuels) : chaque collision est enregistrée dans
+        ``rename_collisions``, transformée en `CurationFlag` `article_doublon`
+        une fois l'article inséré (cf. fin de fonction), numéro d'origine
+        conservé dans la description.
         """
         if base in seen_article_numbers:
             seen_article_numbers[base] += 1
-            return f"{base}_doublon_{seen_article_numbers[base]}"
+            final = f"{base}_doublon_{seen_article_numbers[base]}"
+            rename_collisions.append({"article_id": node_id, "numero_origine": base, "numero_final": final})
+            return final
         seen_article_numbers[base] = 0
         return base
 
@@ -1045,7 +1121,7 @@ def ingest_hierarchy(
 
             if node_data["type"] == "ARTICLE":
                 raw_number = str(node_data.get("number", "")).strip()
-                article_number = unique_article_number(raw_number or f"SANS_NUM_{str(uuid.uuid4())[:8]}")
+                article_number = unique_article_number(raw_number or f"SANS_NUM_{str(uuid.uuid4())[:8]}", node_id)
 
                 article = Article(
                     id=node_id,
@@ -1096,7 +1172,7 @@ def ingest_hierarchy(
                     id=node_id,
                     document_id=document.id,
                     parent_node_id=parent_node_id,
-                    numero_article=unique_article_number("PREAMBULE"),
+                    numero_article=unique_article_number("PREAMBULE", node_id),
                     ordre_affichage=display_order,
                     validation_status=validation_status,
                 )
@@ -1124,7 +1200,7 @@ def ingest_hierarchy(
                     id=node_id,
                     document_id=document.id,
                     parent_node_id=parent_node_id,
-                    numero_article=unique_article_number("SIGNATURE"),
+                    numero_article=unique_article_number("SIGNATURE", node_id),
                     ordre_affichage=display_order,
                     validation_status=validation_status,
                 )
@@ -1188,7 +1264,28 @@ def ingest_hierarchy(
     if hierarchy:
         assign_dfs_order(hierarchy)
         insert_nodes(hierarchy)
-        flag_article_sequence_anomalies(db, document.id, article_sequence)
+        # `flag_article_sequence_anomalies` PURGE d'abord (requête SQL directe
+        # sur les flags heuristiques existants) puis ajoute les siens : les
+        # flags de collision ci-dessous sont ajoutés APRÈS cet appel, jamais
+        # avant — sinon un autoflush déclenché par la requête de purge les
+        # écrirait en base juste à temps pour être supprimés par cette même
+        # purge (elle filtre aussi `source="heuristic"`).
+        already_renamed_ids = {collision["article_id"] for collision in rename_collisions}
+        flag_article_sequence_anomalies(db, document.id, article_sequence, already_flagged=already_renamed_ids)
+        for collision in rename_collisions:
+            db.add(CurationFlag(
+                document_id=document.id,
+                article_id=collision["article_id"],
+                source="heuristic",
+                type_probleme="article_doublon",
+                severity="blocking",
+                description=(
+                    f"Numéro d'article « {collision['numero_origine']} » en collision avec un autre "
+                    f"article du même document — renommé en « {collision['numero_final']} » pour "
+                    "respecter la contrainte d'unicité. Nécessite une revue humaine (fusion, "
+                    "re-numérotation, ou confirmation qu'il s'agit bien de deux articles distincts)."
+                ),
+            ))
 
 
 # ---------------------------------------------------------------------------
