@@ -45,15 +45,31 @@ STRUCTURE_PATTERNS: Dict[str, re.Pattern] = {
 }
 
 # "ARTICLE 1er : contenu...", "Art. 12.-", "Article L.122-4", "ARTICLE PREMIER",
-# "Art.4.‐ ..." (sans espace, tiret Unicode ‐ fréquent dans les Actes OHADA).
-# Le qualificatif "nouveau/nouvelle" est capturé DANS le numéro ("Article 2
-# nouveau" -> "2 nouveau") : dans un acte modificatif il désigne le texte de
-# remplacement d'un article cité, à ne pas confondre avec l'article d'exécution
-# de même numéro (sinon doublon + fausse alerte de curation).
+# "Art.4.‐ ..." (sans espace, tiret Unicode ‐ fréquent dans les Actes OHADA),
+# "Articles 194 :" (pluriel, en-tête d'un seul article numéroté malgré le
+# pluriel — coquille source ou OCR). Le qualificatif "nouveau/nouvelle" est
+# capturé DANS le numéro ("Article 2 nouveau" -> "2 nouveau") : dans un acte
+# modificatif il désigne le texte de remplacement d'un article cité, à ne pas
+# confondre avec l'article d'exécution de même numéro (sinon doublon + fausse
+# alerte de curation).
+#
+# Second groupe alternatif (numéro ABSENT) : « Article : Le titulaire... » —
+# le chiffre a été perdu à l'OCR (rendu vide plutôt que par un caractère
+# reconnaissable), mais le mot « Article » lui-même est net et suivi d'un
+# séparateur explicite. Le texte de l'article suivant se retrouvait sinon
+# collé en fin de l'article précédent (contenu jamais perdu, juste caché —
+# audit remédiation 2026-08-02 phase 5). Le séparateur y est rendu
+# OBLIGATOIRE (pas optionnel) : sans lui, un simple mot de prose commençant
+# par « Article » (rare mais possible) serait pris à tort pour un en-tête.
+# `open_article` retombe déjà sur un identifiant `SANS_NUM_xxxxx` quand
+# `number` est vide (cf. `ingest_hierarchy`, main.py) — aucun autre correctif
+# nécessaire en aval.
 ARTICLE_PATTERN = re.compile(
-    r"^(?:ARTICLE|ART)\.?\s*"
-    r"(PREMIER|[LDRA]?\.?\s*\d+[a-zA-Z0-9\-]*(?:\s+(?:bis|ter|quater|quinquies|nouveau|nouvelle|nouveaux|nouvelles))?)"
-    r"\s*[:.\-–—‐]*\s*(.*)$",
+    r"^(?:ARTICLES?|ART)\.?\s*(?:"
+    r"(?:[:.\-–—‐]\s*)?(?P<num>PREMIER|[LDRA]?\.?\s*\d+[a-zA-Z0-9\-]*(?:\s+(?:bis|ter|quater|quinquies|nouveau|nouvelle|nouveaux|nouvelles))?)"
+    r"\s*[:.\-–—‐]*"
+    r"|[:.\-–—‐]+"
+    r")\s*(?P<content>.*)$",
     re.IGNORECASE,
 )
 
@@ -76,6 +92,25 @@ _SECTION_NOISE_PATTERN = re.compile(
 # Forme inversée : "PREMIÈRE PARTIE — ...", "DEUXIÈME PARTIE : ..."
 PARTIE_INVERTED_PATTERN = re.compile(
     rf"^({_NUMBER})\s+PARTIE{_SEP}(.*)$",
+    re.IGNORECASE,
+)
+
+# Bandeau de page imprimé (numéro de page courant d'un ouvrage relié, ex.
+# « p.11 », parfois suivi du Titre/Chapitre courant réimprimé en en-tête).
+# Remédiation 2026-08-02 phase 5 : confirmé sur le Code civil en prod — un
+# « article » fantôme, contenant SEULEMENT ce bandeau, précède
+# systématiquement le VRAI article de même numéro (le bandeau de la page
+# suivante répète la référence de l'article avant que son texte ne
+# commence). Sans fusion, ce fantôme devient un doublon de chaîne
+# individuellement flagué (144 cas sur ce seul document).
+_PAGE_BANNER_LINE_PATTERN = re.compile(r"^p\.?\s*\d+\.?$", re.IGNORECASE)
+
+# Rappel de Titre/Chapitre courant en bandeau de page (« Titre Ier : Des
+# droits civils »). Volontairement plus permissif que STRUCTURE_PATTERNS
+# (qui n'a pas besoin, ici, d'extraire un numéro exploitable — seulement de
+# reconnaître qu'une ligne EST un bandeau structurel, pas du texte d'article).
+_STRUCTURAL_BANNER_START_PATTERN = re.compile(
+    r"^(?:PARTIE|LIVRE|TITRE|CHAPITRE|SECTION|SOUS[\s\-]SECTION|PARAGRAPHE|§)\b",
     re.IGNORECASE,
 )
 
@@ -103,6 +138,24 @@ def _clean_for_matching(line: str) -> str:
     cleaned = _MD_PREFIX.sub("", line.strip())
     cleaned = _MD_SUFFIX.sub("", cleaned)
     return cleaned.strip()
+
+
+def _is_page_banner_noise(text: str) -> bool:
+    """Le contenu ne contient RIEN d'autre qu'un bandeau de page imprimé
+    (« p.11 ») et/ou un rappel de Titre/Chapitre courant — aucun vrai texte
+    juridique. Cf. `_PAGE_BANNER_LINE_PATTERN`. Une chaîne vide est considérée
+    comme du bruit (rien à perdre en la fusionnant)."""
+    lines = [line.strip() for line in text.split("\n") if line.strip()]
+    if not lines:
+        return True
+    for line in lines:
+        cleaned = _clean_for_matching(line)
+        if _PAGE_BANNER_LINE_PATTERN.match(cleaned):
+            continue
+        if _STRUCTURAL_BANNER_START_PATTERN.match(cleaned):
+            continue
+        return False
+    return True
 
 
 class LegalDocumentParser:
@@ -176,11 +229,26 @@ class LegalDocumentParser:
         signature_buffer: List[str] = []
 
         def close_article() -> None:
+            """Finalise l'article courant — ou le retire silencieusement de
+            l'arbre si son contenu ne s'avère être QUE du bruit de bandeau de
+            page (cf. `_is_page_banner_noise`) : un numéro d'article répété en
+            en-tête de page (avec parfois le Titre/Chapitre courant) juste
+            avant que le VRAI article de même numéro ne commence, capté à tort
+            comme un article fantôme. Remédiation 2026-08-02 phase 5 — confirmé
+            sur le Code civil en prod (144 cas), toujours suivi d'un rappel de
+            Titre/Chapitre/Section dupliqué qui referme l'article via cette
+            fonction (`open_structure`), jamais directement par `open_article`."""
             nonlocal current_article
             if current_article is not None:
                 inline = current_article.get("content", "").strip()
                 block = "\n".join(content_buffer).strip()
-                current_article["content"] = f"{inline}\n{block}".strip() if inline and block else (inline or block)
+                full_content = f"{inline}\n{block}".strip() if inline and block else (inline or block)
+                if _is_page_banner_noise(full_content):
+                    container = open_nodes[-1][1]["children"] if open_nodes else roots
+                    if container and container[-1] is current_article:
+                        container.pop()
+                else:
+                    current_article["content"] = full_content
             content_buffer.clear()
             current_article = None
 
@@ -323,7 +391,7 @@ class LegalDocumentParser:
 
             article_match = ARTICLE_PATTERN.match(match_line)
             if article_match:
-                open_article(article_match.group(1), article_match.group(2))
+                open_article(article_match.group("num"), article_match.group("content"))
                 continue
 
             structure_match = None
