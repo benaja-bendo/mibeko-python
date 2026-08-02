@@ -18,6 +18,7 @@ from src.api.main import (  # noqa: E402
     analyze_article_sequence,
     count_series_restarts,
     derive_numero_origine,
+    find_embedded_series_runs,
     find_missing_runs,
 )
 
@@ -195,6 +196,71 @@ def test_penal_code_like_scrambled_compilation():
     assert "487-552" in descriptions
     assert "559-569" in descriptions
     assert len(anomalies) == 5  # 2 doublons + 1 compilation + 2 blocs, aucun bruit
+
+
+# --- find_embedded_series_runs / remédiation audit 2026-08-02 phase 4 --------
+# Acte principal COURT (loi de ratification, arrêté bref) + annexe qui
+# renumérote à partir de 1 (traité ratifié, cahier des charges) : le sommet
+# atteint avant la chute ne dépasse jamais `restart_prev_min` de
+# `count_series_restarts`, donc `analyze_article_sequence` ne classait pas ces
+# documents en compilation et signalait chaque article de l'annexe comme
+# doublon individuel (652 signalements sur 70 documents, dont la majorité
+# suivait ce schéma sur 6 échantillons réels vérifiés, de 1959 à 2025).
+
+
+def test_find_embedded_series_runs_detects_short_main_body_plus_annex():
+    # Corps principal [1, 2] (ex. loi de ratification à 2 articles), puis une
+    # annexe qui redémarre à 1 et reprend une longue série ascendante.
+    ordinals = [1, 2, 1, 2, 3, 4, 5, 6, 7, 8]
+    assert find_embedded_series_runs(ordinals) == [(2, 9)]
+
+
+def test_find_embedded_series_runs_ignores_immediate_duplicate():
+    # « 2, 2 » consécutifs : ce n'est pas une chute (valeurs égales, pas
+    # `prev > number`) — reste un doublon normal, pas une série incrustée.
+    ordinals = [1, 2, 2, 3, 5, 4, 5, 1]
+    assert find_embedded_series_runs(ordinals) == []
+
+
+def test_find_embedded_series_runs_requires_sustained_run():
+    # La chute vers « 1 » n'est suivie que d'une seule valeur (6) : pas assez
+    # long pour confirmer une série secondaire (audit phase 2 : ce cas doit
+    # rester un doublon isolé signalé normalement).
+    ordinals = [1, 2, 3, 4, 1, 6]
+    assert find_embedded_series_runs(ordinals) == []
+
+
+def test_find_embedded_series_runs_requires_strict_drop():
+    # Chute vers un numéro qui n'est pas strictement inférieur au précédent :
+    # pas une chute réelle.
+    ordinals = [1, 2, 3, 3, 4, 5, 6]
+    assert find_embedded_series_runs(ordinals) == []
+
+
+def test_embedded_series_suppresses_doublons_and_flags_once():
+    """Cas réel (Loi n° 12-2025 du 28 mai 2025, prod) : loi de ratification à 2
+    articles + le traité ratifié en annexe (14 articles, renumérotés à 1).
+    Avant le correctif : 2 `article_doublon`. Après : 0, remplacés par un seul
+    `compilation_suspectee` informatif."""
+    ordinals = [1, 2, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+    anomalies = analyze_article_sequence(_seq(ordinals))
+    assert _types(anomalies) == ["compilation_suspectee"]
+
+
+def test_isolated_erratum_like_duplicate_still_flagged():
+    """Cas réel (Décret n° 59-248 du 3 décembre 1959, prod) : un « 2 » isolé
+    réapparaît (erratum d'époque, « Au lieu de… Lire… ») sans rien relancer
+    derrière lui — doit rester un doublon normal, pas une série incrustée."""
+    ordinals = [1, 2, 3, 4, 5, 2]
+    anomalies = analyze_article_sequence(_seq(ordinals))
+    assert _types(anomalies) == ["article_doublon"]
+
+
+def test_embedded_series_does_not_affect_already_flagged_compilation():
+    # ≥2 redémarrages : la branche `is_compilation` existante est inchangée,
+    # `find_embedded_series_runs` n'est même pas appelée dans ce cas.
+    anomalies = analyze_article_sequence(_seq([11, 12, 1, 11, 12, 1]))
+    assert _types(anomalies) == ["compilation_suspectee"]
 
 
 if __name__ == "__main__":

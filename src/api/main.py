@@ -840,6 +840,30 @@ def derive_numero_origine(numero_article: str) -> Optional[str]:
     return match.group("origine") if match else None
 
 
+def ordinal_from_raw_number(raw_number: str) -> Optional[int]:
+    """Numéro ordinal d'un article pour le contrôle de séquence, à partir de
+    son numéro D'ORIGINE (pas encore suffixé `_doublon_N` — appliquer
+    `derive_numero_origine` d'abord si nécessaire) :
+
+    - « premier » → 1 (forme légale officielle, non normalisée à l'affichage
+      où `numero_article` reste « premier ») ;
+    - « X nouveau » → hors séquence, ``None`` : c'est le texte de remplacement
+      cité dans un acte modificatif, pas un article séquentiel (sinon faux
+      doublon avec l'article d'exécution de même numéro).
+
+    Extrait de `ingest_hierarchy` (`insert_nodes`) pour être réutilisé sans
+    duplication par tout script qui reconstruit une séquence d'articles déjà
+    en base (ex. `scripts/reclassify_embedded_series_flags.py`).
+    """
+    low_number = raw_number.lower()
+    if "nouveau" in low_number or "nouvelle" in low_number:
+        return None
+    if low_number.startswith(("premier", "première", "premiere")):
+        return 1
+    seq_match = re.match(r"(\d+)", raw_number)
+    return int(seq_match.group(1)) if seq_match else None
+
+
 def find_missing_runs(distinct_sorted: List[int]) -> List[Tuple[int, int, int]]:
     """Plages d'entiers ABSENTES dans [min, max] de l'ensemble fourni.
 
@@ -877,6 +901,49 @@ def count_series_restarts(ordinals: List[int], restart_low: int = 3, restart_pre
     return restarts
 
 
+def find_embedded_series_runs(
+    ordinals: List[int],
+    restart_low: int = 3,
+    min_run_length: int = 3,
+) -> List[Tuple[int, int]]:
+    """Repère une série secondaire INCRUSTÉE, manquée par `count_series_restarts`
+    faute d'atteindre son seuil absolu `restart_prev_min` (calibré pour des
+    recueils longs — un acte principal COURT (loi de ratification à 2-3
+    articles, arrêté bref) suivi d'une annexe qui renumérote à partir de 1
+    (traité ratifié, cahier des charges) ne fait jamais dépasser ce seuil au
+    sommet atteint avant la chute — audit 2026-08-02 phase 4, remédiation :
+    652 signalements `article_doublon` sur 70 documents, dont la majorité
+    suivait exactement ce schéma sur 6 échantillons vérifiés (1959 à 2025).
+
+    Signal retenu, indépendant de l'ampleur absolue : une VRAIE chute (`prev`
+    STRICTEMENT supérieur — un doublon immédiat où les deux valeurs sont
+    égales n'en est pas une) vers une petite valeur, confirmée seulement si ce
+    qui suit reprend une ascension soutenue d'au moins `min_run_length`
+    valeurs. Sans cette confirmation, ce n'est pas une série qui s'installe
+    mais une réapparition isolée (erratum, doublon OCR) — qui doit rester
+    signalée normalement (cf. audit phase 2 : doublons non consécutifs,
+    `test_doublon_non_consecutif_detecte_hors_compilation`).
+
+    Renvoie les plages (index début, index fin inclus, dans `ordinals`) des
+    séries ainsi confirmées.
+    """
+    runs: List[Tuple[int, int]] = []
+    i = 1
+    n = len(ordinals)
+    while i < n:
+        prev, number = ordinals[i - 1], ordinals[i]
+        if number <= restart_low and prev > number:
+            j = i
+            while j + 1 < n and ordinals[j + 1] > ordinals[j]:
+                j += 1
+            if j - i + 1 >= min_run_length:
+                runs.append((i, j))
+                i = j + 1
+                continue
+        i += 1
+    return runs
+
+
 def analyze_article_sequence(
     sequence: List[Tuple[Optional[int], uuid.UUID]],
     *,
@@ -884,6 +951,7 @@ def analyze_article_sequence(
     restart_low: int = 3,
     restart_prev_min: int = 10,
     min_restarts: int = 2,
+    min_embedded_series_run: int = 3,
     max_anomalies: int = 200,
     already_flagged: Optional[set] = None,
 ) -> List[Dict[str, Any]]:
@@ -903,7 +971,13 @@ def analyze_article_sequence(
       restent signalés : la réapparition d'un numéro sur un acte encapsulé
       différent est le signal normal d'une nouvelle série, pas une erreur — tout
       signaler produirait exactement le bruit que cette fonction évite déjà pour
-      les petits trous (cf. plus bas) ;
+      les petits trous (cf. plus bas). Hors compilation *au sens de
+      `count_series_restarts`*, une série secondaire INCRUSTÉE peut cependant
+      être confirmée par `find_embedded_series_runs` (acte principal trop
+      court pour franchir `restart_prev_min`, ex. loi de ratification à 2
+      articles + traité annexé qui renumérote) : ses réapparitions ne sont
+      alors PAS comptées comme doublons, un seul ``compilation_suspectee``
+      les remplace (remédiation 2026-08-02 phase 4) ;
     - ``compilation_suspectee`` : la numérotation redémarre plusieurs fois
       (plusieurs séries) → le document devrait être segmenté avant publication ;
     - ``bloc_manquant`` / ``article_manquant`` : plages absentes calculées sur
@@ -925,7 +999,11 @@ def analyze_article_sequence(
     anomalies: List[Dict[str, Any]] = []
     already_flagged = already_flagged or set()
 
-    ordinals = [number for number, _ in sequence if number is not None]
+    # `filtered` et `ordinals` restent alignés index à index (indispensable
+    # pour reprojeter les plages de `find_embedded_series_runs`, calculées sur
+    # `ordinals`, vers les `article_id` correspondants).
+    filtered = [(number, article_id) for number, article_id in sequence if number is not None]
+    ordinals = [number for number, _ in filtered]
     if not ordinals:
         return anomalies[:max_anomalies]
 
@@ -933,6 +1011,9 @@ def analyze_article_sequence(
     # doublons : leur détection en dépend (cf. docstring).
     restarts = count_series_restarts(ordinals, restart_low, restart_prev_min)
     is_compilation = restarts >= min_restarts
+    embedded_runs: List[Tuple[int, int]] = (
+        [] if is_compilation else find_embedded_series_runs(ordinals, restart_low, min_embedded_series_run)
+    )
 
     # 2. Doublons.
     if is_compilation:
@@ -950,10 +1031,14 @@ def analyze_article_sequence(
             prev = number
     else:
         # Hors compilation, un ordinal ne devrait apparaître qu'une fois où
-        # qu'il soit dans la séquence.
+        # qu'il soit dans la séquence — SAUF s'il appartient à une série
+        # secondaire incrustée confirmée (`embedded_runs`) : celle-ci est
+        # signalée une seule fois, globalement, plus bas.
+        embedded_indices = {i for start, end in embedded_runs for i in range(start, end + 1)}
         seen_ordinals: Dict[int, uuid.UUID] = {}
-        for number, article_id in sequence:
-            if number is None:
+        for idx, (number, article_id) in enumerate(filtered):
+            if idx in embedded_indices:
+                seen_ordinals[number] = article_id
                 continue
             if number in seen_ordinals:
                 if article_id not in already_flagged:
@@ -964,6 +1049,23 @@ def analyze_article_sequence(
                     })
             else:
                 seen_ordinals[number] = article_id
+
+        for start, end in embedded_runs:
+            anomalies.append({
+                "type_probleme": "compilation_suspectee",
+                "article_id": None,
+                # 'warning' et non 'blocking' (défaut) : contrairement à une VRAIE
+                # compilation multi-actes (cf. plus bas), une série incrustée
+                # unique est le signal normal d'une annexe — informe sans
+                # bloquer la publication (seul 'blocking' bloque côté Laravel).
+                "severity": "warning",
+                "description": (
+                    f"La numérotation redémarre à l'article {ordinals[start]} après l'article "
+                    f"{ordinals[start - 1]} et reprend une série de {end - start + 1} articles : "
+                    "texte secondaire probable (annexe, traité ratifié, cahier des charges) plutôt "
+                    "qu'un doublon. Vérifier si une segmentation est nécessaire avant publication."
+                ),
+            })
 
     if is_compilation:
         anomalies.append({
@@ -1038,6 +1140,9 @@ def flag_article_sequence_anomalies(
             article_id=anomaly["article_id"],
             source="heuristic",
             type_probleme=anomaly["type_probleme"],
+            # Défaut du modèle ('blocking') sauf anomalie explicitement moins
+            # sévère (ex. série incrustée confirmée — cf. `analyze_article_sequence`).
+            severity=anomaly.get("severity", "blocking"),
             description=anomaly["description"],
         ))
     return len(anomalies)
@@ -1133,21 +1238,8 @@ def ingest_hierarchy(
                 )
                 db.add(article)
 
-                # Numéro ordinal pour le contrôle de séquence :
-                # - « premier » → 1 (forme légale officielle, non normalisée à
-                #   l'affichage où numero_article reste « premier ») ;
-                # - « X nouveau » → hors séquence : c'est le texte de remplacement
-                #   cité dans un acte modificatif, pas un article séquentiel (sinon
-                #   faux doublon avec l'article d'exécution de même numéro).
-                low_number = raw_number.lower()
-                if "nouveau" in low_number or "nouvelle" in low_number:
-                    ordinal = None
-                elif low_number.startswith(("premier", "première", "premiere")):
-                    ordinal = 1
-                else:
-                    seq_match = re.match(r"(\d+)", raw_number)
-                    ordinal = int(seq_match.group(1)) if seq_match else None
-                article_sequence.append((ordinal, article.id))
+                # Numéro ordinal pour le contrôle de séquence (cf. `ordinal_from_raw_number`).
+                article_sequence.append((ordinal_from_raw_number(raw_number), article.id))
 
                 version = ArticleVersion(
                     article_id=article.id,
@@ -1272,19 +1364,47 @@ def ingest_hierarchy(
         # purge (elle filtre aussi `source="heuristic"`).
         already_renamed_ids = {collision["article_id"] for collision in rename_collisions}
         flag_article_sequence_anomalies(db, document.id, article_sequence, already_flagged=already_renamed_ids)
+
+        # Séries secondaires incrustées confirmées sur la séquence ordinale
+        # COMPLÈTE (article_sequence, remplie ci-dessus) : le renommage de
+        # chaque collision reste TOUJOURS individuellement flagué — jamais
+        # silencieux, audit 2026-08-02 phase 2, cf. test_zero_renommage_sans_flag
+        # — mais un renommage qui appartient à une annexe confirmée n'est pas
+        # de même nature qu'une vraie collision non résolue : description et
+        # sévérité l'indiquent (remédiation phase 4), sans jamais réduire le
+        # nombre de flags ni leur bijection avec les renommages.
+        filtered_for_embedded = [(n, aid) for n, aid in article_sequence if n is not None]
+        ordinals_for_embedded = [n for n, _ in filtered_for_embedded]
+        embedded_run_ids = {
+            filtered_for_embedded[i][1]
+            for start, end in find_embedded_series_runs(ordinals_for_embedded)
+            for i in range(start, end + 1)
+        }
+
         for collision in rename_collisions:
+            if collision["article_id"] in embedded_run_ids:
+                severity = "warning"
+                description = (
+                    f"Numéro d'article « {collision['numero_origine']} » renommé en "
+                    f"« {collision['numero_final']} » : appartient probablement à une série "
+                    "secondaire (annexe, traité ratifié, cahier des charges) qui redémarre sa "
+                    "propre numérotation — pas nécessairement une erreur, à confirmer."
+                )
+            else:
+                severity = "blocking"
+                description = (
+                    f"Numéro d'article « {collision['numero_origine']} » en collision avec un autre "
+                    f"article du même document — renommé en « {collision['numero_final']} » pour "
+                    "respecter la contrainte d'unicité. Nécessite une revue humaine (fusion, "
+                    "re-numérotation, ou confirmation qu'il s'agit bien de deux articles distincts)."
+                )
             db.add(CurationFlag(
                 document_id=document.id,
                 article_id=collision["article_id"],
                 source="heuristic",
                 type_probleme="article_doublon",
-                severity="blocking",
-                description=(
-                    f"Numéro d'article « {collision['numero_origine']} » en collision avec un autre "
-                    f"article du même document — renommé en « {collision['numero_final']} » pour "
-                    "respecter la contrainte d'unicité. Nécessite une revue humaine (fusion, "
-                    "re-numérotation, ou confirmation qu'il s'agit bien de deux articles distincts)."
-                ),
+                severity=severity,
+                description=description,
             ))
 
 
