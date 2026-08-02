@@ -19,6 +19,7 @@ from __future__ import annotations
 import asyncio
 import datetime
 import logging
+import uuid
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -33,12 +34,13 @@ from src.api.main import (
     merge_metadata,
     resolve_legal_scope,
     sanitize_path_component,
+    split_official_journal_markdown,
 )
 from src.db.models import CurationFlag, ExtractionRun, LegalDocument
 from src.extractor.parser import LegalDocumentParser
 from src.services.minio_service import minio_service
 from src.services.mistral_service import mistral_service as default_mistral_client
-from src.structuration.journals import ensure_official_journal, titre_jo_depuis_manifeste
+from src.structuration.journals import ensure_official_journal, split_and_persist_journal_acts, titre_jo_depuis_manifeste
 from src.structuration.schema import validate_texte_juridique
 from src.structuration.typage import deduire_type_code
 
@@ -139,6 +141,29 @@ def structure_document(
 
     try:
         markdown_text = md_path.read_text(encoding="utf-8")
+    except Exception as exc:
+        return {"statut": "erreur", "document_id": None, "motif": f"lecture/parsing du markdown en échec : {exc}"}
+
+    if entry.type_source == "journal_officiel":
+        # Un Journal officiel compile souvent plusieurs actes indépendants : le
+        # lot du 21/07/2026 les a tous traités comme UN document unique,
+        # produisant des centaines de collisions de numérotation d'article
+        # (audit docs/audit-ingestion-2026-08-02.md, phase 0 — `structure-batch`
+        # ne routait jamais vers le découpeur en actes, déjà éprouvé côté
+        # upload manuel). On tente le découpage AVANT tout parsing hiérarchique
+        # global — jamais le parseur heuristique lui-même qui reste inchangé.
+        # `None` signifie « un seul acte détecté (ou aucun) » : dans ce cas le
+        # JO reste légitimement un document unique et le flux normal continue
+        # ci-dessous, exactement comme avant ce correctif.
+        try:
+            jo_result = _structure_official_journal_entry(db, data_dir, entry, md_path, markdown_text, dry_run=dry_run)
+        except Exception as exc:
+            db.rollback()
+            return {"statut": "erreur", "document_id": None, "motif": f"structuration JO en échec : {exc}"}
+        if jo_result is not None:
+            return jo_result
+
+    try:
         hierarchy = LegalDocumentParser(text_content=markdown_text).parse_hierarchy()
     except Exception as exc:
         # Un document illisible/corrompu ne doit PAS faire planter tout le lot :
@@ -387,6 +412,124 @@ def structure_document(
         return {"statut": "erreur", "document_id": None, "motif": f"échec d'insertion DB : {exc}"}
 
     return {"statut": "structure", "document_id": document.id, "motif": None}
+
+
+def _structure_official_journal_entry(
+    db: Session,
+    data_dir: Path,
+    entry: ManifestEntry,
+    md_path: Path,
+    markdown_text: str,
+    dry_run: bool,
+) -> Optional[Dict[str, Any]]:
+    """Scinde un Journal officiel en actes distincts au lieu d'un document plat.
+
+    Correctif du routage manquant constaté par l'audit du 2026-08-02 (phase 0) :
+    délègue le découpage et l'insertion à `split_and_persist_journal_acts`
+    (cœur partagé avec `scripts/reingest_flat_journals.py`), qui réutilise
+    `split_official_journal_markdown` — déjà éprouvé côté upload manuel —
+    jamais une nouvelle logique de parsing.
+
+    Renvoie `None` quand un seul acte (ou aucun) est détecté : ce n'est pas
+    une anomalie de routage (mission phase 1 : « ou un seul si le .md prouve
+    que le JO ne contient qu'un acte ») — l'appelant continue alors le flux
+    normal, qui traite le JO comme un document unique légitime, exactement
+    comme avant ce correctif.
+
+    Sans date de publication réelle, aucune fiche `official_journals` n'est
+    créée (règle « n'invente jamais », cf. `journals.py`) : les actes sont
+    insérés quand même, non rattachés. Le rattrapage de la fiche reste le
+    rôle de la commande existante `link-journals` une fois la date connue.
+    """
+    extracted_texts = split_official_journal_markdown(markdown_text)
+    if len(extracted_texts) <= 1:
+        return None
+
+    basename = entry.id.split("/")[-1]
+    if dry_run:
+        return {
+            "statut": "structure",
+            "document_id": None,
+            "document_ids": [],
+            "motif": f"{len(extracted_texts)} acte(s) détecté(s) dans le Journal officiel (dry-run)",
+        }
+
+    probe_key = build_document_key("FLUX", None, f"{extracted_texts[0]['titre'].strip()} — {basename}")
+    if db.query(LegalDocument).filter(LegalDocument.document_key == probe_key).first():
+        return {"statut": "deja_existant", "document_id": None, "document_ids": [], "motif": None}
+
+    # UUID déterministe (pas de FK, sert uniquement à scoper la clé objet
+    # MinIO) : un re-run produit exactement le même chemin de stockage —
+    # invariant « rejouable » (CLAUDE.md racine).
+    storage_scope = uuid.uuid5(uuid.NAMESPACE_URL, f"mibeko-jo-source:{basename}")
+
+    pdf_local_path = data_dir / entry.fichier
+    pdf_object_key = build_object_key("FLUX", None, storage_scope, "source/pdf", pdf_local_path.name)
+    pdf_s3_path = minio_service.upload_file(pdf_object_key, str(pdf_local_path), "application/pdf")
+    if not pdf_s3_path:
+        return {"statut": "erreur", "document_id": None, "document_ids": [], "motif": "échec de stockage MinIO pour le PDF source (JO)"}
+
+    md_object_key = build_object_key("FLUX", None, storage_scope, "extractions/markdown", md_path.name)
+    md_s3_path = minio_service.upload_file(md_object_key, str(md_path), "text/markdown")
+    if not md_s3_path:
+        return {"statut": "erreur", "document_id": None, "document_ids": [], "motif": "échec de stockage MinIO pour le markdown (JO)"}
+
+    json_path = _resolve_artefact(data_dir, "json", entry.id)
+    json_media_ref = None
+    if json_path is not None:
+        json_object_key = build_object_key("FLUX", None, storage_scope, "extractions/json", json_path.name)
+        json_s3_path = minio_service.upload_file(json_object_key, str(json_path), "application/json")
+        if json_s3_path:
+            json_media_ref = {
+                "object_key": json_object_key,
+                "file_path": json_s3_path,
+                "original_filename": json_path.name,
+                "size_bytes": json_path.stat().st_size,
+                "checksum_sha256": sha256_file(json_path),
+            }
+
+    provenance = {
+        "source_url": entry.source_url,
+        "fetched_at": entry.fetched_at,
+        "sha256": entry.sha256,
+        "routage_jo_corrige": True,
+    }
+
+    try:
+        created_documents = split_and_persist_journal_acts(
+            db,
+            markdown_text=markdown_text,
+            basename=basename,
+            official_journal_id=None,
+            date_publication=None,
+            curation_status="draft",
+            pdf_media={
+                "object_key": pdf_object_key, "file_path": pdf_s3_path,
+                "original_filename": pdf_local_path.name, "size_bytes": entry.size_bytes,
+                "checksum_sha256": entry.sha256,
+            },
+            md_media={
+                "object_key": md_object_key, "file_path": md_s3_path,
+                "original_filename": md_path.name, "size_bytes": md_path.stat().st_size,
+                "checksum_sha256": sha256_file(md_path),
+            },
+            json_media=json_media_ref,
+            provenance=provenance,
+        )
+        if not created_documents:
+            db.rollback()
+            return {"statut": "erreur", "document_id": None, "document_ids": [], "motif": "aucun acte persisté malgré >1 acte détecté"}
+        db.commit()
+    except Exception as exc:
+        db.rollback()
+        return {"statut": "erreur", "document_id": None, "document_ids": [], "motif": f"échec d'insertion DB (JO scindé) : {exc}"}
+
+    return {
+        "statut": "structure",
+        "document_id": ",".join(str(d.id) for d in created_documents),
+        "document_ids": [str(d.id) for d in created_documents],
+        "motif": None,
+    }
 
 
 def _parse_iso_date(raw_value: Optional[str]) -> Optional[datetime.date]:
