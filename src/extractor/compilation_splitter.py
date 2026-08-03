@@ -42,7 +42,7 @@ _OHADA_SUBJECTS: List[Tuple[str, str]] = [
 # Marqueurs de début d'acte encapsulé dans un recueil NON-OHADA (code pénal AEF,
 # recueils de textes usuels…). OCR-tolérant : accents optionnels, « N° » sous ses
 # variantes (N°, Nº, No, N0). Le mapping de type est volontairement grossier
-# (5 familles) — la classification fine reste celle de detect_texte_type
+# (6 familles) — la classification fine reste celle de detect_texte_type
 # (src/api/main.py). La détection est PERMISSIVE : ces bornes sont des candidates
 # à valider par un humain (cf. docstring du module).
 _ACT_NUM = r"N\s*[°ºo0]?\s*\d"
@@ -53,6 +53,10 @@ _ACT_BOUNDARY_PATTERNS: List[Tuple["re.Pattern[str]", str]] = [
     (re.compile(rf"^D[ÉE]CRET(?:[-\s]LOI)?\s+{_ACT_NUM}", re.IGNORECASE), "DEC"),
     (re.compile(rf"^ARR[ÊE]T[ÉE]\s+{_ACT_NUM}", re.IGNORECASE), "ARR"),
     (re.compile(r"^CODE\s+[A-ZÀ-Ÿ]", re.IGNORECASE), "CODE"),
+    # AVIS (Office des Changes et autres) : absent jusqu'ici, ratait des recueils
+    # entiers de JO 1959 où seuls des avis encapsulent le contenu réel — constaté
+    # sur « AVIS N° 345 DE L'OFFICE DES CHANGES » (congo-jo-1959-23.md).
+    (re.compile(rf"^AVIS\s+{_ACT_NUM}", re.IGNORECASE), "TEXTE"),
 ]
 
 
@@ -108,7 +112,12 @@ def suggest_markdown_boundaries(markdown_text: str) -> List[Dict]:
         if not _looks_like_act_title(raw_line):
             continue
         cleaned = _clean_heading_line(raw_line)
-        if not cleaned or len(cleaned) > 160:
+        # 160 était trop bas pour ce corpus : les décrets de cession/nomination
+        # avec description complète (parcelles cadastrales, qualité du
+        # bénéficiaire...) dépassent couramment 250-300 caractères en une
+        # seule phrase, sans que ce soit un faux positif — l'ancrage du motif
+        # d'acte (`^DÉCRET N° …`) reste le vrai garde-fou anti-faux-positif.
+        if not cleaned or len(cleaned) > 400:
             continue
         type_code = _detect_act_type(cleaned)
         if not type_code:

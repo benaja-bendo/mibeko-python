@@ -52,6 +52,35 @@ def test_detects_act_start_without_heading_or_uppercase():
     assert boundaries[0]["start_line"] == 2
 
 
+def test_detects_long_title_common_in_this_corpus():
+    # Cas réel (congo-jo-1990-02.md, ligne 2026) : le titre complet fait 185
+    # caractères (objet détaillé du décret) — dépassait l'ancien plafond de
+    # 160, qui écartait donc ce décret sans même le proposer à la revue
+    # humaine. D'autres décrets de cession/nomination du corpus dépassent
+    # même 300 caractères en une seule phrase légitime.
+    titre_complet = (
+        "DECRET N° 90-042 du 17 F. : er 1990, portant nonina-tion de Mr. AWAH "
+        "Cabral (Maloze), en qualite de Directeur de la Construction au "
+        "Ministere de l'Equipement, charge de I'Environnement."
+    )
+    assert len(titre_complet) > 160
+    boundaries = suggest_markdown_boundaries(titre_complet)
+    assert [b["type_code"] for b in boundaries] == ["DEC"]
+
+
+def test_detects_avis_as_act_boundary():
+    # Cas réel (congo-jo-1959-23.md, ligne 4326) : « AVIS » n'était pas un type
+    # reconnu, ratant des recueils entiers où seuls des avis encapsulent le
+    # contenu réel (Office des Changes, 1959).
+    md = "\n".join([
+        "# AVIS N° 345 DE L'OFFICE DES CHANGES relatif aux relations financières avec l'Andorre.",
+        "Le texte de l'avis...",
+    ])
+    boundaries = suggest_markdown_boundaries(md)
+    assert [b["type_code"] for b in boundaries] == ["TEXTE"]
+    assert boundaries[0]["start_line"] == 1
+
+
 def test_ignores_inline_citation_and_structure_headings():
     md = "\n".join([
         "# CODE PENAL",
