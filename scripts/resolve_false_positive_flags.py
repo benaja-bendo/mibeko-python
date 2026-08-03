@@ -191,6 +191,19 @@ FLAGS_A_RESOUDRE: List[Dict[str, str]] = [
     # --- DELIBERATION n°112/58 (37dc9a58) — 3 articles réels + signature,
     # texte intégralement présent (défaut de découpage pur, pas de perte) ---
     {"id": "250bf95f-6e26-4baf-b9eb-fcae98ccb150", "document_id": "37dc9a58-927d-416b-af9e-8eba9538492f", "type": "bloc_manquant", "note": NOTE_HISTORIQUE},
+
+    # --- Ordonnance 019-84 (de681be4) — RE-résolution 2026-08-03 après le
+    # correctif de rattachement croisé (scripts/fix_ordonnance019_loi076_
+    # rattachement.py) : ingest_hierarchy régénère TOUJOURS les flags
+    # heuristiques à chaque reconstruction de structure, sans mémoire des
+    # résolutions précédentes — ces 3 flags avaient déjà été validés
+    # légitimes ci-dessus (même document, mêmes plages, même justification),
+    # ils reviennent simplement sous de nouveaux id après la reconstruction.
+    # Le 4e flag actuel (article_doublon « 3 ») reste HORS périmètre : vraie
+    # collision Constitution/Ordonnance nécessitant une revue humaine.
+    {"id": "39af1834-61ea-4b88-8929-0f72806b4a9f", "document_id": "de681be4-6e9c-4673-8992-c0d5bacf50f8", "type": "bloc_manquant", "note": NOTE_LOI_MODIFICATIVE},
+    {"id": "6352ccfe-dfa4-4482-9903-d68e95ec086b", "document_id": "de681be4-6e9c-4673-8992-c0d5bacf50f8", "type": "bloc_manquant", "note": NOTE_LOI_MODIFICATIVE},
+    {"id": "8213fb90-83ef-48a1-9122-6ac6a3b3335a", "document_id": "de681be4-6e9c-4673-8992-c0d5bacf50f8", "type": "compilation_suspectee", "note": NOTE_LOI_MODIFICATIVE},
 ]
 
 
