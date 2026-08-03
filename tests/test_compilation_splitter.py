@@ -37,6 +37,21 @@ def test_detects_each_act_family():
     assert types == ["CODE", "LOI", "ORD", "DEC", "ARR"], types
 
 
+def test_detects_act_start_without_heading_or_uppercase():
+    # Cas réel (congo-jo-1990-02.md) : MinerU rend le début du décret en casse
+    # mixte, sans niveau de titre markdown — ni « # » ni le seuil de 80% de
+    # majuscules ne le détectaient avant ce correctif.
+    md = "\n".join([
+        "Jeanne DAMBENDZET.-",  # fin de signature de l'acte précédent
+        "DECRET N° 90-042 du 17 F. : er 1990, portant nonina-tion de Mr. AWAH Cabral (Maloze), en qualite de Directeur.",
+        "# LE PREMIER MINISTRE,",
+        "Vu la Constitution ;",
+    ])
+    boundaries = suggest_markdown_boundaries(md)
+    assert [b["type_code"] for b in boundaries] == ["DEC"]
+    assert boundaries[0]["start_line"] == 2
+
+
 def test_ignores_inline_citation_and_structure_headings():
     md = "\n".join([
         "# CODE PENAL",

@@ -62,11 +62,23 @@ def _clean_heading_line(raw_line: str) -> str:
 
 
 def _looks_like_act_title(raw_line: str) -> bool:
-    """Vrai si la ligne ressemble à un TITRE d'acte (titre markdown ou ligne en
-    grande partie capitalisée) — par opposition à un renvoi inline « Vu la loi
-    n° X » en minuscules, qu'on ne veut pas proposer comme borne."""
+    """Vrai si la ligne ressemble à un TITRE d'acte (titre markdown, ligne en
+    grande partie capitalisée, ou début reconnu par `_ACT_BOUNDARY_PATTERNS`)
+    — par opposition à un renvoi inline « Vu la loi n° X » en minuscules,
+    qu'on ne veut pas proposer comme borne.
+
+    Le troisième cas (motif d'acte reconnu) couvre les JO où MinerU rend les
+    en-têtes de décret en casse mixte, sans niveau de titre markdown — constaté
+    sur plusieurs recueils 1959/1990 où « DECRET N° 90-042 du 17 F. : er 1990,
+    portant nonina-tion de Mr. AWAH... » ne matchait ni `#` ni le seuil de
+    majuscules, et ne produisait donc aucune borne. `_detect_act_type` est déjà
+    insensible à la casse (`re.IGNORECASE`) : le réutiliser ici ne fait
+    qu'aligner la porte d'entrée sur un motif déjà éprouvé, sans changer ce
+    qu'un « type d'acte » signifie."""
     stripped = raw_line.strip()
     if stripped.startswith("#"):
+        return True
+    if _detect_act_type(_clean_heading_line(stripped)) is not None:
         return True
     letters = [c for c in stripped if c.isalpha()]
     if len(letters) < 6:
