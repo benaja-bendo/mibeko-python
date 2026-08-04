@@ -49,15 +49,21 @@ class FakeSession:
 
     def __init__(self):
         self.added = []
+        self.flushed_ids = set()
+        self._pending = []
 
     def query(self, model):
         return FakeQuery()
 
     def add(self, obj):
         self.added.append(obj)
+        self._pending.append(obj)
 
     def flush(self):
-        pass
+        for obj in self._pending:
+            if getattr(obj, "id", None) is not None:
+                self.flushed_ids.add(obj.id)
+        self._pending = []
 
 
 @pytest.fixture(autouse=True)
@@ -200,6 +206,38 @@ def test_zero_renommage_sans_flag():
     assert renamed_ids  # le fixture provoque bien des renommages
     assert renamed_ids == flagged_ids
     assert len(flags) == len(renamed_ids)  # bijection stricte : pas de doublon de flag
+
+
+def test_articles_finaux_flushes_avant_les_flags_de_collision():
+    """Régression (Code pénal 1836, 2026-08-03) : la session réelle est
+    `autoflush=False` (`src/db/database.py`) — seul le passage d'un
+    `StructureNode` flush les articles en attente (cf. `insert_nodes`). Les
+    derniers articles de l'arbre, après le dernier `StructureNode`, restaient
+    seulement `add()`-és — jamais flush()-és — au moment où la boucle de
+    collision leur attachait un `CurationFlag`. En Postgres réel ceci lève une
+    `ForeignKeyViolation` au commit (12 articles jamais flush sur ce document,
+    dont 5 référencés par un flag). `FakeSession.flushed_ids` simule cette
+    contrainte FK sans base réelle."""
+    document = _document()
+    db = FakeSession()
+    hierarchy = [
+        {"type": "TITRE", "number": "I", "title": "Titre I", "children": [_article_node("1")]},
+        # Après ce seul StructureNode (qui flush à son passage), plus aucun
+        # jusqu'à la fin de l'arbre : ces deux articles — dont la collision —
+        # ne sont couverts par AUCUN flush() sans le correctif.
+        _article_node("2"),
+        _article_node("2"),
+    ]
+
+    ingest_hierarchy(db, document, hierarchy, run_id=None, media_id=None, validation_status="pending")
+
+    flags = _doublon_flags(db)
+    assert flags  # la collision tardive est bien détectée
+    for flag in flags:
+        assert flag.article_id in db.flushed_ids, (
+            "CurationFlag référence un article jamais flush() — "
+            "violerait la contrainte de clé étrangère en Postgres réel"
+        )
 
 
 def test_aucune_collision_aucun_flag():

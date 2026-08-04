@@ -1388,6 +1388,16 @@ def ingest_hierarchy(
     if hierarchy:
         assign_dfs_order(hierarchy)
         insert_nodes(hierarchy)
+        # Flush explicite obligatoire ici : la session est `autoflush=False`
+        # (src/db/database.py) et `insert_nodes` ne flushe qu'au passage de
+        # chaque `StructureNode` (ligne ci-dessus) — les articles/PREAMBULE/
+        # SIGNATURE en fin d'arbre, après le dernier `StructureNode`, restent
+        # donc en attente jusqu'ici. Sans ce flush, la boucle `rename_collisions`
+        # plus bas ajoute des `CurationFlag` référençant CES MÊMES articles
+        # encore non persistés → violation de clé étrangère au commit final
+        # (constaté sur le Code pénal 1836 : 12 articles jamais flushés, dont 5
+        # référencés par un flag de doublon).
+        db.flush()
         # `flag_article_sequence_anomalies` PURGE d'abord (requête SQL directe
         # sur les flags heuristiques existants) puis ajoute les siens : les
         # flags de collision ci-dessous sont ajoutés APRÈS cet appel, jamais
