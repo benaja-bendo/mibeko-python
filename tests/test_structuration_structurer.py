@@ -329,6 +329,38 @@ def test_structuration_reussie_televerse_pdf_markdown_json_vers_minio(tmp_path: 
     assert len(fake_minio.uploads) == 3
 
 
+def test_hierarchie_vide_ne_marque_jamais_completed(tmp_path: Path, monkeypatch):
+    """Un texte sans aucun marqueur structurel reconnu (ARTICLE/TITRE) produit
+    une hiérarchie vide : `extraction_status` ne doit jamais rester "completed"
+    dans ce cas (même défaut constaté dans `journals.py` sur 32 actes JO du
+    02/08/2026) — sinon un document sans le moindre article se fait passer
+    pour traité."""
+    from src.db.models import LegalDocument
+
+    data_dir = tmp_path / "data"
+    entry_id = "avocat-alban/doc-prive-vide"
+    md_path = data_dir / "pipeline" / "md" / f"{entry_id}.md"
+    md_path.parent.mkdir(parents=True, exist_ok=True)
+    md_path.write_text("Ceci est un simple paragraphe sans structure juridique reconnaissable.", encoding="utf-8")
+    entry = ManifestEntry(
+        id=entry_id,
+        fichier=f"sources/sgg/JO/{entry_id.split('/')[-1]}.pdf",
+        sha256="0" * 64,
+        size_bytes=100,
+        type_source="lot_prive",
+        statut="parse",
+    )
+    db = FakeSession()
+    monkeypatch.setattr(structurer, "minio_service", FakeMinioService())
+    monkeypatch.setattr(structurer, "ingest_hierarchy", lambda *args, **kwargs: None)
+
+    result = structure_document(db, data_dir, entry, mistral_client=ValidMetadataMistralClient())
+
+    assert result["statut"] == "structure"
+    document = next(obj for obj in db.added if isinstance(obj, LegalDocument))
+    assert document.extraction_status == "failed"
+
+
 def test_echec_televersement_minio_du_pdf_annule_la_creation_du_document(tmp_path: Path, monkeypatch):
     data_dir = tmp_path / "data"
     entry = _seed_entry(data_dir, "sgg-jo/congo-jo-2026-28")

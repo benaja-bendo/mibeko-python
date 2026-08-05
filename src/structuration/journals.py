@@ -206,7 +206,10 @@ def split_and_persist_journal_acts(
                 statut="vigueur",
                 legal_scope=resolve_legal_scope(title),
                 curation_status=curation_status,
-                extraction_status="completed",
+                # Statut définitif fixé plus bas, une fois la hiérarchie de CET
+                # acte connue (pas celle du JO entier) — jamais "completed" avant
+                # de savoir si l'acte a effectivement produit un article.
+                extraction_status="processing",
             )
             db.add(document)
             db.flush()
@@ -282,6 +285,16 @@ def split_and_persist_journal_acts(
             # de backfill séparé nécessaire ici, contrairement au chemin
             # d'upload manuel historique qui n'avait jamais câblé cette
             # provenance (constat audit phase 1).
+            document.extraction_status = "completed"
+        else:
+            # Deux titres d'actes détectés côte à côte (bruit OCR, sommaire mal
+            # filtré) laissent un acte sans aucun contenu entre eux : constaté
+            # sur 32 documents du 02/08/2026, tous marqués "completed" à tort
+            # (0 structure_nodes, 0 article) avant ce correctif. "failed" les
+            # fait apparaître dans le filtre « Échecs » existant de
+            # /editor/ingestion (Ingestion.tsx) au lieu de les faire passer
+            # pour traités.
+            document.extraction_status = "failed"
 
         created.append(document)
 

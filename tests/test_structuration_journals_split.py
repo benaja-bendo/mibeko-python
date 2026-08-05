@@ -283,6 +283,40 @@ def test_jo_deux_actes_de_titre_identique_ne_fusionnent_pas(tmp_path: Path, monk
     assert len(media_rows) == 4  # 2 actes x (SOURCE_PDF + EXTRACTION_MARKDOWN), aucune collision
 
 
+MD_JO_ACTE_VIDE_ENTRE_DEUX_TITRES = (
+    "[[MIBEKO_PAGE:1]]\n"
+    "LOI N° 12-2026 DU 3 JANVIER 2026 PORTANT CODE DU TRAVAIL\n"
+    "DECRET N° 45-2026 DU 5 JANVIER 2026 PORTANT NOMINATION\n"
+    "Article 1 : Est nomme M. X au poste de Y.\n"
+    "Article 2 : Le present decret sera publie.\n"
+)
+
+
+def test_jo_acte_sans_contenu_entre_deux_titres_est_marque_en_echec(tmp_path: Path, monkeypatch):
+    """Régression du 05/08/2026 : 32 actes prod du 02/08/2026 constatés
+    `extraction_status="completed"` avec 0 `structure_nodes`/article — deux
+    titres d'acte détectés côte à côte (bruit OCR, sommaire mal filtré) ne
+    laissent aucun contenu au premier. Il ne doit plus jamais se marquer
+    "completed" : "failed" le fait apparaître dans le filtre « Échecs »
+    existant de `/editor/ingestion` (`Ingestion.tsx`) plutôt que de le faire
+    passer, à tort, pour traité."""
+    data_dir = tmp_path / "data"
+    entry = _seed_entry(data_dir, "sgg-jo/congo-jo-2026-45", MD_JO_ACTE_VIDE_ENTRE_DEUX_TITRES)
+    db = RegistryFakeSession()
+    _patch_ingest_hierarchy_noop(monkeypatch)
+    monkeypatch.setattr(structurer, "minio_service", FakeMinioService())
+
+    result = structure_document(db, data_dir, entry, mistral_client=ValidMetadataMistralClient())
+
+    assert result["statut"] == "structure"
+    documents = {d.titre_officiel: d for d in db.added if isinstance(d, LegalDocument)}
+    assert len(documents) == 2
+    loi = next(d for t, d in documents.items() if "LOI N° 12-2026" in t)
+    decret = next(d for t, d in documents.items() if "DECRET N° 45-2026" in t)
+    assert loi.extraction_status == "failed"
+    assert decret.extraction_status == "completed"
+
+
 def test_jo_multi_actes_est_idempotent_sur_rejeu(tmp_path: Path, monkeypatch):
     """Rejouer la même entrée ne doit pas dupliquer les actes déjà en base
     (retrouvés par `document_key`, comme le reste du pipeline)."""

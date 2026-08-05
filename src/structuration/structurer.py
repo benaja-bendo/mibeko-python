@@ -312,7 +312,12 @@ def structure_document(
             # ignore le document même publié : on type toujours, TEXTE en filet.
             type_code=deduire_type_code(nature, titre_officiel),
             curation_status="draft",
-            extraction_status="completed",
+            # "completed" seulement si `hierarchy` (calculée plus haut) a
+            # produit au moins un article — jamais avant `ingest_hierarchy`,
+            # sinon un document sans structure détectable (hiérarchie vide)
+            # se marque "traité" à tort (même défaut que journals.py, constaté
+            # sur 32 actes JO du 02/08/2026).
+            extraction_status="completed" if hierarchy else "failed",
         )
         provenance = {
             "source_url": entry.source_url,
