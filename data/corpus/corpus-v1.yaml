@@ -25,9 +25,17 @@ series:
   - id: jo-recents
     type: journal_officiel
     description: >
-      Journaux officiels récents (traçabilité RAG : citations, n°, dates) +
-      éditions spéciales. Périmètre MVP conseillé par docs/data/corpus-mvp-sources.md.
-    annees: [2024, 2025, 2026]
+      Journaux officiels en TEXTE NATIF (2005 → aujourd'hui) : le socle du droit
+      positif applicable. Mesure du 06/08/2026 (PyMuPDF, échantillons réels) : les
+      PDF du JO portent une couche texte à partir de 2005 (~6 000 car./page) et
+      n'en portent AUCUNE avant — d'où la coupure exacte à 2005. Ce lot s'ingère
+      donc sans OCR, ce qui en fait la priorité n° 1 de l'usine.
+      ⚠️ Ne jamais acquérir les PDF de /textes-officiels/ (lois, décrets isolés) :
+      ils sont TOUS des scans à 0 caractère, y compris les plus récents
+      (congo-loi-2023-13.pdf = 8 p., 0 car.). Le texte d'un acte s'obtient en
+      découpant le JO qui l'a publié, jamais son PDF isolé.
+    annees: [2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015,
+             2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026]
     # Pages d'index à scanner (liens /JO/{AAAA}/….pdf). La page des éditions
     # spéciales est connue ; ajouter ici la page d'archives des numéros
     # ordinaires quand elle sera identifiée au premier run.
@@ -47,8 +55,50 @@ series:
       max_numero: 60
       stop_apres_absents: 5
 
+  - id: jo-archives
+    type: journal_officiel
+    description: >
+      Journaux officiels ANTÉRIEURS à 2005 : archive historique intégralement
+      SCANNÉE (couche texte à 0 caractère, vérifié sur 1946, 1963, 1981, 1985,
+      1990, 1997, 2004). Chaque numéro exige un passage MinerU/OCR — d'où la
+      série séparée : ce lot ne doit jamais retarder `jo-recents`, qui lui ne
+      coûte aucun OCR. Valeur réelle malgré tout : de nombreux textes de cette
+      période sont encore en vigueur faute d'abrogation (code de procédure
+      pénale de 1963, code de la famille de 1984, code du travail de 1975…).
+      Années établies par énumération de l'autoindex le 06/08/2026, PAS par le
+      menu déroulant du site : celui-ci cache 12 années pourtant présentes
+      (1975, 1991 à 1996, 1998, 2000 à 2003). Seules 9 années n'ont réellement
+      aucun répertoire : 1953, 1976, 1977, 1979, 1986 à 1989 et 1999.
+      La couverture s'effondre de 1974 à 2004 (souvent 1 à 4 numéros par an,
+      contre ~25 avant 1974) : c'est un trou de l'archive en ligne, pas un trou
+      du droit — ces années-là devront être complétées hors ligne.
+    annees: [1946, 1947, 1948, 1949, 1950, 1951, 1952, 1954, 1955, 1956, 1957,
+             1958, 1959, 1960, 1961, 1962, 1963, 1964, 1965, 1966, 1967, 1968,
+             1969, 1970, 1971, 1972, 1973, 1974, 1975, 1978, 1980, 1981, 1982,
+             1983, 1984, 1985, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997,
+             1998, 2000, 2001, 2002, 2003, 2004]
+    autoindex:
+      actif: true
+    enumeration:
+      actif: true
+      max_numero: 60
+      stop_apres_absents: 5
+
 # ---------------------------------------------------------------------------
 # Textes unitaires : URL explicite obligatoire (validée humainement).
+#
+# ⚠️ AVERTISSEMENT (mesure du 06/08/2026) — avant de compléter un `<à compléter>` :
+# les PDF de textes isolés servis par sgg.cg sous /textes-officiels/ sont TOUS
+# des scans sans couche texte, quelle que soit leur date. Vérifié sur les lois
+# 2023-13 (8 p., 0 car.) et 1984-01 (7 p., 0 car.), et confirmé par l'agent de
+# contre-vérification sur 16 autres (52-83, 53-83, 022-92, 026-92, 017-89, 35-61,
+# 10-2004, 11-2004, 17-2000, 102-75, 021-1988, 013-92, 37-2012, 4-2010…).
+# Remplir ces URL revient donc à s'imposer un OCR pour un texte que le JO
+# correspondant fournit déjà en texte natif (si postérieur à 2005).
+# La bonne façon d'obtenir un code ou une loi : ingérer le JO de publication via
+# la série `jo-recents` / `jo-archives`, puis découper. N'utiliser une entrée
+# `textes` que pour ce qui n'est PAS publié au JO congolais (actes uniformes
+# OHADA, Accord de Bangui/OAPI, règlements CEMAC/UMAC, Code CIMA).
 # ---------------------------------------------------------------------------
 textes:
   - id: constitution-2015
