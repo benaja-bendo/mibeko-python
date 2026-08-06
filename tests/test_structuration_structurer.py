@@ -361,6 +361,59 @@ def test_hierarchie_vide_ne_marque_jamais_completed(tmp_path: Path, monkeypatch)
     assert document.extraction_status == "failed"
 
 
+def test_hierarchie_vide_recupere_le_texte_integral_via_ingest_hierarchy(tmp_path: Path, monkeypatch):
+    """Sibling de `test_jo_acte_sans_contenu_entre_deux_titres_est_marque_en_echec`
+    (journals.py) pour le chemin plat (non-JO) : à la différence de
+    `test_hierarchie_vide_ne_marque_jamais_completed` ci-dessus, qui vérifie
+    que `extraction_status` reste "failed", ce test vérifie le contenu
+    RÉELLEMENT transmis à `ingest_hierarchy` — le même repli « Texte intégral »
+    que `journals.py` (lignes ~268-280) doit rescaper le texte brut en un
+    unique noeud ARTICLE plutôt que de laisser le document à zéro article."""
+    from src.db.models import LegalDocument
+
+    data_dir = tmp_path / "data"
+    entry_id = "avocat-alban/doc-prive-sans-structure"
+    md_path = data_dir / "pipeline" / "md" / f"{entry_id}.md"
+    md_path.parent.mkdir(parents=True, exist_ok=True)
+    md_path.write_text(
+        "[[MIBEKO_PAGE:1]]\nCeci est un simple paragraphe sans structure juridique reconnaissable.",
+        encoding="utf-8",
+    )
+    entry = ManifestEntry(
+        id=entry_id,
+        fichier=f"sources/sgg/JO/{entry_id.split('/')[-1]}.pdf",
+        sha256="0" * 64,
+        size_bytes=100,
+        type_source="lot_prive",
+        statut="parse",
+    )
+    db = FakeSession()
+    monkeypatch.setattr(structurer, "minio_service", FakeMinioService())
+    captured = {}
+
+    def fake_ingest_hierarchy(db, document, hierarchy, **kwargs):
+        captured["hierarchy"] = hierarchy
+
+    monkeypatch.setattr(structurer, "ingest_hierarchy", fake_ingest_hierarchy)
+
+    result = structure_document(db, data_dir, entry, mistral_client=ValidMetadataMistralClient())
+
+    assert result["statut"] == "structure"
+    document = next(obj for obj in db.added if isinstance(obj, LegalDocument))
+    # Le repli sauve le contenu, pas le statut : `extraction_status` reste
+    # "failed" (calculé sur la hiérarchie d'origine, avant repli) — c'est
+    # `test_hierarchie_vide_ne_marque_jamais_completed` qui couvre ce point.
+    assert document.extraction_status == "failed"
+    hierarchy = captured["hierarchy"]
+    assert len(hierarchy) == 1
+    node = hierarchy[0]
+    assert node["type"] == "ARTICLE"
+    assert node["number"] == "Unique"
+    assert node["title"] == "Texte intégral"
+    assert "Ceci est un simple paragraphe" in node["content"]
+    assert node["page"] == 1
+
+
 def test_echec_televersement_minio_du_pdf_annule_la_creation_du_document(tmp_path: Path, monkeypatch):
     data_dir = tmp_path / "data"
     entry = _seed_entry(data_dir, "sgg-jo/congo-jo-2026-28")

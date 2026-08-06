@@ -19,6 +19,7 @@ from __future__ import annotations
 import asyncio
 import datetime
 import logging
+import re
 import uuid
 from pathlib import Path
 from typing import Any, Dict, Optional
@@ -417,6 +418,23 @@ def structure_document(
         )
         db.add(run)
         db.flush()
+
+        if not hierarchy and markdown_text.strip():
+            # Repli « Texte intégral » (même logique que journals.py, lignes
+            # ~268-280 : un texte sans dispositif reconnu — proclamation,
+            # discours — n'est pas pour autant vide) : plutôt que zéro article,
+            # un unique noeud ARTICLE porte le texte brut. Ne change PAS
+            # `extraction_status`, déjà figé plus haut sur la hiérarchie
+            # d'origine : ce repli sauve le contenu, pas le statut.
+            first_marker = re.search(r"\[\[MIBEKO_PAGE:(\d+)\]\]", markdown_text)
+            hierarchy = [{
+                "type": "ARTICLE",
+                "number": "Unique",
+                "title": "Texte intégral",
+                "content": markdown_text.strip(),
+                "page": int(first_marker.group(1)) if first_marker else None,
+                "children": [],
+            }]
 
         ingest_hierarchy(db, document, hierarchy, run_id=run.id, media_id=markdown_media.id, validation_status="pending")
 
