@@ -20,11 +20,14 @@ volée (get_textpage_ocr nécessite Tesseract et coûte cher sur un lot entier).
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from src.extractor.text_quality import OCR_QUALITY_WARN_THRESHOLD, compute_ocr_quality
+
+logger = logging.getLogger(__name__)
 
 # En dessous de ce nombre de caractères natifs par page, on considère qu'il n'y
 # a pas de couche texte exploitable (PDF scanné/image) — quel que soit le score
@@ -43,12 +46,27 @@ class TriageResult:
 
 
 def extract_native_text_by_page(pdf_path: Path) -> List[str]:
-    """Texte natif par page, SANS OCR. Une page sans couche texte renvoie ''."""
+    """Texte natif par page, SANS OCR. Une page sans couche texte renvoie ''.
+
+    Un PDF illisible (0 octet, tronqué, non-PDF) renvoie une liste vide plutôt
+    que de lever : sgg.cg sert réellement de tels fichiers (congo-jo-2026-17.pdf
+    fait 0 octet à la source, congo-jo-2025-45.pdf 822 octets), et sans ce
+    garde-fou un seul d'entre eux interrompait tout un lot de plusieurs
+    centaines de documents. L'appelant voit alors 0 page / 0 car. et route le
+    document vers MinerU, qui échouera proprement et sera signalé.
+    """
     import fitz  # PyMuPDF — import différé (convention déjà suivie par parser.py)
 
-    doc = fitz.open(str(pdf_path))
+    try:
+        doc = fitz.open(str(pdf_path))
+    except Exception:  # fitz lève EmptyFileError / FileDataError selon le cas
+        logger.warning("PDF illisible, ignoré au triage : %s", pdf_path)
+        return []
     try:
         return [page.get_text("text") for page in doc]
+    except Exception:
+        logger.warning("PDF partiellement illisible, ignoré au triage : %s", pdf_path)
+        return []
     finally:
         doc.close()
 
