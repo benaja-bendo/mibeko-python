@@ -144,6 +144,15 @@ def structure_document(
     except Exception as exc:
         return {"statut": "erreur", "document_id": None, "motif": f"lecture/parsing du markdown en échec : {exc}"}
 
+    # PyMuPDF mappe parfois un glyphe de puce personnalisé (police custom d'un
+    # export Word→PDF) sur le codepoint U+0000 plutôt que sur '•' — constaté
+    # sur congo-jo-2021-02-sp.pdf. Postgres refuse tout NUL dans une chaîne
+    # (« string literal cannot contain NUL ») : un seul caractère fait échouer
+    # l'insertion de l'acte entier. Aucune perte de sens : ce n'est jamais un
+    # caractère de contenu juridique légitime.
+    if "\x00" in markdown_text:
+        markdown_text = markdown_text.replace("\x00", "")
+
     if entry.type_source == "journal_officiel":
         # Un Journal officiel compile souvent plusieurs actes indépendants : le
         # lot du 21/07/2026 les a tous traités comme UN document unique,
