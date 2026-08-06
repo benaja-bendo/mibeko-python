@@ -21,6 +21,14 @@ OCR_ARTIFACT_REPLACEMENTS: Tuple[Tuple[str, str], ...] = (
     (r"\bDÉCRÊT\b", "DECRET"),
     (r"\bARRETÊ\b", "ARRETE"),
     (r"\bN°\s*o\b", "N°"),
+    # Ligature 'ﬁ' (U+FB01) mal décomposée par certains PDF (polices custom
+    # d'export Word→PDF) : le glyphe compose ressort avec un espace parasite
+    # ('ﬁ xe' au lieu de 'fixe') — constaté sur la loi n°33-2023 (gestion
+    # durable de l'environnement). Toujours substituable : 'ﬁ' seul n'existe
+    # dans aucun mot français, l'espace qui suit est l'artefact, pas une vraie
+    # coupure de mots.
+    (r"ﬁ\s?", "fi"),
+    (r"ﬂ\s?", "fl"),
 )
 
 _OCR_ARTIFACT_PATTERNS: Tuple[re.Pattern, ...] = tuple(
