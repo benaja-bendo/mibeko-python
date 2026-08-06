@@ -109,6 +109,7 @@ class EtatCible:
     references_nor: frozenset
     ids_journaux: frozenset
     journaux_par_date_numero: dict  # (publication_date, number) -> id cible
+    institutions_par_sigle: dict  # sigle -> id cible
 
 
 @dataclass
@@ -119,10 +120,31 @@ class PlanPush:
     ecartes: list = field(default_factory=list)  # (DocumentSource, motif)
     journaux_a_creer: list = field(default_factory=list)  # JournalSource
     remap_journaux: dict = field(default_factory=dict)  # id source -> id cible
+    remap_institutions: dict = field(default_factory=dict)  # id source -> id cible
+
+
+def filtrer_par_document_keys(documents: list, document_keys) -> tuple:
+    """Réduit la source à un jeu précis de document_key, pour pousser un
+    document urgent sans attendre ni pousser tout le reste du plan.
+
+    Sur un corpus de plusieurs dizaines de milliers de documents, calculer le
+    plan complet (dry-run compris : `executer_push` fait ~7 requêtes PAR
+    document, pas de traitement par lot) devient très long — constaté en
+    conditions réelles le 06/08/2026 sur 52 456 documents. `--document-key`
+    contourne le problème en amont, avant même `construire_plan`.
+
+    Renvoie `(documents_filtres, manquants)` — `manquants` est l'ensemble des
+    clés demandées mais absentes de la source (faute de frappe la plupart du
+    temps) : à l'appelant de décider s'il s'agit d'un refus ou d'un avertissement.
+    """
+    voulus = set(document_keys)
+    filtres = [d for d in documents if d.document_key in voulus]
+    trouves = {d.document_key for d in filtres}
+    return filtres, voulus - trouves
 
 
 def construire_plan(
-    documents: list, journaux: list, cible: EtatCible
+    documents: list, journaux: list, cible: EtatCible, institutions_source: dict | None = None
 ) -> PlanPush:
     """Calcule le plan additif. Fonction pure : aucune connexion, testable à sec.
 
@@ -134,10 +156,29 @@ def construire_plan(
        est déjà prise dans la cible — pousser échouerait sur l'index partiel, et
        « le même nom » sans « la même source » mérite un arbitrage humain, pas un
        écrasement.
+
+    `institutions_source` (sigle -> id source, optionnel) calcule le remap
+    `legal_documents.institution_id` : dev et prod ont chacun leur propre jeu
+    d'UUID pour les MÊMES 7 institutions (AN, CC, CS, GOUV, JO, PR, SEN),
+    générées indépendamment lors de chaque seed — constaté en conditions
+    réelles le 06/08/2026, où pousser un acte de JO échouait systématiquement
+    sur `legal_documents_institution_id_fkey` (id dev absent de la cible).
+    Contrairement aux journaux officiels, une institution n'est jamais créée
+    ici : les 7 sont un référentiel stable des deux côtés — un sigle source
+    sans correspondance en cible n'est pas remappé et échouera au COPY,
+    volontairement (signal net plutôt qu'une création silencieuse).
     """
     plan = PlanPush()
     journaux_par_id = {j.id: j for j in journaux}
     journaux_requis: dict = {}
+
+    if institutions_source:
+        plan.remap_institutions = {
+            id_source: cible.institutions_par_sigle[sigle]
+            for sigle, id_source in institutions_source.items()
+            if sigle in cible.institutions_par_sigle
+            and cible.institutions_par_sigle[sigle] != id_source
+        }
 
     for doc in documents:
         if doc.id in cible.ids_documents:
@@ -269,6 +310,18 @@ def charger_documents_source(engine) -> tuple:
     return documents, journaux
 
 
+def charger_institutions_par_sigle(engine) -> dict:
+    """sigle -> id, pour un environnement donné (source ou cible) — même
+    requête des deux côtés, réutilisée pour construire le remap institution_id."""
+    from sqlalchemy import text
+
+    with engine.connect() as cnx:
+        return {
+            sigle: str(id_)
+            for id_, sigle in cnx.execute(text("select id, sigle from institutions"))
+        }
+
+
 def charger_etat_cible(engine) -> EtatCible:
     """Photographie la cible (production) : ids, checksums et clés d'unicité."""
     from sqlalchemy import text
@@ -308,6 +361,7 @@ def charger_etat_cible(engine) -> EtatCible:
             ),
             ids_journaux=colonne("select id::text from official_journals"),
             journaux_par_date_numero=journaux,
+            institutions_par_sigle=charger_institutions_par_sigle(engine),
         )
 
 
@@ -434,8 +488,10 @@ def _colonnes_copiables(cnx_source, cnx_cible, table: str) -> list:
     return [c for c in source if c in cible and c not in COLONNES_EXCLUES]
 
 
-def _expression_selection(table: str, colonnes: list, remap_journaux: dict) -> str:
-    """SELECT de copie : identique à la source, à deux réécritures près."""
+def _expression_selection(table: str, colonnes: list, remap_journaux: dict,
+                          remap_institutions: dict | None = None) -> str:
+    """SELECT de copie : identique à la source, à quelques réécritures près."""
+    remap_institutions = remap_institutions or {}
     exprs = []
     for col in colonnes:
         if table == "legal_documents" and col == "curation_status":
@@ -451,20 +507,32 @@ def _expression_selection(table: str, colonnes: list, remap_journaux: dict) -> s
                 f"(case official_journal_id {cas} else official_journal_id end) "
                 "as official_journal_id"
             )
+        elif table == "legal_documents" and col == "institution_id" and remap_institutions:
+            # Même référentiel des deux côtés (AN, CC, CS, GOUV, JO, PR, SEN),
+            # mais des UUID générés indépendamment à chaque seed dev/prod —
+            # constaté le 06/08/2026 (FK institution_id systématiquement en
+            # échec sur tout acte de JO). cf. docstring de construire_plan.
+            cas = " ".join(
+                f"when '{src}'::uuid then '{dst}'::uuid"
+                for src, dst in remap_institutions.items()
+            )
+            exprs.append(
+                f"(case institution_id {cas} else institution_id end) as institution_id"
+            )
         else:
             exprs.append(col)
     return ", ".join(exprs)
 
 
 def copier_table(cnx_source, cnx_cible, table: str, where: str, params: dict,
-                 remap_journaux: dict) -> int:
+                 remap_journaux: dict, remap_institutions: dict | None = None) -> int:
     """Copie les lignes d'une table via COPY TO/FROM (sans perte de types).
 
     Le trigger BEFORE INSERT de la cible (search_tsv) s'applique : COPY déclenche
     les triggers de lignes.
     """
     colonnes = _colonnes_copiables(cnx_source, cnx_cible, table)
-    selection = _expression_selection(table, colonnes, remap_journaux)
+    selection = _expression_selection(table, colonnes, remap_journaux, remap_institutions)
 
     tampon = io.StringIO()
     with cnx_source.cursor() as cur:
@@ -527,6 +595,70 @@ def copier_objets_minio(client_source, client_cible, bucket: str, objets: list,
     return resultats
 
 
+def _compter_par_document_dry_run(engine_source, ids: list) -> dict:
+    """Équivalent GROUPÉ des comptages de `TABLES_PAR_DOCUMENT`, pour le rapport
+    dry-run uniquement : une poignée de requêtes sur l'ensemble des documents au
+    lieu d'une par document. Constaté à l'usage : la version « un document =
+    une requête par table » (7 tables × N documents) prend des dizaines de
+    minutes sans aucun affichage de progression dès que N dépasse quelques
+    milliers — inutilisable en pratique sur un corpus de cette taille. Le mode
+    écriture, lui, reste document-par-document (voir `executer_push`) : c'est
+    voulu, pour la reprise après interruption, pas un oubli.
+
+    Renvoie {document_id: {table: compte}}, avec les mêmes clés/valeurs que la
+    boucle d'origine produirait pour chaque document.
+    """
+    from sqlalchemy import text
+
+    if not ids:
+        return {}
+
+    compte: dict = {doc_id: {"legal_documents": 1} for doc_id in ids}
+    with engine_source.connect() as cnx:
+        for table in ("media_files", "extraction_runs", "structure_nodes", "articles"):
+            for doc_id, n in cnx.execute(
+                text(
+                    f"select document_id, count(*) from {table} "
+                    "where document_id = any(CAST(:ids AS uuid[])) group by document_id"
+                ),
+                {"ids": ids},
+            ):
+                compte[str(doc_id)][table] = n
+
+        for doc_id, n in cnx.execute(
+            text(
+                "select a.document_id, count(av.id) from articles a "
+                "join article_versions av on av.article_id = a.id "
+                "where a.document_id = any(CAST(:ids AS uuid[])) group by a.document_id"
+            ),
+            {"ids": ids},
+        ):
+            compte[str(doc_id)]["article_versions"] = n
+
+        # curation_flags : même clause OR que l'original (document_id direct OU
+        # via un article du document) — DISTINCT sur l'id du flag pour ne pas
+        # compter deux fois une ligne qui satisferait les deux branches.
+        for doc_id, n in cnx.execute(
+            text(
+                "select doc_id, count(distinct flag_id) from ("
+                "  select document_id as doc_id, id as flag_id from curation_flags"
+                "  where document_id = any(CAST(:ids AS uuid[]))"
+                "  union all"
+                "  select a.document_id as doc_id, cf.id as flag_id"
+                "  from curation_flags cf join articles a on a.id = cf.article_id"
+                "  where a.document_id = any(CAST(:ids AS uuid[]))"
+                ") sous_requete group by doc_id"
+            ),
+            {"ids": ids},
+        ):
+            compte[str(doc_id)]["curation_flags"] = n
+
+    for doc_id in ids:
+        for table, _ in TABLES_PAR_DOCUMENT:
+            compte[doc_id].setdefault(table, 0)
+    return compte
+
+
 def executer_push(engine_source, engine_cible, plan: PlanPush,
                   client_minio_source=None, client_minio_cible=None,
                   bucket: str = "mibeko-documents", dry_run: bool = True,
@@ -563,21 +695,43 @@ def executer_push(engine_source, engine_cible, plan: PlanPush,
             )
             cnx_cbl.commit()
 
-        # -- Documents, un par un ----------------------------------------------
+        # -- Documents ------------------------------------------------------
+        # Dry-run : comptages groupés (une poignée de requêtes pour tout
+        # a_pousser) — voir _compter_par_document_dry_run. Écriture : un
+        # document = une transaction, inchangé, pour la reprise après
+        # interruption (chaque commit rend la cible cohérente).
+        objets_par_doc: dict = {}
+        comptes_par_doc: dict = {}
+        if dry_run and a_pousser:
+            ids = [doc.id for doc in a_pousser]
+            comptes_par_doc = _compter_par_document_dry_run(engine_source, ids)
+            with engine_source.connect() as cnx:
+                for doc_id, k, c in cnx.execute(
+                    text(
+                        "select document_id, object_key, checksum_sha256 "
+                        "from media_files where document_id = any(CAST(:ids AS uuid[]))"
+                    ),
+                    {"ids": ids},
+                ):
+                    objets_par_doc.setdefault(str(doc_id), []).append((k, c))
+
         for doc in a_pousser:
             entree = {"document": doc.libelle(), "id": doc.id, "tables": {},
                       "objets": []}
-            with engine_source.connect() as cnx:
-                objets = [
-                    (k, c)
-                    for k, c in cnx.execute(
-                        text(
-                            "select object_key, checksum_sha256 from media_files "
-                            "where document_id = :doc"
-                        ),
-                        {"doc": doc.id},
-                    )
-                ]
+            if dry_run:
+                objets = objets_par_doc.get(doc.id, [])
+            else:
+                with engine_source.connect() as cnx:
+                    objets = [
+                        (k, c)
+                        for k, c in cnx.execute(
+                            text(
+                                "select object_key, checksum_sha256 from media_files "
+                                "where document_id = :doc"
+                            ),
+                            {"doc": doc.id},
+                        )
+                    ]
             if client_minio_source is not None and client_minio_cible is not None:
                 entree["objets"] = copier_objets_minio(
                     client_minio_source, client_minio_cible, bucket, objets, dry_run
@@ -585,20 +739,14 @@ def executer_push(engine_source, engine_cible, plan: PlanPush,
             elif objets:
                 entree["objets"] = [(k, "à téléverser") for k, _ in objets]
 
-            for table, where in TABLES_PAR_DOCUMENT:
-                if dry_run:
-                    with cnx_src.cursor() as cur:
-                        cur.execute(
-                            f"select count(*) from {table} where {where}",
-                            {"doc": doc.id},
-                        )
-                        entree["tables"][table] = cur.fetchone()[0]
-                else:
+            if dry_run:
+                entree["tables"] = comptes_par_doc.get(doc.id, {})
+            else:
+                for table, where in TABLES_PAR_DOCUMENT:
                     entree["tables"][table] = copier_table(
                         cnx_src, cnx_cbl, table, where, {"doc": doc.id},
-                        plan.remap_journaux,
+                        plan.remap_journaux, plan.remap_institutions,
                     )
-            if not dry_run:
                 cnx_cbl.commit()
                 logger.info("Poussé : %s (%s)", doc.libelle(), doc.id)
             rapport["documents"].append(entree)

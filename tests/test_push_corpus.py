@@ -20,6 +20,7 @@ from src.promotion.push_corpus import (
     creer_client_minio_ecriture,
     creer_client_minio_source,
     creer_engine_source,
+    filtrer_par_document_keys,
 )
 
 
@@ -50,6 +51,7 @@ def _cible(**surcharge) -> EtatCible:
         references_nor=frozenset(),
         ids_journaux=frozenset(),
         journaux_par_date_numero={},
+        institutions_par_sigle={},
     )
     base.update(surcharge)
     return EtatCible(**base)
@@ -60,6 +62,25 @@ def test_document_neuf_est_pousse():
 
     assert len(plan.a_pousser) == 1
     assert plan.ecartes == []
+
+
+def test_filtrer_par_document_keys_reduit_a_la_selection():
+    voulu = _doc(document_key="loi-voulue")
+    autre = _doc(id="00000000-0000-0000-0000-000000000002", document_key="autre-loi")
+
+    filtres, manquants = filtrer_par_document_keys([voulu, autre], ["loi-voulue"])
+
+    assert filtres == [voulu]
+    assert manquants == set()
+
+
+def test_filtrer_par_document_keys_signale_les_cles_absentes():
+    doc = _doc(document_key="loi-voulue")
+
+    filtres, manquants = filtrer_par_document_keys([doc], ["loi-voulue", "loi-inconnue"])
+
+    assert filtres == [doc]
+    assert manquants == {"loi-inconnue"}
 
 
 def test_document_deja_pousse_est_ecarte_en_premier():
@@ -199,6 +220,50 @@ def test_les_autres_tables_ne_sont_pas_reecrites():
     assert _expression_selection("articles", ["id", "numero_article"], {}) == (
         "id, numero_article"
     )
+
+
+def test_remap_institutions_reecrit_la_fk():
+    """dev et prod ont chacun leurs propres UUID pour le même référentiel de 7
+    institutions (AN, CC, CS, GOUV, JO, PR, SEN) — constaté en conditions
+    réelles le 06/08/2026 : institution_id, jamais remappé, faisait échouer
+    tout push d'acte de JO sur legal_documents_institution_id_fkey."""
+    expr = _expression_selection(
+        "legal_documents", ["institution_id"], {}, {"jo-src": "jo-cible"}
+    )
+
+    assert "case institution_id" in expr
+    assert "'jo-src'::uuid then 'jo-cible'::uuid" in expr
+
+
+def test_construire_plan_calcule_le_remap_institutions_par_sigle():
+    plan = construire_plan(
+        [_doc()], [],
+        _cible(institutions_par_sigle={"JO": "id-institution-cible"}),
+        institutions_source={"JO": "id-institution-source"},
+    )
+
+    assert plan.remap_institutions == {"id-institution-source": "id-institution-cible"}
+
+
+def test_construire_plan_n_inclut_pas_les_sigles_deja_alignes():
+    """Même id des deux côtés : rien à remapper, la CASE ne doit pas exister."""
+    plan = construire_plan(
+        [_doc()], [],
+        _cible(institutions_par_sigle={"JO": "meme-id"}),
+        institutions_source={"JO": "meme-id"},
+    )
+
+    assert plan.remap_institutions == {}
+
+
+def test_construire_plan_ignore_un_sigle_absent_de_la_cible():
+    plan = construire_plan(
+        [_doc()], [],
+        _cible(institutions_par_sigle={}),
+        institutions_source={"JO": "id-institution-source"},
+    )
+
+    assert plan.remap_institutions == {}
 
 
 # ---------------------------------------------------------------------------

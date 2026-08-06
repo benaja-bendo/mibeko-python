@@ -454,10 +454,19 @@ def prod_preflight():
 @click.option("--execute", "executer", is_flag=True,
               help="Écrit réellement dans la cible (défaut : dry-run, aucune écriture).")
 @click.option("--limit", "limite", type=int, default=None,
-              help="Ne pousser que les N premiers documents du plan (lot pilote).")
+              help="Ne pousser que les N premiers documents du plan (lot pilote). "
+                   "Le plan est trié par created_at croissant : sur un corpus qui a "
+                   "grossi par lots successifs, un petit N sélectionne les plus anciens, "
+                   "jamais les plus récents — utiliser --document-key pour cibler un "
+                   "document précis quel que soit son âge.")
+@click.option("--document-key", "document_keys", multiple=True,
+              help="Ne pousser que ce(s) document_key précis (répétable). Prioritaire sur "
+                   "--limit ; utile pour un document urgent sans attendre/pousser tout le "
+                   "reste du plan (un corpus de dizaines de milliers de documents rend le "
+                   "plan complet — même en dry-run — très long : ~7 requêtes par document).")
 @click.option("--rapport", "rapport_chemin", default=None,
               help="Chemin du rapport JSON (défaut : data/pipeline/meta/push-<horodatage>.json).")
-def push_corpus(executer, limite, rapport_chemin):
+def push_corpus(executer, limite, document_keys, rapport_chemin):
     """Pousse le corpus validé du dev vers la PROD, de façon additive (staging only).
 
     Dry-run par défaut : le plan est calculé via le profil de lecture seule
@@ -477,11 +486,13 @@ def push_corpus(executer, limite, rapport_chemin):
         charger_cible_ecriture,
         charger_documents_source,
         charger_etat_cible,
+        charger_institutions_par_sigle,
         construire_plan,
         creer_client_minio_ecriture,
         creer_client_minio_source,
         creer_engine_source,
         executer_push,
+        filtrer_par_document_keys,
     )
 
     click.secho("\n  ███  PUSH CORPUS → PRODUCTION  ███\n", fg="red", bold=True)
@@ -502,9 +513,24 @@ def push_corpus(executer, limite, rapport_chemin):
         click.secho("Préflight : lecture seule prouvée (SQLSTATE 25006).", fg="green")
 
     documents, journaux = charger_documents_source(engine_source)
-    plan = construire_plan(documents, journaux, charger_etat_cible(engine_ro))
+    total_source = len(documents)
 
-    click.secho(f"\n  Source : {len(documents)} documents vivants", fg="cyan")
+    if document_keys:
+        documents, manquants = filtrer_par_document_keys(documents, document_keys)
+        if manquants:
+            click.secho(f"Refus : document_key introuvable dans la source : "
+                        f"{', '.join(sorted(manquants))}", fg="red")
+            raise SystemExit(1)
+        limite = None  # --document-key cible une liste exacte, --limit n'a plus de sens
+
+    institutions_source = charger_institutions_par_sigle(engine_source)
+    plan = construire_plan(
+        documents, journaux, charger_etat_cible(engine_ro), institutions_source
+    )
+
+    click.secho(f"\n  Source : {total_source} documents vivants"
+                + (f" ({len(documents)} sélectionnés par --document-key)" if document_keys else ""),
+                fg="cyan")
     click.secho(f"  À pousser : {len(plan.a_pousser)}"
                 + (f" (limité à {limite})" if limite else ""), fg="cyan")
     click.secho(f"  Écartés : {len(plan.ecartes)}", fg="cyan")
