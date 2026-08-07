@@ -150,12 +150,22 @@ def construire_plan(
 
     Un document est écarté si — dans cet ordre, le premier motif l'emporte :
     1. son id existe déjà dans la cible (déjà poussé : idempotence) ;
-    2. l'un de ses PDF sources (SHA-256) existe déjà dans la cible (même texte,
-       autre forme : la version de la production fait foi) ;
+    2. l'un de ses PDF sources (SHA-256) existe déjà dans la cible ET ce SHA-256
+       n'est partagé par AUCUN AUTRE document de la source (même texte, autre
+       forme : la version de la production fait foi) ;
     3. l'une de ses clés d'unicité (slug, document_key, stock_code, reference_nor)
        est déjà prise dans la cible — pousser échouerait sur l'index partiel, et
        « le même nom » sans « la même source » mérite un arbitrage humain, pas un
        écrasement.
+
+    Le filtre « SHA-256 partagé par aucun autre document » de la règle 2 est
+    indispensable : un Journal officiel scindé produit N documents qui référencent
+    TOUS le même PDF source. Constaté en conditions réelles le 07/08/2026 — les 12
+    actes du JO 2023-48 partagent un unique SHA-256 ; sans ce filtre, avoir poussé
+    UN SEUL de ces actes (la loi n°33-2023) aurait fait écarter les 11 autres à
+    tort au push suivant, sous prétexte que « leur » source était déjà en
+    production. La règle garde tout son sens pour un vrai doublon 1 PDF = 1
+    document (l'usage originel : un texte unitaire réingéré sous un autre id).
 
     `institutions_source` (sigle -> id source, optionnel) calcule le remap
     `legal_documents.institution_id` : dev et prod ont chacun leur propre jeu
@@ -172,6 +182,16 @@ def construire_plan(
     journaux_par_id = {j.id: j for j in journaux}
     journaux_requis: dict = {}
 
+    # Occurrences de chaque SHA-256 DANS LA SOURCE : un checksum porté par
+    # plusieurs documents source signale un JO scindé (documents légitimement
+    # distincts, même PDF) — la collision de la règle 2 ne doit alors jamais
+    # s'appliquer, sous peine d'écarter toute la fratrie dès qu'un seul acte
+    # a déjà été poussé.
+    occurrences_checksum: dict = {}
+    for doc in documents:
+        for checksum in doc.checksums_sources:
+            occurrences_checksum[checksum] = occurrences_checksum.get(checksum, 0) + 1
+
     if institutions_source:
         plan.remap_institutions = {
             id_source: cible.institutions_par_sigle[sigle]
@@ -185,7 +205,10 @@ def construire_plan(
             plan.ecartes.append((doc, "déjà poussé (id présent dans la cible)"))
             continue
 
-        deja_la = doc.checksums_sources & cible.checksums_sources
+        checksums_non_partages = {
+            c for c in doc.checksums_sources if occurrences_checksum.get(c, 0) == 1
+        }
+        deja_la = checksums_non_partages & cible.checksums_sources
         if deja_la:
             plan.ecartes.append(
                 (doc, f"source déjà en production (SHA-256 {sorted(deja_la)[0][:12]}…)")

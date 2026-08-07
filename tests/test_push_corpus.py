@@ -347,3 +347,39 @@ def test_l_import_ne_cree_ni_engine_ni_client():
     )
 
     assert resultat.returncode == 0, resultat.stdout + resultat.stderr
+
+
+def test_jo_scinde_les_actes_fratrie_passent_meme_si_un_est_deja_pousse():
+    """Un JO scindé produit N documents qui référencent tous le même PDF
+    source. Confirmé en conditions réelles le 07/08/2026 : les 12 actes du
+    JO 2023-48 partagent un unique SHA-256 — avoir poussé un seul acte
+    (la loi n°33-2023) ne doit jamais faire écarter les 11 autres au
+    prétexte que « leur » source est déjà en production."""
+    checksum_partage = frozenset({"sha-jo-2023-48"})
+    fratrie = [
+        _doc(id=f"acte-{i}", document_key=f"flux:acte-{i}", checksums_sources=checksum_partage)
+        for i in range(3)
+    ]
+    # Le premier acte est déjà en cible (poussé lors d'une session antérieure),
+    # sous un id DIFFÉRENT de celui de la source — d'où la présence de son
+    # SHA-256 dans checksums_sources de la cible, mais pas de son id source.
+    cible = _cible(checksums_sources=frozenset({"sha-jo-2023-48"}))
+
+    plan = construire_plan(fratrie, [], cible)
+
+    assert {d.id for d in plan.a_pousser} == {"acte-0", "acte-1", "acte-2"}
+    assert plan.ecartes == []
+
+
+def test_vrai_doublon_1_pdf_1_document_reste_ecarte():
+    """La règle d'origine garde tout son sens quand le SHA-256 n'est PAS
+    partagé par un autre document source : un texte unitaire réingéré sous
+    un autre id reste un doublon à écarter."""
+    doc_unitaire = _doc(document_key="flux:texte-unitaire", checksums_sources=frozenset({"sha-unique"}))
+    cible = _cible(checksums_sources=frozenset({"sha-unique"}))
+
+    plan = construire_plan([doc_unitaire], [], cible)
+
+    assert plan.a_pousser == []
+    assert len(plan.ecartes) == 1
+    assert "source déjà en production" in plan.ecartes[0][1]
