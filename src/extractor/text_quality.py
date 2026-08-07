@@ -10,6 +10,8 @@ import os
 import re
 from typing import Any, Dict, Tuple
 
+from src.extractor.latex_artifacts import strip_latex_artifacts
+
 # Artefacts OCR fréquents (confusions caractères) et leur correction. Servent à
 # DEUX usages : (1) la réparation par sanitize_legal_text avant découpage ;
 # (2) le calcul de l'indicateur de qualité OCR (compute_ocr_quality) qui mesure
@@ -37,9 +39,18 @@ _OCR_ARTIFACT_PATTERNS: Tuple[re.Pattern, ...] = tuple(
 
 
 def sanitize_legal_text(content: str) -> str:
-    """Corrige quelques artefacts OCR fréquents avant découpage ou parsing."""
+    """Corrige quelques artefacts OCR fréquents avant découpage ou parsing.
 
-    result = content
+    Le déséchappement LaTeX vient EN PREMIER : MinerU rend « le 1er juin » en
+    ``le $1^{\\text{er}}$ juin``, et les motifs OCR ci-dessous raisonnent sur du
+    texte, pas sur du mode mathématique (``$\\mathbf{N}^{\\circ}$ o`` ne
+    ressemble à « N° o » qu'une fois déséchappé). Il reste DÉLIBÉRÉMENT hors de
+    `OCR_ARTIFACT_REPLACEMENTS`, qui sert aussi de source au calcul de densité
+    de `compute_ocr_quality` : un échappement LaTeX n'est pas une confusion de
+    caractères, l'y compter fausserait le score de lisibilité.
+    """
+
+    result = strip_latex_artifacts(content)
     for (pattern, replacement), compiled in zip(OCR_ARTIFACT_REPLACEMENTS, _OCR_ARTIFACT_PATTERNS):
         result = compiled.sub(replacement, result)
     return result

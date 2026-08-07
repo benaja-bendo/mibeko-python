@@ -2,6 +2,8 @@ import logging
 import re
 from typing import Any, Dict, List, Optional, Tuple
 
+from src.extractor.latex_artifacts import strip_latex_artifacts
+
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
@@ -229,10 +231,18 @@ class LegalDocumentParser:
         self.text_content = text_content
 
     def extract_text(self) -> str:
-        """Retourne le texte fourni ou l'extrait du PDF via PyMuPDF (OCR si dispo)."""
+        """Retourne le texte fourni ou l'extrait du PDF via PyMuPDF (OCR si dispo).
+
+        Les échappements LaTeX de MinerU sont retirés ICI, en amont de tout :
+        c'est le seul point par lequel passent les contenus d'articles, de
+        préambules, de signatures et les intitulés de nœuds, quel que soit
+        l'appelant (pipeline live, upload manuel, scripts de rattrapage). En
+        prime, les regex de détection ci-dessous voient « Article 1er » là où
+        elles lisaient ``Article $1^{\\text{er}}$``.
+        """
 
         if self.text_content:
-            return self.text_content
+            return strip_latex_artifacts(self.text_content)
 
         if not self.pdf_path:
             return ""
@@ -253,7 +263,7 @@ class LegalDocumentParser:
             clean_lines = [line.strip() for line in text.split("\n") if line.strip()]
             full_text.append("\n".join(clean_lines))
 
-        return "\n".join(full_text)
+        return strip_latex_artifacts("\n".join(full_text))
 
     def parse_hierarchy(self) -> List[Dict[str, Any]]:
         """Analyse le texte et reconstruit l'arborescence du document."""
