@@ -764,6 +764,90 @@ def _looks_like_real_act_title(rest_of_line: str) -> bool:
     return bool(re.match(r"[\s’'A-ZÀ-Ÿ\-]{8,}", rest_of_line))
 
 
+# Formule d'autorité qui ouvre le dispositif (« Le Président de la République, »,
+# « Le ministre d'Etat, ministre de… », « L'Assemblée nationale et le Sénat »,
+# « Vu … », « Considérant … ») — jamais le prolongement d'un objet de titre
+# (« portant… », « relatif à… », « fixant… »). Marqueur d'arrêt fiable pour la
+# continuation multi-ligne du titre : constaté identique sur les lois, décrets
+# ET arrêtés d'un même JO (congo-jo-2023-48). Un rôle générique (« Le ministre »,
+# sans nommer le ministère) suffit : pas besoin d'énumérer chaque intitulé de
+# portefeuille, qui varie à chaque remaniement.
+_CORPS_ACTE_REGEX = re.compile(
+    r"^(?:"
+    r"L['’]ASSEMBL[ÉE]E\s+NATIONALE"
+    r"|LE\s+S[ÉE]NAT\b"
+    r"|LE\s+PR[ÉE]SIDENT\s+DE\s+LA\s+R[ÉE]PUBLIQUE"
+    r"|LE\s+GOUVERNEMENT\b"
+    r"|LE\s+PREMIER\s+MINISTRE"
+    r"|LE\s+MINISTRE|LA\s+MINISTRE"
+    r"|LE\s+SECR[ÉE]TAIRE\s+G[ÉE]N[ÉE]RAL"
+    r"|LE\s+DIRECTEUR\s+G[ÉE]N[ÉE]RAL|LA\s+DIRECTRICE\s+G[ÉE]N[ÉE]RALE"
+    r"|VU\b|CONSID[ÉE]RANT\b"
+    r"|ARTICLE\s+(?:PREMIER|1(?:ER)?)\b"
+    r")",
+    flags=re.IGNORECASE,
+)
+
+# Bruit de saut de page (pied de page + en-tête répétée du JO) — jamais la
+# continuation d'un titre. Constaté en avalant le pied de page dans le titre
+# d'un « acte en abrégé » (avis de nomination/agrément court, sans structure
+# Vu/Considérant, donc sans marqueur `_CORPS_ACTE_REGEX` pour arrêter avant) :
+# « Arrêté n° 10444 du 20 décembre 2010. La \n société DELTA MARINE… \n 1108 \n
+# Journal officiel de la République du Congo \n N° 52-2010 \n [[MIBEKO_PAGE:29]] »
+# — sans ce garde-fou, le numéro de page et l'en-tête entraient dans le titre.
+_SAUT_DE_PAGE_REGEX = re.compile(
+    r"^(?:\[\[MIBEKO_PAGE:\d+\]\]|\d{1,5}|Journal\s+off[ﬁi]ciel\s+de\s+la\s+R[ÉE]publique|N°\s*\d+[\-–]\d{4}\s*$)",
+    flags=re.IGNORECASE,
+)
+
+# La continuation multi-ligne n'est activée QUE pour les genres normatifs
+# (LOI/DÉCRET/ARRÊTÉ/ORDONNANCE/DÉCISION), où le motif « n° + date + portant/
+# relatif à/fixant… » est stable et où `_CORPS_ACTE_REGEX` fournit un marqueur
+# d'arrêt fiable. Les genres narratifs (COMMUNIQUÉ, DISCOURS, ALLOCUTION,
+# RAPPORT, NOTE, AVIS, CIRCULAIRE…) n'ont pas cette structure — un communiqué
+# enchaîne souvent directement sur une phrase de récit, sans aucune formule
+# d'autorité pour arrêter la continuation. Gardés au comportement historique
+# (titre = première ligne) plutôt que de risquer d'avaler le corps du texte.
+_TYPES_ACTE_NORMATIF_REGEX = re.compile(
+    r"^(LOI|D[ÉE]CRET|ARR[ÊE]T[ÉE]|ORDONNANCE|D[ÉE]CISION)\b", flags=re.IGNORECASE
+)
+
+# Un titre s'étend rarement sur plus de quelques lignes physiques — plafond de
+# sécurité pour ne jamais avaler tout un acte si aucun marqueur d'arrêt n'est
+# reconnu (texte atypique, formule d'autorité absente du référentiel ci-dessus).
+_MAX_LIGNES_CONTINUATION_TITRE = 6
+
+
+def _continuer_titre_multiligne(
+    lignes: List[str], depart: int, title_regex: "re.Pattern[str]"
+) -> tuple[List[str], int]:
+    """Accumule les lignes qui prolongent un titre coupé par la mise en page du
+    PDF (ex. « Loi n° 33-2023 du 17 novembre 2023 portant » / « gestion durable
+    de l'environnement en République du » / « Congo »), jusqu'à un marqueur
+    fiable de début de dispositif.
+
+    Renvoie (lignes_de_continuation, index_de_la_première_ligne_non_consommée).
+    Ne consomme rien si la ligne suivante est vide, démarre un nouvel acte, ou
+    ouvre le dispositif : dans ces cas le titre initial reste tel quel, comme
+    avant ce correctif.
+    """
+    suite: List[str] = []
+    i = depart
+    while i < len(lignes) and len(suite) < _MAX_LIGNES_CONTINUATION_TITRE:
+        candidate = lignes[i].strip()
+        if not candidate:
+            break
+        if title_regex.match(candidate):
+            break
+        if _CORPS_ACTE_REGEX.match(candidate):
+            break
+        if _SAUT_DE_PAGE_REGEX.match(candidate):
+            break
+        suite.append(candidate)
+        i += 1
+    return suite, i
+
+
 def split_official_journal_markdown(markdown_text: str) -> List[Dict[str, str]]:
     """Découpe un Journal Officiel en actes unitaires à partir du markdown OCRisé."""
 
@@ -790,7 +874,9 @@ def split_official_journal_markdown(markdown_text: str) -> List[Dict[str, str]]:
                 }
             )
 
-    for raw_line in lines:
+    index = 0
+    while index < len(lines):
+        raw_line = lines[index]
         line = raw_line.strip()
         # Retire les décorations markdown (#, gras) avant détection du titre.
         cleaned = re.sub(r"^[#>\s]*[*_]{0,3}\s*", "", line)
@@ -806,15 +892,21 @@ def split_official_journal_markdown(markdown_text: str) -> List[Dict[str, str]]:
             is_act_start = _looks_like_real_act_title(cleaned[title_match.end(1):])
         if is_act_start:
             flush()
-            current_title = cleaned
-            # La ligne de titre n'est PAS reversée dans le contenu : elle est déjà
-            # conservée comme titre de l'acte (titre_officiel). Évite de répéter le
-            # titre en tête du préambule.
+            if _TYPES_ACTE_NORMATIF_REGEX.match(cleaned):
+                suite, index = _continuer_titre_multiligne(lines, index + 1, title_regex)
+            else:
+                suite, index = [], index + 1
+            current_title = " ".join([cleaned, *suite]) if suite else cleaned
+            # La ligne de titre (et ses éventuelles lignes de continuation) n'est
+            # PAS reversée dans le contenu : elle est déjà conservée comme titre
+            # de l'acte (titre_officiel). Évite de répéter le titre en tête du
+            # préambule.
             current_lines = []
             continue
 
         if current_title:
             current_lines.append(raw_line)
+        index += 1
 
     flush()
     return _dedupe_official_journal_acts(texts)
