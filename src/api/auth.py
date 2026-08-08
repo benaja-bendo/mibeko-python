@@ -57,17 +57,26 @@ def _resolve_token(plain_token: str, db: Session) -> Optional[AuthenticatedUser]
     token_hash = hashlib.sha256(token_value.encode()).hexdigest()
 
     # Miroir de la validation Sanctum côté Laravel : hash du token, mais aussi
-    # expiration (expires_at NULL = sans limite) et type du modèle porteur —
-    # seuls les tokens d'un User Laravel ('App\Models\User') sont acceptés ici.
+    # expiration (expires_at NULL = sans limite), type du modèle porteur —
+    # seuls les tokens d'un User Laravel ('App\Models\User') sont acceptés ici —
+    # et scope SoftDeletes : côté Laravel, un utilisateur soft-deleted est
+    # invisible du guard même si son token n'a pas été révoqué → 401. Sans le
+    # filtre deleted_at, ce service ré-authentifiait ces comptes, require_editor
+    # compris (le rôle Spatie survit à la suppression). La suspension, elle,
+    # n'est PAS vérifiée par requête côté Laravel (suspendre révoque les
+    # tokens, UserController::applyStatus) : on ne la vérifie pas non plus ici,
+    # par parité. NB : u.id et pat.tokenable_id sont tous deux uuid en base —
+    # une jointure directe, sans cast ::text qui priverait la requête des index.
     row = db.execute(
         text("""
             SELECT pat.tokenable_id, u.name, u.email
             FROM personal_access_tokens pat
-            JOIN users u ON u.id::text = pat.tokenable_id::text
+            JOIN users u ON u.id = pat.tokenable_id
             WHERE pat.id = :token_id
               AND pat.token = :token_hash
               AND (pat.expires_at IS NULL OR pat.expires_at > NOW())
               AND pat.tokenable_type = 'App\\Models\\User'
+              AND u.deleted_at IS NULL
         """),
         {"token_id": token_id, "token_hash": token_hash},
     ).fetchone()
@@ -92,7 +101,7 @@ def _resolve_token(plain_token: str, db: Session) -> Optional[AuthenticatedUser]
             SELECT r.name
             FROM model_has_roles mhr
             JOIN roles r ON r.id = mhr.role_id
-            WHERE mhr.model_id::text = :user_id AND mhr.model_type = 'App\\Models\\User'
+            WHERE mhr.model_id = :user_id AND mhr.model_type = 'App\\Models\\User'
         """),
         {"user_id": str(row.tokenable_id)},
     ).fetchall()
