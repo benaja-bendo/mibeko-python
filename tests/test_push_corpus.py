@@ -121,7 +121,8 @@ def test_source_deja_en_production_est_ecartee():
     ],
 )
 def test_collision_d_unicite_ecarte_le_document(champ, valeur, cle_cible):
-    """Pousser quand même échouerait sur l'index partiel ; on écarte en le disant."""
+    """Pousser quand même échouerait sur l'index unique (total pour le slug,
+    partiels pour les trois autres clés) ; on écarte en le disant."""
     plan = construire_plan(
         [_doc(**{champ: valeur})], [], _cible(**{cle_cible: frozenset({valeur})})
     )

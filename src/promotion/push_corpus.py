@@ -154,9 +154,10 @@ def construire_plan(
        n'est partagé par AUCUN AUTRE document de la source (même texte, autre
        forme : la version de la production fait foi) ;
     3. l'une de ses clés d'unicité (slug, document_key, stock_code, reference_nor)
-       est déjà prise dans la cible — pousser échouerait sur l'index partiel, et
-       « le même nom » sans « la même source » mérite un arbitrage humain, pas un
-       écrasement.
+       est déjà prise dans la cible — pousser échouerait sur l'index unique
+       (`legal_documents_slug_unique` est TOTAL, les trois `uq_legal_documents_*`
+       sont partiels sur `deleted_at IS NULL`), et « le même nom » sans « la même
+       source » mérite un arbitrage humain, pas un écrasement.
 
     Le filtre « SHA-256 partagé par aucun autre document » de la règle 2 est
     indispensable : un Journal officiel scindé produit N documents qui référencent
@@ -370,9 +371,13 @@ def charger_etat_cible(engine) -> EtatCible:
                 "join legal_documents d on d.id = m.document_id "
                 "where m.file_category = 'SOURCE_PDF' and d.deleted_at is null"
             ),
-            slugs=colonne(
-                "select slug from legal_documents where deleted_at is null"
-            ),
+            # slug : seule clé d'unicité portée par un index TOTAL
+            # (`legal_documents_slug_unique`, sans clause WHERE) — un slug porté
+            # par un document soft-deleted dans la cible bloque quand même
+            # l'INSERT. On lit donc TOUS les slugs, comme ids_documents ; les
+            # trois autres clés restent filtrées, leurs index étant partiels
+            # (`WHERE … deleted_at IS NULL`).
+            slugs=colonne("select slug from legal_documents"),
             document_keys=colonne(
                 "select document_key from legal_documents where deleted_at is null"
             ),
