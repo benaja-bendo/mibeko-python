@@ -54,7 +54,7 @@ class LegalDocument(Base):
     institution_id = Column(UUID(as_uuid=True), ForeignKey("institutions.id"), nullable=True)
     official_journal_id = Column(UUID(as_uuid=True), ForeignKey("official_journals.id"), nullable=True)
     document_key = Column(Text, nullable=True)
-    document_role = Column(String(20), default="FLUX")
+    document_role = Column(String(20), nullable=False, default="FLUX")
     consolidation_as_of = Column(Date, nullable=True)
     stock_code = Column(String(100), nullable=True)
     titre_officiel = Column(Text, nullable=False)
@@ -63,7 +63,7 @@ class LegalDocument(Base):
     date_publication = Column(Date, nullable=True)
     date_entree_vigueur = Column(Date, nullable=True)
     statut = Column(String(20), default="vigueur")
-    legal_scope = Column(String(20), default="national")
+    legal_scope = Column(String(20), nullable=False, default="national")
     curation_status = Column(String(255), default="draft")
     extraction_status = Column(String(20), nullable=True)
     metadata_ = Column("metadata", JSONB, default=dict)
@@ -87,12 +87,12 @@ class MediaFile(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     document_id = Column(UUID(as_uuid=True), ForeignKey("legal_documents.id", ondelete="CASCADE"), nullable=False)
     file_path = Column(String(512), nullable=False)
-    storage_provider = Column(String(20), default="MINIO")
-    bucket_name = Column(String(100), default="mibeko-documents")
+    storage_provider = Column(String(20), nullable=False, default="MINIO")
+    bucket_name = Column(String(100), nullable=False, default="mibeko-documents")
     object_key = Column(String(512), nullable=False)
     original_filename = Column(String(255), nullable=True)
     mime_type = Column(String(100), default="application/pdf")
-    file_category = Column(String(50), default="SOURCE_PDF")
+    file_category = Column(String(50), nullable=False, default="SOURCE_PDF")
     file_size = Column(BigInteger, nullable=True)
     checksum_sha256 = Column(String(64), nullable=True)
     description = Column(String(255), nullable=True)
@@ -109,8 +109,8 @@ class ExtractionRun(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     document_id = Column(UUID(as_uuid=True), ForeignKey("legal_documents.id", ondelete="CASCADE"), nullable=False)
-    source = Column(String(50), default="MINERU")
-    status = Column(String(20), default="queued")
+    source = Column(String(50), nullable=False, default="MINERU")
+    status = Column(String(20), nullable=False, default="queued")
     started_at = Column(DateTime, default=datetime.utcnow)
     finished_at = Column(DateTime, nullable=True)
     source_media_file_id = Column(UUID(as_uuid=True), ForeignKey("media_files.id", ondelete="SET NULL"), nullable=True)
@@ -173,11 +173,12 @@ class CurationFlag(Base):
     article_id = Column(UUID(as_uuid=True), ForeignKey("articles.id"), nullable=True)
     # Origine du signalement : la couche heuristique (numérotation) tague
     # 'heuristic' pour pouvoir être purgée/recréée sans toucher aux flags
-    # humains ni aux autres couches (structural/llm) côté Laravel.
-    source = Column(String(20), default="heuristic")
+    # humains ni aux autres couches (structural/llm) côté Laravel. Le défaut
+    # DB est 'human' (flags créés depuis l'éditeur) : divergence VOULUE.
+    source = Column(String(20), nullable=False, default="heuristic")
     type_probleme = Column(String(50), nullable=True)
     # Seul 'blocking' empêche la publication côté Laravel (warning/info informent).
-    severity = Column(String(20), default="blocking")
+    severity = Column(String(20), nullable=False, default="blocking")
     description = Column(Text, nullable=True)
     resolved = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)

@@ -1,4 +1,18 @@
 -- ===========================================================
+-- RÉFÉRENCE DOCUMENTAIRE — NE JAMAIS REJOUER SUR UNE BASE VIVANTE
+-- (le bloc NETTOYAGE ci-dessous commence par des DROP TABLE … CASCADE,
+-- users et audits compris). Le schéma réel est piloté par les migrations
+-- Laravel (mibeko-tableau-de-bord) ; ce fichier s'y resynchronise À LA MAIN.
+--
+-- Périmètre : uniquement les tables lues/écrites par ce service et le socle
+-- Laravel historique. Les tables produit gérées exclusivement côté Laravel
+-- (familles dossiers*/echeance*, subscriptions*, user_settings,
+-- user_invitations, legal_watch_dispatches, app_settings, contact_messages,
+-- newsletter_subscriptions, agent_message_feedback…) sont volontairement
+-- ABSENTES d'ici : ne pas les ajouter, se référer aux migrations Laravel.
+-- ===========================================================
+
+-- ===========================================================
 -- INITIALISATION DES EXTENSIONS
 -- ===========================================================
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";   -- Pour les IDs uniques
@@ -167,7 +181,8 @@ CREATE TABLE IF NOT EXISTS audits (
     user_id UUID,
     event VARCHAR(255) NOT NULL,
     auditable_type VARCHAR(255) NOT NULL,
-    auditable_id UUID NOT NULL,
+    -- VARCHAR, pas UUID : le morph Laravel sérialise l'id en texte.
+    auditable_id VARCHAR(255) NOT NULL,
     old_values TEXT,
     new_values TEXT,
     url TEXT,
@@ -203,7 +218,8 @@ CREATE TABLE official_journals (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     title VARCHAR(255) NOT NULL,
     publication_date DATE NOT NULL,
-    file_path VARCHAR(255) NOT NULL,
+    -- 512 : aligné sur media_files.file_path (migration widen_official_journals_file_path).
+    file_path VARCHAR(512) NOT NULL,
     transcription_status VARCHAR(255),
     is_published BOOLEAN DEFAULT FALSE,
     number VARCHAR(255),
@@ -228,16 +244,22 @@ CREATE TABLE legal_documents (
     stock_code VARCHAR(100),
 
     titre_officiel TEXT NOT NULL,
+    -- Slug public (site/app) généré côté Laravel ; NULL tant que non backfillé.
+    slug VARCHAR(255),
     reference_nor VARCHAR(50),
 
     date_signature DATE,
     date_publication DATE,
     date_entree_vigueur DATE,
+    -- Marque une date d'entrée en vigueur volontairement inconnue (vs simplement absente).
+    date_entree_vigueur_inconnue BOOLEAN NOT NULL DEFAULT FALSE,
 
     statut VARCHAR(20) CHECK (statut IN ('vigueur', 'abroge', 'projet')) DEFAULT 'vigueur',
     legal_scope VARCHAR(20) NOT NULL CHECK (legal_scope IN ('national', 'ohada', 'communautaire')) DEFAULT 'national',
     curation_status VARCHAR(255) DEFAULT 'draft',
     extraction_status VARCHAR(20),
+    -- Veille juridique : dernier envoi de notification pour ce document.
+    watch_notified_at TIMESTAMP(0) WITHOUT TIME ZONE,
 
     metadata JSONB DEFAULT '{}'::jsonb,
 
@@ -248,6 +270,13 @@ CREATE TABLE legal_documents (
 
 CREATE INDEX idx_legal_docs_metadata ON legal_documents USING GIN (metadata);
 CREATE INDEX IF NOT EXISTS legal_documents_legal_scope_index ON legal_documents(legal_scope);
+CREATE INDEX IF NOT EXISTS legal_documents_watch_idx ON legal_documents(curation_status, watch_notified_at);
+
+-- ⚠️ Unicité TOTALE (contrairement aux autres index uniques partiels ci-dessous,
+-- elle inclut les lignes soft-deleted) : un slug reste réservé même après
+-- suppression logique du document.
+CREATE UNIQUE INDEX IF NOT EXISTS legal_documents_slug_unique
+ON legal_documents(slug);
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_legal_documents_document_key
 ON legal_documents(document_key)
@@ -260,6 +289,10 @@ WHERE stock_code IS NOT NULL AND deleted_at IS NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS uq_legal_documents_reference_nor
 ON legal_documents(reference_nor)
 WHERE reference_nor IS NOT NULL AND deleted_at IS NULL;
+
+ALTER TABLE legal_documents
+    ADD CONSTRAINT legal_documents_curation_status_check
+    CHECK (curation_status IN ('draft', 'review', 'validated', 'published'));
 
 ALTER TABLE legal_documents
     ADD CONSTRAINT chk_legal_documents_role_logic
@@ -295,7 +328,7 @@ ON media_files(document_id, object_key);
 CREATE TABLE extraction_runs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     document_id UUID NOT NULL REFERENCES legal_documents(id) ON DELETE CASCADE,
-    source VARCHAR(50) NOT NULL CHECK (source IN ('MINERU', 'MANUAL_UPLOAD', 'PARSING')) DEFAULT 'MINERU',
+    source VARCHAR(50) NOT NULL CHECK (source IN ('MINERU', 'MANUAL_UPLOAD', 'PARSING', 'STRUCTURATION_LLM')) DEFAULT 'MINERU',
     status VARCHAR(20) NOT NULL CHECK (status IN ('queued', 'running', 'succeeded', 'failed', 'partial', 'needs_review', 'discarded')) DEFAULT 'queued',
     started_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     finished_at TIMESTAMP(0) WITHOUT TIME ZONE,
@@ -365,6 +398,9 @@ CREATE TABLE article_versions (
     source_locator JSONB DEFAULT '{}'::jsonb,
     validation_status VARCHAR(255) DEFAULT 'pending',
     is_verified BOOLEAN DEFAULT FALSE,
+    -- Traçabilité de la revue humaine (éditeur Laravel).
+    reviewed_by UUID REFERENCES users(id) ON DELETE SET NULL,
+    reviewed_at TIMESTAMP(0) WITHOUT TIME ZONE,
     created_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT chk_article_versions_validity_not_empty CHECK (NOT isempty(validity_period)),
@@ -438,10 +474,10 @@ CREATE TABLE curation_flags (
     node_id UUID REFERENCES structure_nodes(id) ON DELETE CASCADE,
     -- Origine : heuristic (numérotation) | structural | llm | human. Les flags
     -- 'human' ne sont jamais purgés par les détecteurs automatiques.
-    source VARCHAR(20) DEFAULT 'human',
+    source VARCHAR(20) NOT NULL DEFAULT 'human',
     type_probleme VARCHAR(50),
     -- Seul 'blocking' empêche la publication ; 'warning'/'info' informent.
-    severity VARCHAR(20) DEFAULT 'blocking',
+    severity VARCHAR(20) NOT NULL DEFAULT 'blocking',
     description TEXT,
     -- Proposition de correction (LLM) — jamais appliquée automatiquement.
     suggestion JSONB,
@@ -466,6 +502,10 @@ CREATE TABLE tags (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) NOT NULL UNIQUE,
     slug VARCHAR(255) NOT NULL UNIQUE,
+    -- Taxonomie éditoriale (thèmes de vie) : présentation côté front.
+    icon VARCHAR(255),
+    description VARCHAR(255),
+    display_order INTEGER NOT NULL DEFAULT 0,
     created_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
