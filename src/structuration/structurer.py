@@ -47,7 +47,7 @@ from src.structuration.typage import deduire_type_code
 
 logger = logging.getLogger("mibeko.structuration")
 
-STOCK_TYPE_SOURCES = {"code"}
+STOCK_TYPE_SOURCES = {"code", "acte_uniforme"}
 
 # Mistral a l'interdiction d'inventer : si l'en-tête ne permet pas de déduire
 # la nature, elle est reprise du manifeste (provenance connue et tracée, pas
