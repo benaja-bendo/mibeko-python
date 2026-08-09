@@ -803,6 +803,221 @@ def proposer_nettoyage_masthead(chemin_sortie, statuts, limite):
         fg="yellow",
     )
 
+@cli.command("proposer-normalisation-tableaux")
+@click.option("--sortie", "chemin_sortie", default="backups/tableaux-mapping.json",
+              show_default=True, help="Fichier JSON à produire (format mibeko:corriger-contenu-article).")
+@click.option("--signalements", "chemin_signalements", default="backups/tableaux-signalements.json",
+              show_default=True, help="Fichier JSON des tableaux à vérifier contre le PDF source.")
+@click.option("--statuts", default="published", show_default=True,
+              help="Statuts de curation à examiner, séparés par des virgules ('' = tous).")
+@click.option("--limite", type=int, default=0,
+              help="N'émettre que les N premières propositions (lot pilote).")
+@click.option("--connexion", type=click.Choice(["prod", "dev"]), default="prod", show_default=True,
+              help="Base visée. 'prod' exige une lecture seule prouvée ; 'dev' tape la base locale.")
+def proposer_normalisation_tableaux(chemin_sortie, chemin_signalements, statuts, limite, connexion):
+    """Propose la normalisation des tableaux HTML restés dans le corpus (mibeko-python#12).
+
+    LECTURE SEULE : cette commande n'écrit rien. Elle produit un mapping destiné
+    à `php artisan mibeko:corriger-contenu-article`, qui applique les corrections
+    par `PATCH /articles/{id}` — versionné, audité, réversible.
+
+    La conversion vient de `src/extractor/tables.py`, exactement le même code que
+    l'ingestion : prévention et remédiation ne peuvent pas diverger. Contenu et
+    forme canonique partent dans le MÊME appel : servir un texte linéarisé sans
+    sa structure ferait perdre aux surfaces le tableau qu'elles savent rendre.
+
+    Idempotente : la normalisation est un point fixe sur un texte déjà propre,
+    donc relancer ne repropose rien. Le lot pilote se fait avec `--limite`.
+    """
+    import json
+    import os
+
+    from sqlalchemy import text
+
+    from src.extractor.tables import (
+        contains_table_markup,
+        looks_like_subscription_grid,
+        normalize_content,
+    )
+
+    liste_statuts = [s.strip() for s in statuts.split(",") if s.strip()]
+
+    if connexion == "prod":
+        from src.db.prod_readonly import (
+            LectureSeuleNonProuvee,
+            SQLSTATE_LECTURE_SEULE,
+            assert_read_only,
+            charger_cible,
+            creer_engine,
+        )
+
+        click.secho("\n  ███  PRODUCTION — lecture seule  ███\n", fg="red", bold=True)
+        try:
+            cible = charger_cible()
+            engine = creer_engine(cible)
+            sqlstate = assert_read_only(engine)
+        except LectureSeuleNonProuvee as exc:
+            click.secho(f"Lecture seule NON prouvée : {exc}", fg="red")
+            raise SystemExit(1)
+        except Exception as exc:
+            click.secho(f"Connexion impossible : {exc}", fg="red")
+            raise SystemExit(1)
+
+        click.echo(f"  Cible : {cible.resume()}")
+        if sqlstate == SQLSTATE_LECTURE_SEULE:
+            click.secho("  Lecture seule prouvée (SQLSTATE 25006).\n", fg="green")
+    else:
+        from src.db.database import engine  # base de développement
+
+        click.secho("\n  Base de développement\n", fg="cyan")
+
+    # Version ACTIVE (`upper_inf`) : celle que lisent le site public et l'export
+    # PDF. Filtres SoftDeletes obligatoires des deux côtés de la jointure.
+    requete = (
+        "select a.id::text, a.numero_article, d.titre_officiel, "
+        "av.contenu_texte, av.source_locator "
+        "from article_versions av "
+        "join articles a on a.id = av.article_id and a.deleted_at is null "
+        "join legal_documents d on d.id = a.document_id and d.deleted_at is null "
+        "where upper_inf(av.validity_period) and av.contenu_texte like '%<table%' "
+        + ("and d.curation_status = any(:statuts) " if liste_statuts else "")
+        + "order by d.created_at, a.ordre_affichage"
+    )
+    params = {"statuts": liste_statuts} if liste_statuts else {}
+
+    with engine.connect() as cnx:
+        lignes = cnx.execute(text(requete), params).fetchall()
+
+    click.echo(f"  Articles porteurs de balisage de tableau : {len(lignes)}")
+
+    mapping = []
+    signalements = []
+    documents = set()
+    tableaux_total = 0
+
+    for article_id, numero, titre, contenu, locator in lignes:
+        if not contenu or not contains_table_markup(contenu):
+            continue
+
+        normalise, tableaux, anomalies = normalize_content(contenu)
+
+        if not normalise.strip():
+            # Un article dont il ne resterait rien n'est pas une correction de
+            # contenu : c'est un faux article, décision humaine.
+            signalements.append({
+                "id": article_id,
+                "document": f"{titre} — art. {numero}",
+                "anomalie": "contenu_vide_apres_normalisation",
+                "message": "La normalisation ne laisse aucun texte : article à retirer, pas à corriger.",
+            })
+            continue
+
+        if contains_table_markup(normalise):
+            # Balisage encore présent après normalisation : le tableau a été
+            # TRONQUÉ à l'ingestion (l'ancien parseur ne lisait que la ligne
+            # d'ouverture d'un tableau multi-lignes). Le reste du tableau n'est
+            # pas en base : aucun patch de texte ne peut le reconstituer, seule
+            # une réingestion du document le peut. Proposer une correction ici
+            # écrirait une nouvelle version identique à l'ancienne.
+            signalements.append({
+                "id": article_id,
+                "document": f"{titre} — art. {numero}",
+                "anomalie": "tableau_tronque_a_lingestion",
+                "severite": "blocking",
+                "message": (
+                    "Tableau tronqué à l'ingestion : le contenu manquant n'est pas en base. "
+                    "À RÉINGÉRER (le parseur corrigé réassemble les tableaux multi-lignes), "
+                    "pas à corriger par patch de texte."
+                ),
+            })
+            continue
+
+        if normalise == contenu and not tableaux:
+            # Rien à faire : ne pas écrire une version identique à l'ancienne.
+            continue
+
+        # Le locator existant est CONSERVÉ (page, zone PDF) et seulement enrichi :
+        # écraser la citabilité par page pour corriger un tableau serait un
+        # échange perdant.
+        nouveau_locator = dict(locator or {})
+        nouveau_locator["tables"] = [tableau.to_locator() for tableau in tableaux]
+
+        documents.add(titre)
+        tableaux_total += len(tableaux)
+        mapping.append({
+            "id": article_id,
+            "document": f"{titre} — art. {numero}",
+            "motif": "Normalisation des tableaux MinerU (mibeko-python#12)",
+            "content": normalise,
+            "source_locator": nouveau_locator,
+        })
+
+        for anomalie in anomalies:
+            signalements.append({
+                "id": article_id,
+                "document": f"{titre} — art. {numero}",
+                "anomalie": anomalie.code,
+                "severite": anomalie.severity,
+                "message": anomalie.message,
+            })
+
+        if any(looks_like_subscription_grid(tableau) for tableau in tableaux):
+            # La correction de texte reste proposée (mieux vaut un tableau
+            # lisible qu'un mur de balises en attendant), mais le vrai geste
+            # est le retrait : ce n'est pas du droit.
+            signalements.append({
+                "id": article_id,
+                "document": f"{titre} — art. {numero}",
+                "anomalie": "tableau_ours_journal_officiel",
+                "severite": "warning",
+                "message": (
+                    "Grille tarifaire d'abonnement au Journal officiel : faux article. "
+                    "À retirer via `php artisan mibeko:retirer-articles-masthead` "
+                    "plutôt qu'à corriger."
+                ),
+            })
+
+        if limite and len(mapping) >= limite:
+            break
+
+    click.secho(
+        f"\n  À normaliser : {len(mapping)} article(s) dans {len(documents)} document(s), "
+        f"{tableaux_total} tableau(x).",
+        fg="cyan",
+    )
+    for entree in mapping[:5]:
+        click.echo(f"    · {entree['document'][:78]}")
+    if len(mapping) > 5:
+        click.echo(f"    … et {len(mapping) - 5} autres")
+
+    if signalements:
+        click.secho(
+            f"\n  ⚠ {len(signalements)} signalement(s) — à vérifier contre le PDF source "
+            "(la correction du texte, elle, reste proposée) :", fg="yellow")
+        for signalement in signalements[:8]:
+            click.echo(f"    · [{signalement['anomalie']}] {signalement['document'][:60]}")
+        if len(signalements) > 8:
+            click.echo(f"    … et {len(signalements) - 8} autres")
+
+    # `backups/` par défaut : ce sont des fichiers de travail, ignorés par git.
+    for chemin in (chemin_sortie, chemin_signalements):
+        dossier = os.path.dirname(chemin)
+        if dossier:
+            os.makedirs(dossier, exist_ok=True)
+
+    with open(chemin_sortie, "w", encoding="utf-8") as fichier:
+        json.dump(mapping, fichier, ensure_ascii=False, indent=2)
+    with open(chemin_signalements, "w", encoding="utf-8") as fichier:
+        json.dump(signalements, fichier, ensure_ascii=False, indent=2)
+
+    click.secho(f"\n  Mapping écrit      : {chemin_sortie}", fg="green")
+    click.secho(f"  Signalements écrits : {chemin_signalements}", fg="green")
+    click.secho(
+        "  Appliquer depuis le terminal humain (dry-run par défaut) :\n"
+        f"    php artisan mibeko:corriger-contenu-article --mapping={chemin_sortie}",
+        fg="yellow",
+    )
+
 
 if __name__ == "__main__":
     cli()
