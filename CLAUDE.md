@@ -34,7 +34,7 @@ Sous-commandes par étage de l'usine à textes (idempotentes, la plupart avec `-
 | Parsing (triage natif → MinerU) | `process-batch` |
 | Structuration | `structure-batch`, `link-journals`, `backfill-type-codes` |
 | Découpage manuel de compilations | `merge-chunks`, `suggest-boundaries[-md]`, `split-compilation[-md]` |
-| Production | `prod-preflight`, `push-corpus` |
+| Production | `prod-preflight`, `push-corpus`, `proposer-nettoyage-masthead` (lecture seule : produit un mapping pour `php artisan mibeko:corriger-contenu-article`) |
 
 Aucun linter ni formateur n'est configuré dans ce dépôt (ni ruff, ni black, ni mypy) — ne pas en introduire un sans arbitrage.
 

@@ -679,5 +679,130 @@ def backfill_type_codes(cible_nom, executer):
     click.secho(f"\n{total} documents typés.", fg="green")
 
 
+@cli.command("proposer-nettoyage-masthead")
+@click.option("--sortie", "chemin_sortie", default="masthead-mapping.json",
+              show_default=True, help="Fichier JSON à produire (format mibeko:corriger-contenu-article).")
+@click.option("--statuts", default="published", show_default=True,
+              help="Statuts de curation à examiner, séparés par des virgules ('' = tous).")
+@click.option("--limite", type=int, default=0,
+              help="N'examiner que les N premiers articles concernés (mise au point).")
+def proposer_nettoyage_masthead(chemin_sortie, statuts, limite):
+    """Propose le retrait du mobilier de page JO incrusté dans les articles (mibeko-python#5).
+
+    LECTURE SEULE : cette commande n'écrit rien en production. Elle produit un
+    mapping destiné à `php artisan mibeko:corriger-contenu-article`, qui applique
+    les corrections par `PATCH /articles/{id}` — versionné, audité, réversible.
+
+    Le nettoyage vient de `strip_page_furniture`, exactement le même code que le
+    filtre préventif du parseur : prévention et remédiation ne peuvent pas
+    diverger. Un article dont le nettoyage laisserait un texte vide n'est jamais
+    proposé — il est signalé pour décision humaine.
+    """
+    import json
+
+    from sqlalchemy import text
+
+    from src.db.prod_readonly import (
+        LectureSeuleNonProuvee,
+        SQLSTATE_LECTURE_SEULE,
+        assert_read_only,
+        charger_cible,
+        creer_engine,
+    )
+    from src.extractor.page_furniture import strip_page_furniture
+
+    click.secho("\n  ███  PRODUCTION — lecture seule  ███\n", fg="red", bold=True)
+
+    try:
+        cible = charger_cible()
+        engine = creer_engine(cible)
+        sqlstate = assert_read_only(engine)
+    except LectureSeuleNonProuvee as exc:
+        click.secho(f"Lecture seule NON prouvée : {exc}", fg="red")
+        raise SystemExit(1)
+    except Exception as exc:
+        click.secho(f"Connexion impossible : {exc}", fg="red")
+        raise SystemExit(1)
+
+    click.echo(f"  Cible : {cible.resume()}")
+    if sqlstate == SQLSTATE_LECTURE_SEULE:
+        click.secho("  Lecture seule prouvée (SQLSTATE 25006).\n", fg="green")
+
+    # Version ACTIVE (`upper_inf`) : celle que lisent le site public et l'export
+    # PDF. Filtres SoftDeletes obligatoires des deux côtés de la jointure.
+    liste_statuts = [s.strip() for s in statuts.split(",") if s.strip()]
+    requete = (
+        "select a.id::text, a.numero_article, d.titre_officiel, av.contenu_texte "
+        "from article_versions av "
+        "join articles a on a.id = av.article_id and a.deleted_at is null "
+        "join legal_documents d on d.id = a.document_id and d.deleted_at is null "
+        "where upper_inf(av.validity_period) "
+        + ("and d.curation_status = any(:statuts) " if liste_statuts else "")
+        + "order by d.created_at, a.ordre_affichage"
+    )
+    params = {"statuts": liste_statuts} if liste_statuts else {}
+
+    with engine.connect() as cnx:
+        lignes = cnx.execute(text(requete), params).fetchall()
+
+    click.echo(f"  Articles examinés : {len(lignes)}")
+
+    mapping = []
+    vides = []
+    documents = set()
+    lignes_retirees = 0
+
+    for article_id, numero, titre, contenu in lignes:
+        if not contenu:
+            continue
+        nettoye = strip_page_furniture(contenu)
+        if nettoye == contenu:
+            continue
+        if not nettoye.strip():
+            # Un article intégralement composé de mobilier n'est pas une
+            # correction de contenu : c'est un faux article, à retirer par
+            # `mibeko:retirer-articles-masthead` après lecture humaine.
+            vides.append((article_id, titre, numero))
+            continue
+        documents.add(titre)
+        lignes_retirees += len(contenu.split("\n")) - len(nettoye.split("\n"))
+        mapping.append({
+            "id": article_id,
+            "document": f"{titre} — art. {numero}",
+            "motif": "Retrait du mobilier de page JO (mibeko-python#5)",
+            "content": nettoye,
+        })
+        if limite and len(mapping) >= limite:
+            break
+
+    click.secho(
+        f"\n  À corriger : {len(mapping)} articles dans {len(documents)} documents "
+        f"({lignes_retirees} lignes de mobilier).",
+        fg="cyan",
+    )
+
+    for entree in mapping[:5]:
+        click.echo(f"    · {entree['document'][:78]}")
+    if len(mapping) > 5:
+        click.echo(f"    … et {len(mapping) - 5} autres")
+
+    if vides:
+        click.secho(
+            f"\n  ⚠ {len(vides)} article(s) ne contiennent QUE du mobilier — non proposés, "
+            "décision humaine requise :", fg="yellow")
+        for article_id, titre, numero in vides[:10]:
+            click.echo(f"    · {titre[:60]} — art. {numero} ({article_id})")
+
+    with open(chemin_sortie, "w", encoding="utf-8") as fichier:
+        json.dump(mapping, fichier, ensure_ascii=False, indent=2)
+
+    click.secho(f"\n  Mapping écrit : {chemin_sortie}", fg="green")
+    click.secho(
+        "  Appliquer depuis le terminal humain (dry-run par défaut) :\n"
+        f"    php artisan mibeko:corriger-contenu-article --mapping={chemin_sortie}",
+        fg="yellow",
+    )
+
+
 if __name__ == "__main__":
     cli()
