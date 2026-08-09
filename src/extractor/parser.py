@@ -174,10 +174,18 @@ _STRUCTURAL_BANNER_START_PATTERN = re.compile(
 # d'origine (1-based) pour la citabilité « page N ». Absent des entrées markdown.
 PAGE_MARKER_PATTERN = re.compile(r"^\[\[MIBEKO_PAGE:(\d+)\]\]$")
 
-# Tableau HTML émis par l'extraction JSON MinerU (grilles salariales, etc.) sur
-# une seule ligne. Routé vers un nœud feuille TABLEAU plutôt que noyé dans
-# l'article courant.
+# Tableau HTML émis par MinerU (grilles salariales, annexes budgétaires…),
+# routé vers un nœud feuille TABLEAU plutôt que noyé dans l'article courant.
+#
+# Le plus souvent sur une seule ligne, mais PAS toujours : MinerU coupe la ligne
+# quand une cellule est longue (136 tableaux sur 1323 dans le corpus local au
+# 09/08/2026). Ne lire que la ligne d'ouverture tronquait le tableau ET versait
+# ses lignes suivantes dans le flux d'articles — d'où l'accumulation jusqu'à la
+# fermeture, plafonnée par `_TABLE_MAX_LINES` pour qu'une balise jamais refermée
+# n'avale pas le document.
 TABLE_HTML_PATTERN = re.compile(r"^<table[\s>]", re.IGNORECASE)
+TABLE_HTML_CLOSE = re.compile(r"</table\s*>", re.IGNORECASE)
+_TABLE_MAX_LINES = 200
 
 # Lignes de bruit à ignorer : images markdown, filets, numéros de page isolés.
 _NOISE_PATTERN = re.compile(r"^(?:!\[.*|[-_*=]{3,}|\d{1,3}|[o0]{3,})$")
@@ -438,8 +446,11 @@ class LegalDocumentParser:
             }
             attach_to_parent(node)
 
-        for raw_line in text.split("\n"):
-            stripped = raw_line.strip()
+        lines = text.split("\n")
+        index = 0
+        while index < len(lines):
+            stripped = lines[index].strip()
+            index += 1
             if not stripped:
                 continue
 
@@ -449,7 +460,15 @@ class LegalDocumentParser:
                 continue
 
             if TABLE_HTML_PATTERN.match(stripped):
-                open_table(stripped)
+                fragment = [stripped]
+                while (
+                    not TABLE_HTML_CLOSE.search(fragment[-1])
+                    and index < len(lines)
+                    and len(fragment) < _TABLE_MAX_LINES
+                ):
+                    fragment.append(lines[index].strip())
+                    index += 1
+                open_table(" ".join(part for part in fragment if part))
                 continue
 
             match_line = _clean_for_matching(stripped)
