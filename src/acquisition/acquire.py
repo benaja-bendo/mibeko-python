@@ -105,7 +105,13 @@ def _acquire_texte(
     if dry_run:
         return {"prevu": url}
 
-    filename = url.rsplit("/", 1)[-1] or f"{texte['id']}.pdf"
+    # Certaines bibliothèques numériques (ex. biblio.ohada.org) servent le PDF
+    # depuis une route paramétrée (« doc_num.php?explnum_id=483 ») : le dernier
+    # segment d'URL n'est alors pas un nom de fichier exploitable (pas
+    # d'extension, « ? » littéral — casse `Path.with_suffix` en aval dans
+    # `PoliteClient.download`). On retombe sur l'id du carnet dans ce cas.
+    last_segment = url.rsplit("/", 1)[-1].split("?", 1)[0]
+    filename = last_segment if last_segment.lower().endswith(".pdf") else f"{texte['id']}.pdf"
     dest = data_dir / "sources" / texte.get("dest", "divers") / filename
     try:
         sha, size = client.download(url, dest)
