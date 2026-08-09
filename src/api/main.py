@@ -28,6 +28,13 @@ from src.db.models import Article, ArticleVersion, CurationFlag, ExtractionRun, 
 from src.services.mineru_service import mineru_service
 from src.services.minio_service import minio_service
 from src.extractor.parser import LegalDocumentParser
+from src.extractor.tables import (
+    LegalTable,
+    TableAnomaly,
+    contains_table_markup,
+    looks_like_subscription_grid,
+    normalize_content,
+)
 from src.extractor.chunk_merger import merge_json_chunks, merge_markdown_chunks
 from psycopg2.extras import DateRange
 from sqlalchemy_utils import Ltree
@@ -1313,6 +1320,37 @@ def ingest_hierarchy(
     rename_collisions: List[Dict[str, Any]] = []
     table_counter = {"n": 0}
     article_sequence: List[Tuple[Optional[int], uuid.UUID]] = []
+    table_findings: List[Dict[str, Any]] = []
+
+    def leaf_content(
+        node_data: Dict[str, Any],
+        locator: Dict[str, Any],
+        article_id: uuid.UUID,
+    ) -> str:
+        """Contenu d'une feuille, débarrassé de tout balisage de tableau.
+
+        Invariant du corpus : `contenu_texte` est du texte pur. Les tableaux y
+        sont linéarisés et leur forme canonique part dans `source_locator`
+        (`docs/decisions.md`, 09/08/2026). S'applique à TOUTES les feuilles, pas
+        aux seuls nœuds TABLEAU : la production porte des tableaux incrustés
+        dans des articles ordinaires (arrêtés miniers, coordonnées de permis).
+
+        Les anomalies relevées sont mises de côté ici et transformées en
+        `CurationFlag` une fois les articles insérés — un flag exige un
+        `article_id`, qui n'existe pas encore à ce stade.
+        """
+        content = node_data.get("content", "") or ""
+        if not contains_table_markup(content):
+            return content
+
+        normalized, tables, anomalies = normalize_content(content)
+        if tables:
+            locator["tables"] = [table.to_locator() for table in tables]
+        if anomalies or tables:
+            table_findings.append(
+                {"article_id": article_id, "tables": tables, "anomalies": anomalies}
+            )
+        return normalized
 
     def unique_article_number(base: str, node_id: uuid.UUID) -> str:
         """Garantit l'unicité de (document_id, numero_article).
@@ -1365,13 +1403,16 @@ def ingest_hierarchy(
                 # Numéro ordinal pour le contrôle de séquence (cf. `ordinal_from_raw_number`).
                 article_sequence.append((ordinal_from_raw_number(raw_number), article.id))
 
+                article_locator: Dict[str, Any] = (
+                    {"page": node_data["page"]} if node_data.get("page") is not None else {}
+                )
                 version = ArticleVersion(
                     article_id=article.id,
-                    contenu_texte=node_data.get("content", ""),
+                    contenu_texte=leaf_content(node_data, article_locator, article.id),
                     validity_period=DateRange(datetime.datetime.utcnow().date(), None),
                     source_run_id=run_id,
                     source_media_file_id=media_id,
-                    source_locator={"page": node_data["page"]} if node_data.get("page") is not None else {},
+                    source_locator=article_locator,
                     validation_status=validation_status,
                 )
                 db.add(version)
@@ -1396,7 +1437,7 @@ def ingest_hierarchy(
 
                 version = ArticleVersion(
                     article_id=article.id,
-                    contenu_texte=node_data.get("content", ""),
+                    contenu_texte=leaf_content(node_data, preamble_locator, article.id),
                     validity_period=DateRange(datetime.datetime.utcnow().date(), None),
                     source_run_id=run_id,
                     source_media_file_id=media_id,
@@ -1424,7 +1465,7 @@ def ingest_hierarchy(
 
                 version = ArticleVersion(
                     article_id=article.id,
-                    contenu_texte=node_data.get("content", ""),
+                    contenu_texte=leaf_content(node_data, signature_locator, article.id),
                     validity_period=DateRange(datetime.datetime.utcnow().date(), None),
                     source_run_id=run_id,
                     source_media_file_id=media_id,
@@ -1452,7 +1493,7 @@ def ingest_hierarchy(
 
                 version = ArticleVersion(
                     article_id=article.id,
-                    contenu_texte=node_data.get("content", ""),
+                    contenu_texte=leaf_content(node_data, table_locator, article.id),
                     validity_period=DateRange(datetime.datetime.utcnow().date(), None),
                     source_run_id=run_id,
                     source_media_file_id=media_id,
@@ -1539,6 +1580,56 @@ def ingest_hierarchy(
                 type_probleme="article_doublon",
                 severity=severity,
                 description=description,
+            ))
+
+    flag_table_anomalies(db, document, table_findings)
+
+
+def flag_table_anomalies(
+    db: Session,
+    document: LegalDocument,
+    findings: List[Dict[str, Any]],
+) -> None:
+    """Transforme les constats de normalisation des tableaux en signalements.
+
+    La normalisation, elle, a déjà eu lieu : ces flags ne bloquent pas
+    l'ingestion, ils disent à l'éditeur ce qu'il doit aller vérifier contre le
+    PDF source. Un tableau dont l'arithmétique ne tombe pas juste porte un
+    chiffre mal océrisé — c'est le seul moyen de le savoir sans relire à la main
+    des annexes budgétaires de cinquante rangées.
+
+    Une grille d'abonnements du Journal officiel n'est pas un défaut de
+    conversion mais un **faux article** : elle est signalée à part, en proposant
+    le retrait (`php artisan mibeko:retirer-articles-masthead`), jamais en
+    supprimant d'office — la suppression reste une décision humaine.
+    """
+    for finding in findings:
+        anomalies: List[TableAnomaly] = finding["anomalies"]
+        tables: List[LegalTable] = finding["tables"]
+
+        for anomaly in anomalies:
+            db.add(CurationFlag(
+                document_id=document.id,
+                article_id=finding["article_id"],
+                source="heuristic",
+                type_probleme=anomaly.code,
+                severity=anomaly.severity,
+                description=anomaly.message,
+            ))
+
+        if any(looks_like_subscription_grid(table) for table in tables):
+            db.add(CurationFlag(
+                document_id=document.id,
+                article_id=finding["article_id"],
+                source="heuristic",
+                type_probleme="tableau_ours_journal_officiel",
+                severity="warning",
+                description=(
+                    "Ce tableau est la grille tarifaire d'abonnement au Journal officiel "
+                    "(l'« ours »), pas un texte juridique : MinerU l'a capturé comme s'il "
+                    "était un article. À retirer du document plutôt qu'à corriger — voir "
+                    "`php artisan mibeko:retirer-articles-masthead`."
+                ),
             ))
 
 
