@@ -3,6 +3,7 @@ import re
 from typing import Any, Dict, List, Optional, Tuple
 
 from src.extractor.latex_artifacts import strip_latex_artifacts
+from src.extractor.page_furniture import strip_page_furniture
 
 logger = logging.getLogger(__name__)
 
@@ -239,10 +240,19 @@ class LegalDocumentParser:
         l'appelant (pipeline live, upload manuel, scripts de rattrapage). En
         prime, les regex de détection ci-dessous voient « Article 1er » là où
         elles lisaient ``Article $1^{\\text{er}}$``.
+
+        Le mobilier de page du Journal officiel (numéro de page, bandeau, date
+        d'édition réimprimés à chaque saut de page) est retiré au même endroit et
+        pour la même raison : les quatre appelants de ce parseur convergent tous
+        ici, avant que `parse_hierarchy` ne pose les frontières d'articles. Sans
+        ce retrait, l'en-tête s'incruste en pleine phrase dans le contenu de
+        l'article à cheval sur deux pages (554 articles publiés concernés,
+        mesuré en production le 09/08/2026). Les marqueurs `[[MIBEKO_PAGE:N]]`
+        traversent le filtre intacts — la citabilité par page en dépend.
         """
 
         if self.text_content:
-            return strip_latex_artifacts(self.text_content)
+            return strip_page_furniture(strip_latex_artifacts(self.text_content))
 
         if not self.pdf_path:
             return ""
@@ -263,7 +273,7 @@ class LegalDocumentParser:
             clean_lines = [line.strip() for line in text.split("\n") if line.strip()]
             full_text.append("\n".join(clean_lines))
 
-        return strip_latex_artifacts("\n".join(full_text))
+        return strip_page_furniture(strip_latex_artifacts("\n".join(full_text)))
 
     def parse_hierarchy(self) -> List[Dict[str, Any]]:
         """Analyse le texte et reconstruit l'arborescence du document."""
