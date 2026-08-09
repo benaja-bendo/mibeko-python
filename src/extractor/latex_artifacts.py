@@ -57,7 +57,13 @@ POLICES = (
 # Une portion en mode mathématique, avec l'espace horizontal qui l'entoure.
 # `[^$\r\n]` interdit d'enjamber une fin de ligne : c'est ce qui protège les
 # `$` dépareillés des tableaux de chiffres.
-_PORTION_RE = re.compile(r"(?P<avant>[^\S\r\n]*)\$(?P<inner>[^$\r\n]*)\$(?P<apres>[^\S\r\n]*)")
+#
+# `(?P<base>\d)?` capture, quand il est présent, le chiffre collé immédiatement
+# avant la portion — nécessaire pour distinguer, dans `remplacer()`, un
+# exposant nu recollé à son chiffre (« 1 $^{er}$ ») du cas général déjà géré
+# (base ET exposant tous deux à l'intérieur du `$`). Le chiffre capturé est
+# réémis tel quel : rien n'est perdu, il change seulement de groupe.
+_PORTION_RE = re.compile(r"(?P<base>\d)?(?P<avant>[^\S\r\n]*)\$(?P<inner>[^$\r\n]*)\$(?P<apres>[^\S\r\n]*)")
 
 _MARQUEUR_RE = re.compile(r"\\|\^\{|_\{")
 _MATHFRAK_N_RE = re.compile(r"\\mathfrak\{([nN])\}")
@@ -99,8 +105,9 @@ def analyser(texte: str) -> Analyse:
     refuses: List[str] = []
 
     def remplacer(match: "re.Match") -> str:
+        base = match.group("base") or ""
         avant, inner, apres = match.group("avant"), match.group("inner"), match.group("apres")
-        brut = f"{avant}${inner}${apres}"
+        brut = f"{base}{avant}${inner}${apres}"
         clair = _decoder(inner)
 
         if clair is None:
@@ -109,10 +116,19 @@ def analyser(texte: str) -> Analyse:
 
         # L'espace autour de la portion est celui que MinerU a inséré en
         # ouvrant le mode mathématique : on en garde un seul, sans jamais
-        # coller deux mots qui étaient séparés.
-        prefixe = " " if avant or clair[:1].isspace() else ""
+        # coller deux mots qui étaient séparés. EXCEPTION : un chiffre collé
+        # juste avant un exposant nu (rien d'autre dans le `$`, cf. `base`
+        # ci-dessus) — MinerU rend parfois « 1er » en laissant le « 1 » en
+        # texte normal et en n'ouvrant le mode mathématique que pour
+        # l'exposant seul (« 1 $^{er}$ »), contrairement au cas normal où
+        # toute la portion, base comprise, est à l'intérieur du `$`
+        # (« $1^{\text{er}}$ »). Sans cette exception, le blanc que MinerU
+        # insère à l'ouverture du mode mathématique était reproduit tel quel,
+        # donnant « 1 er » au lieu de « 1er ».
+        base_collee = base != "" and inner.lstrip().startswith("^{")
+        prefixe = "" if base_collee else (" " if avant or clair[:1].isspace() else "")
         suffixe = " " if apres or clair[-1:].isspace() else ""
-        remplacement = f"{prefixe}{clair.strip()}{suffixe}"
+        remplacement = f"{base}{prefixe}{clair.strip()}{suffixe}"
 
         convertis.append((brut.strip(), remplacement.strip()))
         return remplacement

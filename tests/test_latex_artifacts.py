@@ -124,6 +124,43 @@ def test_le_parseur_deseschappe_le_texte_qu_il_recoit():
     assert parser.extract_text() == "Article 1er .- La loi entre en vigueur."
 
 
+# mibeko-dashboard#24 — régression trouvée le 09/08/2026 en vérifiant, avant
+# exécution, le mapping produit par `mibeko:proposer-nettoyage-latex` sur la
+# production : quand MinerU laisse le chiffre EN DEHORS du `$` et n'ouvre le
+# mode mathématique que pour l'exposant seul, le nettoyeur reproduisait le
+# blanc de séparation au lieu de coller le chiffre à l'exposant. Les 5 formes
+# ci-dessous sont parmi les 7 occurrences réelles trouvées sur les 128
+# candidats du lot de correction (`article_versions.contenu_texte`, versions
+# publiées), pas des cas inventés. Jumelles des cas PHP de
+# `tests/Unit/LatexArtifactCleanerTest.php`.
+FORMES_BASE_COLLEE_A_EXPOSANT_NU = [
+    ("paragraphe 1  $^{er}$  de la présente loi.", "paragraphe 1er de la présente loi."),
+    ("les alinéas 1  $^{er}$  et 2 sont applicables", "les alinéas 1er et 2 sont applicables"),
+    ("du livre 1  $^{er}$  .", "du livre 1er ."),
+    ("au-delà du 8  $^{ème}$  degré", "au-delà du 8ème degré"),
+    ("né avant le 180  $^{ème}$  jour", "né avant le 180ème jour"),
+]
+
+
+def test_colle_le_chiffre_externe_au_dollar_a_l_exposant_nu_qu_il_precede():
+    for avant, apres in FORMES_BASE_COLLEE_A_EXPOSANT_NU:
+        assert strip_latex_artifacts(avant) == apres, f"{avant!r} → {strip_latex_artifacts(avant)!r}"
+
+
+def test_ne_colle_pas_quand_la_base_est_deja_a_l_interieur_du_dollar():
+    # Cas déjà correct avant le correctif : la base ET l'exposant sont tous
+    # deux dans le `$` — rien ne doit changer, seul le cas où la base est HORS
+    # du `$` (ci-dessus) était fautif.
+    assert strip_latex_artifacts("le  $1^{\\text{er}}$  juin 1927") == "le 1er juin 1927"
+
+
+def test_ne_colle_pas_un_chiffre_externe_a_autre_chose_qu_un_exposant_nu():
+    # Le chiffre "5" précède ici une portion qui n'est PAS un exposant nu
+    # (elle contient \mathfrak{n}) : la règle de collage ne doit pas
+    # s'appliquer, seul le comportement espacement habituel doit jouer.
+    assert strip_latex_artifacts("acte 5  $\\mathfrak{n}^{\\circ}$  du registre") == "acte 5 n° du registre"
+
+
 def test_le_parseur_detecte_un_article_dont_le_numero_etait_echappe():
     # Bénéfice collatéral du nettoyage en amont : la regex d'article voit
     # « Article 1er » là où elle lisait « Article $1^{\text{er}}$ ».
