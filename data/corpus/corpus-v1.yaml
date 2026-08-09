@@ -169,15 +169,149 @@ textes:
     type_source: code
     source: {url: "<à compléter>"}
 
-# ---------------------------------------------------------------------------
-# OHADA : en attente du rapport de reconnaissance (python main.py ohada-recon).
-# Reporter ici les URLs validées des Actes uniformes en vigueur (commercial
-# général, sociétés & GIE, sûretés, recouvrement & exécution, procédures
-# collectives, comptable, arbitrage, médiation, transport).
-# ---------------------------------------------------------------------------
-# textes:
-#   - id: au-droit-commercial-general
-#     …
+  - id: loi-1998-08-genocide-crimes-guerre
+    titre: "Loi n° 8/98 du 31 octobre 1998 portant définition et répression du génocide, des crimes de guerre et des crimes contre l'humanité"
+    categorie: penal
+    role: STOCK
+    priorite: P2
+    manifeste: sgg-lois
+    dest: sgg/lois
+    type_source: loi
+    source: {url: "https://www.sgg.cg/textes-officiels/lois/1998/congo-loi-1998-08.pdf"}
+
+  - id: au-suretes
+    titre: "Acte uniforme portant organisation des sûretés (révisé)"
+    categorie: ohada
+    role: STOCK
+    priorite: P1
+    manifeste: ohada-actes
+    dest: ohada/actes-uniformes
+    type_source: acte_uniforme
+    # Adopté 15/12/2010 à Lomé — date vérifiée dans le PDF lui-même (page de
+    # garde JO OHADA, pas seulement la page de présentation ohada.org).
+    source: {url: "http://biblio.ohada.org/pmb/opac_css/doc_num.php?explnum_id=483"}
+
+  - id: au-recouvrement-voies-execution
+    titre: "Acte uniforme portant organisation des procédures simplifiées de recouvrement et des voies d'exécution"
+    categorie: ohada
+    role: STOCK
+    priorite: P1
+    manifeste: ohada-actes
+    dest: ohada/actes-uniformes
+    type_source: acte_uniforme
+    # Adopté 10/4/1998 à Libreville — jamais révisé depuis, date vérifiée dans
+    # le PDF (JO OHADA du 1/7/1998).
+    source: {url: "http://biblio.ohada.org/pmb/opac_css/doc_num.php?explnum_id=485"}
+
+  - id: au-transport-marchandises-route
+    titre: "Acte uniforme relatif aux contrats de transport de marchandises par route"
+    categorie: ohada
+    role: STOCK
+    priorite: P2
+    manifeste: ohada-actes
+    dest: ohada/actes-uniformes
+    type_source: acte_uniforme
+    # Adopté 22/3/2003 à Yaoundé — jamais révisé depuis (pas de générique
+    # « recent revision » signalée sur la page ohada.org, contrairement aux 4
+    # actes ci-dessous). Date NON re-confirmée visuellement dans le PDF : la
+    # page de garde est un scan sans couche texte exploitable. À vérifier en
+    # revue éditeur si un doute survient.
+    source: {url: "http://biblio.ohada.org/pmb/opac_css/doc_num.php?explnum_id=479"}
+
+  # -------------------------------------------------------------------------
+  # Les entrées OHADA ci-dessous sont sourcées sur des fac-similés du Journal
+  # Officiel de l'OHADA, et leur MILLÉSIME a été lu sur la page de garde du PDF
+  # lui-même (08/08/2026), jamais déduit de la page web : les fiches d'actes de
+  # ohada.org exposent, derrière leur bouton « download », les versions
+  # d'ORIGINE (1997/1998/1999) des actes pourtant révisés depuis. Les
+  # `explnum_id` retenus ici ne sont donc PAS ceux que ces boutons proposent.
+  # Ne jamais « corriger » une de ces URLs vers celle de la fiche officielle
+  # sans rouvrir le PDF : ce serait revenir à une version abrogée.
+  # -------------------------------------------------------------------------
+
+  - id: au-commercial-general
+    titre: "Acte uniforme portant sur le droit commercial général (révisé)"
+    categorie: ohada
+    role: STOCK
+    priorite: P1
+    manifeste: ohada-actes
+    dest: ohada/actes-uniformes
+    type_source: acte_uniforme
+    # JO OHADA 15e année n° 21 du 15/02/2011 — « Adopté le 15 décembre 2010 à
+    # Lomé », 307 articles (celui de 1997 s'arrêtait à 289), crée le statut
+    # d'entreprenant. Le bouton de la fiche officielle sert explnum_id=481 = 1997.
+    source: {url: "https://biblio.ohada.org/pmb/opac_css/doc_num.php?explnum_id=3954"}
+
+  - id: au-societes-cooperatives
+    titre: "Acte uniforme relatif au droit des sociétés coopératives"
+    categorie: ohada
+    role: STOCK
+    priorite: P2
+    manifeste: ohada-actes
+    dest: ohada/actes-uniformes
+    type_source: acte_uniforme
+    # JO OHADA 15e année n° 23 du 15/02/2011 — « Adopté le 15 décembre 2010 à
+    # Lomé », 397 articles. Acte créé ex nihilo en 2010 : sa clause finale
+    # (art. 396) abroge les droits internes contraires, pas un acte antérieur.
+    source: {url: "https://biblio.ohada.org/pmb/opac_css/doc_num.php?explnum_id=487"}
+
+  - id: au-societes-gie
+    titre: "Acte uniforme relatif au droit des sociétés commerciales et du groupement d'intérêt économique (révisé)"
+    categorie: ohada
+    role: STOCK
+    priorite: P1
+    manifeste: ohada-actes
+    dest: ohada/actes-uniformes
+    type_source: acte_uniforme
+    # JO OHADA numéro spécial du 04/02/2014 — « Adoptés le 30 janvier 2014 à
+    # Ouagadougou », 920 articles dont les art. 853-1 à 853-23 créant la SAS.
+    # Le bouton de la fiche officielle sert explnum_id=486 = 1997.
+    source: {url: "https://biblio.ohada.org/doc_num.php?explnum_id=2032"}
+
+  - id: au-procedures-collectives
+    titre: "Acte uniforme portant organisation des procédures collectives d'apurement du passif (révisé)"
+    categorie: ohada
+    role: STOCK
+    priorite: P1
+    manifeste: ohada-actes
+    dest: ohada/actes-uniformes
+    type_source: acte_uniforme
+    # JO OHADA numéro spécial du 25/09/2015 — adopté le 10/09/2015 à
+    # Grand-Bassam ; ajoute la conciliation et les procédures simplifiées.
+    # Le bouton de la fiche officielle sert explnum_id=484 = 1998.
+    source: {url: "https://biblio.ohada.org/doc_num.php?explnum_id=19"}
+
+  - id: au-comptable-audcif
+    titre: "Acte uniforme relatif au droit comptable et à l'information financière (AUDCIF)"
+    categorie: ohada
+    role: STOCK
+    priorite: P1
+    manifeste: ohada-actes
+    dest: ohada/actes-uniformes
+    type_source: acte_uniforme
+    # JO OHADA numéro spécial du 15/02/2017 — adopté le 26/01/2017 à
+    # Brazzaville, 113 articles. Le SYSCOHADA (plan comptable) est un document
+    # distinct, volontairement hors de cette entrée.
+    source: {url: "https://biblio.ohada.org/doc_num.php?explnum_id=2061"}
+
+  - id: jo-ohada-2017-arbitrage-mediation
+    titre: "Journal Officiel OHADA, numéro spécial du 15 décembre 2017 (arbitrage, médiation, règlement d'arbitrage CCJA)"
+    categorie: ohada
+    role: STOCK
+    priorite: P1
+    manifeste: ohada-actes
+    dest: ohada/actes-uniformes
+    type_source: acte_uniforme
+    # ⚠️ RECUEIL À DÉCOUPER, pas un acte unique : ce seul PDF contient TROIS
+    # textes — l'Acte uniforme relatif à la médiation (18 art.), l'Acte
+    # uniforme relatif au droit de l'arbitrage (36 art., dont l'art. 36 qui
+    # abroge expressément celui du 11 mars 1999) et le Règlement d'arbitrage
+    # de la CCJA. Tous adoptés le 23/11/2017 à Conakry. Après parsing, passer
+    # par suggest-boundaries-md / split-compilation-md avant structuration,
+    # sinon on recrée un « Code Bleu Ohada » en miniature (numérotations qui
+    # repartent à 1 dans un même document). Le bouton de la fiche arbitrage
+    # sert explnum_id=480 = la version 1999 abrogée.
+    source: {url: "https://biblio.ohada.org/doc_num.php?explnum_id=2799"}
 
 # ---------------------------------------------------------------------------
 # Hors carnet v1 (décision Phase 1) : les 297 traités internationaux/CEMAC
