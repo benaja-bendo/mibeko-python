@@ -128,6 +128,79 @@ def _article_match_groups(match: "re.Match") -> Tuple[Optional[str], str]:
     content = match.group("content_pl") if match.group("content_pl") is not None else match.group("content")
     return num, content
 
+
+# Amorce d'un titre d'article éclaté un mot par ligne par MinerU — trouvé en
+# pilotant le redécoupage d'un JO spécial (2010-02) en prod le 10/08/2026 :
+# « Article \n61 \n: \n Rémunération \n perçue \n par \n le \n Concessionnaire »,
+# alors que le même document rend « Article 62 : Rémunération due au
+# Concédant » sur une seule ligne quelques dizaines de lignes plus loin. Le
+# mot « Article » seul sur sa ligne ne matche jamais ARTICLE_PATTERN (qui
+# exige un numéro) : le contenu qui suit restait rattaché à l'article
+# précédent jusqu'au prochain en-tête reconnu — pas perdu, juste mal étiqueté,
+# et signalé en aval comme un « article manquant ».
+_SPLIT_HEADING_START_PATTERN = re.compile(r"^(?:ARTICLES?|ART)\.?$", re.IGNORECASE)
+# Fragments plausibles d'un numéro/titre éclaté : peu de mots par ligne. Une
+# vraie phrase de corps de texte en fait toujours davantage — le seuil sert de
+# garde-fou, pas de règle grammaticale.
+_SPLIT_HEADING_MAX_WORDS_PER_LINE = 3
+# Nombre de lignes fragmentées tolérées après l'amorce avant d'abandonner : un
+# titre d'article, même très éclaté, ne s'étend jamais sur des dizaines de
+# lignes — au-delà, ce n'est plus ce motif.
+_SPLIT_HEADING_MAX_FRAGMENTS = 20
+
+
+def _rejoin_split_article_headings(texte: str) -> str:
+    """Recolle un titre d'article que MinerU a rendu un mot par ligne.
+
+    N'agit que sur les lignes qui, seules, ne contiennent QUE le mot « Article »
+    (ou « Art »/« Articles ») — jamais reconnu comme un en-tête valide par
+    ARTICLE_PATTERN puisqu'il exige un numéro. Les lignes suivantes, tant
+    qu'elles restent courtes, sont fusionnées avec des espaces jusqu'à ce que
+    le résultat matche ARTICLE_PATTERN (numéro reconnu). Dès qu'une ligne est
+    trop longue pour être un fragment de titre, ou que le plafond de lignes est
+    atteint sans qu'aucune fusion ne matche, les lignes d'origine sont laissées
+    intactes : un faux déclenchement (un document où « Article » apparaît
+    seul sur sa ligne pour une tout autre raison) ne peut donc rien casser,
+    il ne fait juste rien.
+    """
+    if not texte:
+        return texte
+
+    lignes = texte.split("\n")
+    resultat: List[str] = []
+    i = 0
+    n = len(lignes)
+    while i < n:
+        ligne = lignes[i]
+        if not _SPLIT_HEADING_START_PATTERN.match(_clean_for_matching(ligne)):
+            resultat.append(ligne)
+            i += 1
+            continue
+
+        # Fusion GLOUTONNE d'abord (toutes les lignes courtes consécutives),
+        # test ARTICLE_PATTERN ensuite, une seule fois sur le résultat complet.
+        # Tester à chaque fragment ajouté s'arrêterait dès « Article 61 » seul
+        # (numéro reconnu, contenu vide déjà valide pour ARTICLE_PATTERN) sans
+        # jamais absorber le reste du titre qui suit.
+        fragments = [ligne.strip()]
+        j = i + 1
+        while j < n and (j - i) <= _SPLIT_HEADING_MAX_FRAGMENTS:
+            candidate_line = lignes[j].strip()
+            if not candidate_line or len(candidate_line.split()) > _SPLIT_HEADING_MAX_WORDS_PER_LINE:
+                break
+            fragments.append(candidate_line)
+            j += 1
+
+        candidate = " ".join(fragments)
+        if len(fragments) > 1 and ARTICLE_PATTERN.match(_clean_for_matching(candidate)):
+            resultat.append(candidate)
+            i = j
+        else:
+            resultat.append(ligne)
+            i += 1
+
+    return "\n".join(resultat)
+
 # Formule finale d'un acte : « Fait à Brazzaville, le 18 avril 2026 » suivie du
 # nom du ou des signataires. Isolée en feuille SIGNATURE plutôt que collée au
 # contenu du dernier article. On exige « le <jour> » après le lieu pour ne pas
@@ -257,10 +330,20 @@ class LegalDocumentParser:
         l'article à cheval sur deux pages (554 articles publiés concernés,
         mesuré en production le 09/08/2026). Les marqueurs `[[MIBEKO_PAGE:N]]`
         traversent le filtre intacts — la citabilité par page en dépend.
+
+        Un titre d'article que MinerU a rendu un mot par ligne (« Article \\n61
+        \\n: \\n Rémunération… ») est recollé en dernier, une fois le mobilier de
+        page retiré : sinon un bandeau intercalé entre deux fragments du titre
+        empêcherait la fusion. Sans ce recollage, ARTICLE_PATTERN n'y voit
+        jamais un numéro, et tout le texte qui suit reste rattaché à l'article
+        précédent — pas perdu, juste mal étiqueté (trouvé le 10/08/2026 en
+        pilotant le redécoupage d'un JO spécial en prod).
         """
 
         if self.text_content:
-            return strip_page_furniture(strip_latex_artifacts(self.text_content))
+            return _rejoin_split_article_headings(
+                strip_page_furniture(strip_latex_artifacts(self.text_content))
+            )
 
         if not self.pdf_path:
             return ""
@@ -281,7 +364,9 @@ class LegalDocumentParser:
             clean_lines = [line.strip() for line in text.split("\n") if line.strip()]
             full_text.append("\n".join(clean_lines))
 
-        return strip_page_furniture(strip_latex_artifacts("\n".join(full_text)))
+        return _rejoin_split_article_headings(
+            strip_page_furniture(strip_latex_artifacts("\n".join(full_text)))
+        )
 
     def parse_hierarchy(self) -> List[Dict[str, Any]]:
         """Analyse le texte et reconstruit l'arborescence du document."""
