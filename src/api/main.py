@@ -803,9 +803,99 @@ _CORPS_ACTE_REGEX = re.compile(
 # Journal officiel de la République du Congo \n N° 52-2010 \n [[MIBEKO_PAGE:29]] »
 # — sans ce garde-fou, le numéro de page et l'en-tête entraient dans le titre.
 _SAUT_DE_PAGE_REGEX = re.compile(
-    r"^(?:\[\[MIBEKO_PAGE:\d+\]\]|\d{1,5}|Journal\s+off[ﬁi]ciel\s+de\s+la\s+R[ÉE]publique|N°\s*\d+[\-–]\d{4}\s*$)",
+    r"^(?:\[\[MIBEKO_PAGE:\d+\]\]|\d{1,5}\s*$|Journal\s+off[ﬁi]ciel\s+de\s+la\s+R[ÉE]publique|N°\s*\d+[\-–]\d{4}\s*$)",
     flags=re.IGNORECASE,
 )
+
+# --- Garde-fou d'ÉTAT, complémentaire du garde-fou de plausibilité ---
+# `_looks_like_real_act_title` juge une ligne isolée : il accepte tout ce qui
+# porte un « n° » ou une date. Or le bloc de visas d'un acte n'est QUE cela —
+# une énumération de textes cités, chacun avec son numéro et sa date. Quand la
+# mise en page du JO coupe un visa, la ligne suivante commence donc par
+# « Loi n° 52.130 du 6 février 1952 relative à… » et franchit tous les
+# contrôles (cas réel : congo-jo-1958-01, un faux acte issu du visa du décret
+# n° 46.2374). Aucune propriété de la ligne seule ne permet de trancher : il
+# faut savoir CE QUI précède.
+#
+# Un drapeau « bloc de visas ouvert » (armé par VU/CONSIDÉRANT, désarmé par le
+# verbe du dispositif) a été écrit puis RETIRÉ le 10/08/2026, mesures à
+# l'appui : les « actes en abrégé » (nominations, agréments, autorisations
+# minières) n'ont ni verbe de dispositif isolé ni « ARTICLE PREMIER », donc
+# aucune sortie ne se déclenche et le drapeau étouffe tout le reste du JO —
+# congo-jo-2013-21 tombait de 14 actes à 2, douze arrêtés réels fondus dans
+# leur voisin. La formule de légalisation « Vu pour la légalisation de la
+# signature », qui figure en FIN d'acte, l'armait de surcroît juste avant le
+# titre suivant. La continuité de phrase ci-dessous suffit au cas fondateur.
+
+# Ponctuation qui clôt une phrase. La virgule en est délibérément absente :
+# c'est la ponctuation NORMALE de fin de visa, donc le signe le plus fréquent
+# qu'une énumération continue.
+_PONCTUATION_FORTE_REGEX = re.compile(r"[.!?:;»”\"…]['’\"”\s]*$")
+
+# Mots grammaticaux qui appellent obligatoirement un complément : une phrase
+# française ne peut pas s'arrêter dessus. Une ligne qui finit ainsi est donc
+# une phrase EN COURS, et la ligne d'après en est la suite — pas un titre.
+# En minuscules uniquement, volontairement : la casse distingue le déterminant
+# « la » de l'initiale « L. » et le « a » verbal du « A » de « S.A » /
+# « A.E.F. ». Les visas en capitales échappent à ce test, mais le drapeau de
+# bloc de visas les couvre — c'est l'intérêt d'avoir deux garde-fous.
+_MOTS_APPELANT_UNE_SUITE = (
+    "le|la|les|l|un|une|des|du|de|d|au|aux|ce|cet|cette|ces|son|sa|ses|leur|leurs|"
+    "notre|nos|votre|vos|mon|ma|mes|à|a|en|par|pour|sur|sous|dans|avec|sans|vers|"
+    "chez|entre|depuis|selon|et|ou|ni|mais|donc|or|car|que|qu|qui|dont|où|comme|si|"
+    "ledit|ladite|lesdits|lesdites"
+)
+_PHRASE_EN_SUSPENS_REGEX = re.compile(
+    r"(?:"
+    rf"\b(?:{_MOTS_APPELANT_UNE_SUITE})\s*['’]?"  # « … et la », « … de l’ »
+    r"|[A-Za-zÀ-ÿ]-"  # césure typographique : « … portant créa- »
+    r")\s*$"
+)
+
+# Un titre de section markdown (« # DELIBERATION N° 112/58 ») est un bloc à
+# part entière produit par MinerU : il ne peut pas être le prolongement de la
+# phrase précédente, quoi qu'en dise la ligne d'avant.
+_TITRE_MARKDOWN_REGEX = re.compile(r"^\s*#{1,6}\s")
+
+
+def _coupure_autorisee_par_la_continuite(lignes: List[str], index: int) -> bool:
+    """Vrai si la ligne `index` a le droit d'ouvrir un acte au vu de ce qui la précède.
+
+    Une phrase qui continue ne peut pas être suivie d'un nouvel acte : c'est ce
+    que le faux titre trahit toujours, puisque le fragment de visa qu'on prend
+    pour un intitulé est précédé d'une ligne interrompue en plein milieu
+    (« … Territoriales en A.E.F. et la » / « Loi n° 52.130 du 6 février 1952 »).
+
+    La formulation littérale — « refuser la coupure si la ligne précédente ne
+    finit pas par une ponctuation forte » — a été mesurée sur les 1 436
+    markdowns de data/pipeline/md/ : elle fait tomber le corpus de 54 249 à
+    37 195 actes. Le JO sépare en effet ses actes par des lignes de rubrique
+    sans ponctuation (« PARTIE OFFICIELLE », « - LOI - », un folio, la fin
+    tabulaire d'un acte de pension), et surtout les « actes en abrégé » se
+    succèdent sans phrase de clôture. Le signal utile n'est donc pas l'absence
+    de point mais la PRÉSENCE d'une marque de phrase en suspens (mot outil ou
+    césure) : sur un échantillon de 131 de ces markdowns, à suppression égale
+    des faux titres, elle coûte 64 actes au lieu de 1 497.
+
+    Deux dérogations, chacune motivée par une borne au moins aussi forte qu'un
+    point : le début du document, et un saut de page (marqueur de page, folio,
+    en-tête répétée du JO), qui sépare bel et bien deux blocs.
+    """
+    i = index - 1
+    while i >= 0:
+        precedente = lignes[i].strip()
+        if not precedente:
+            i -= 1
+            continue
+        if _SAUT_DE_PAGE_REGEX.match(precedente):
+            return True
+        precedente = re.sub(r"^[#>\s]*[*_]{0,3}\s*", "", precedente)
+        precedente = re.sub(r"\s*[*_]{1,3}$", "", precedente)
+        if _PONCTUATION_FORTE_REGEX.search(precedente):
+            return True
+        return not _PHRASE_EN_SUSPENS_REGEX.search(precedente)
+    return True
+
 
 # La continuation multi-ligne n'est activée QUE pour les genres normatifs
 # (LOI/DÉCRET/ARRÊTÉ/ORDONNANCE/DÉCISION), où le motif « n° + date + portant/
@@ -897,6 +987,17 @@ def split_official_journal_markdown(markdown_text: str) -> List[Dict[str, str]]:
         is_act_start = bool(title_match and has_substance and not toc_entry_regex.search(cleaned))
         if is_act_start:
             is_act_start = _looks_like_real_act_title(cleaned[title_match.end(1):])
+        # Garde-fou d'état, en ET avec le garde-fou de plausibilité ci-dessus :
+        # une ligne ne peut pas ouvrir un acte si la phrase précédente reste
+        # en suspens. C'est ce qui distingue un intitulé d'une citation coupée
+        # par la mise en page (« … et la » / « Loi n° 52.130 du 6 février… »).
+        if (
+            is_act_start
+            and not _TITRE_MARKDOWN_REGEX.match(raw_line)
+            and not _coupure_autorisee_par_la_continuite(lines, index)
+        ):
+            is_act_start = False
+
         if is_act_start:
             flush()
             if _TYPES_ACTE_NORMATIF_REGEX.match(cleaned):
