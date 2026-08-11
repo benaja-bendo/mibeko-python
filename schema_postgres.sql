@@ -352,12 +352,14 @@ CREATE TABLE structure_nodes (
     tree_path ltree NOT NULL,
     validation_status VARCHAR(255) DEFAULT 'pending',
     sort_order INTEGER DEFAULT 0,
+    deleted_at TIMESTAMP(0) WITHOUT TIME ZONE,
     created_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX idx_structure_path ON structure_nodes USING GIST (tree_path);
 CREATE INDEX idx_structure_doc ON structure_nodes(document_id);
+CREATE INDEX idx_structure_nodes_deleted_at ON structure_nodes(deleted_at);
 CREATE UNIQUE INDEX IF NOT EXISTS uq_structure_nodes_document_path
 ON structure_nodes(document_id, tree_path);
 

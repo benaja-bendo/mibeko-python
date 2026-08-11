@@ -134,6 +134,9 @@ class StructureNode(Base):
     tree_path = Column(LtreeType, nullable=False)
     validation_status = Column(String(255), default="pending")
     sort_order = Column(Integer, default=0)
+    # SoftDeletes côté Laravel : une reconstruction publiée retire les anciennes
+    # divisions sans perdre leurs flags, chemins ni capacité de restauration.
+    deleted_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

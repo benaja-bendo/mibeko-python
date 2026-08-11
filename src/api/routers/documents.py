@@ -177,7 +177,10 @@ def get_document(doc_id: str, db: Session = Depends(get_db), _user: Authenticate
     has_md = any(f.file_category == "EXTRACTION_MARKDOWN" for f in document.files)
     has_json = any(f.file_category == "EXTRACTION_JSON" for f in document.files)
     nb_articles = db.query(func.count(Article.id)).filter(Article.document_id == document.id, Article.deleted_at.is_(None)).scalar() or 0
-    nb_nodes = db.query(func.count(StructureNode.id)).filter(StructureNode.document_id == document.id).scalar() or 0
+    nb_nodes = db.query(func.count(StructureNode.id)).filter(
+        StructureNode.document_id == document.id,
+        StructureNode.deleted_at.is_(None),
+    ).scalar() or 0
 
     detail = LegalDocumentDetail(
         id=document.id,
@@ -253,7 +256,10 @@ def get_document_stats(doc_id: str, db: Session = Depends(get_db), _user: Authen
         raise HTTPException(status_code=404, detail="Document non trouvé")
 
     nb_articles = db.query(func.count(Article.id)).filter(Article.document_id == document.id, Article.deleted_at.is_(None)).scalar() or 0
-    nb_nodes = db.query(func.count(StructureNode.id)).filter(StructureNode.document_id == document.id).scalar() or 0
+    nb_nodes = db.query(func.count(StructureNode.id)).filter(
+        StructureNode.document_id == document.id,
+        StructureNode.deleted_at.is_(None),
+    ).scalar() or 0
     nb_runs = db.query(func.count(ExtractionRun.id)).filter(ExtractionRun.document_id == document.id).scalar() or 0
     nb_files = db.query(func.count(MediaFile.id)).filter(MediaFile.document_id == document.id).scalar() or 0
 

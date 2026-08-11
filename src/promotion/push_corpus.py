@@ -59,16 +59,16 @@ TABLES_PAR_DOCUMENT = (
     ("legal_documents", "id = %(doc)s"),
     ("media_files", "document_id = %(doc)s"),
     ("extraction_runs", "document_id = %(doc)s"),
-    ("structure_nodes", "document_id = %(doc)s"),
-    ("articles", "document_id = %(doc)s"),
+    ("structure_nodes", "document_id = %(doc)s AND deleted_at IS NULL"),
+    ("articles", "document_id = %(doc)s AND deleted_at IS NULL"),
     (
         "article_versions",
-        "article_id in (select id from articles where document_id = %(doc)s)",
+        "article_id in (select id from articles where document_id = %(doc)s AND deleted_at IS NULL)",
     ),
     (
         "curation_flags",
         "document_id = %(doc)s"
-        " or article_id in (select id from articles where document_id = %(doc)s)",
+        " or article_id in (select id from articles where document_id = %(doc)s AND deleted_at IS NULL)",
     ),
 )
 
@@ -644,10 +644,11 @@ def _compter_par_document_dry_run(engine_source, ids: list) -> dict:
     compte: dict = {doc_id: {"legal_documents": 1} for doc_id in ids}
     with engine_source.connect() as cnx:
         for table in ("media_files", "extraction_runs", "structure_nodes", "articles"):
+            live_filter = " and deleted_at is null" if table in {"structure_nodes", "articles"} else ""
             for doc_id, n in cnx.execute(
                 text(
                     f"select document_id, count(*) from {table} "
-                    "where document_id = any(CAST(:ids AS uuid[])) group by document_id"
+                    f"where document_id = any(CAST(:ids AS uuid[])){live_filter} group by document_id"
                 ),
                 {"ids": ids},
             ):
@@ -657,7 +658,7 @@ def _compter_par_document_dry_run(engine_source, ids: list) -> dict:
             text(
                 "select a.document_id, count(av.id) from articles a "
                 "join article_versions av on av.article_id = a.id "
-                "where a.document_id = any(CAST(:ids AS uuid[])) group by a.document_id"
+                "where a.document_id = any(CAST(:ids AS uuid[])) and a.deleted_at is null group by a.document_id"
             ),
             {"ids": ids},
         ):
@@ -674,7 +675,7 @@ def _compter_par_document_dry_run(engine_source, ids: list) -> dict:
                 "  union all"
                 "  select a.document_id as doc_id, cf.id as flag_id"
                 "  from curation_flags cf join articles a on a.id = cf.article_id"
-                "  where a.document_id = any(CAST(:ids AS uuid[]))"
+                "  where a.document_id = any(CAST(:ids AS uuid[])) and a.deleted_at is null"
                 ") sous_requete group by doc_id"
             ),
             {"ids": ids},
