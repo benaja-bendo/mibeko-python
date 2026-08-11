@@ -105,7 +105,7 @@ def _collect_leaf_texts(hierarchy: list, node_type: str) -> list:
 def _flatten_articles(hierarchy: list) -> list:
     articles = []
     for node in hierarchy:
-        if node["type"] == "ARTICLE":
+        if node["type"] in {"ARTICLE", "DISPOSITION"}:
             articles.append({
                 "numero": node.get("number", ""),
                 "contenu": node.get("content", ""),

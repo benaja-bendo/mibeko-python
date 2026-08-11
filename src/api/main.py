@@ -1602,6 +1602,39 @@ def ingest_hierarchy(
                     validation_status=validation_status,
                 )
                 db.add(version)
+            elif node_data["type"] in {"DISPOSITION", "NOTE"}:
+                leaf_type = node_data["type"]
+                prefix = "DISPOSITION" if leaf_type == "DISPOSITION" else "NOTE"
+                raw_number = str(node_data.get("number", "")).strip()
+                if not raw_number.startswith(f"{prefix}_"):
+                    raw_number = f"{prefix}_{raw_number or display_order}"
+
+                locator: Dict[str, Any] = {"content_format": prefix.lower()}
+                if node_data.get("page") is not None:
+                    locator["page"] = node_data["page"]
+                if node_data.get("page_end") is not None:
+                    locator["page_end"] = node_data["page_end"]
+
+                article = Article(
+                    id=node_id,
+                    document_id=document.id,
+                    parent_node_id=parent_node_id,
+                    numero_article=unique_article_number(raw_number, node_id),
+                    ordre_affichage=display_order,
+                    validation_status=validation_status,
+                )
+                db.add(article)
+
+                version = ArticleVersion(
+                    article_id=article.id,
+                    contenu_texte=leaf_content(node_data, locator, article.id),
+                    validity_period=DateRange(datetime.datetime.utcnow().date(), None),
+                    source_run_id=run_id,
+                    source_media_file_id=media_id,
+                    source_locator=locator,
+                    validation_status=validation_status,
+                )
+                db.add(version)
             else:
                 node = StructureNode(
                     id=node_id,
@@ -1740,7 +1773,7 @@ def flag_table_anomalies(
 # (JSONB) puis arbitrée (diff → promote/discard) par un éditeur.
 # ---------------------------------------------------------------------------
 
-LEAF_CONTENT_TYPES = {"ARTICLE", "PREAMBULE", "SIGNATURE", "TABLEAU"}
+LEAF_CONTENT_TYPES = {"ARTICLE", "PREAMBULE", "SIGNATURE", "TABLEAU", "DISPOSITION", "NOTE"}
 
 
 def document_has_curated_content(db: Session, document_id: uuid.UUID) -> bool:
@@ -1769,7 +1802,8 @@ def document_has_curated_content(db: Session, document_id: uuid.UUID) -> bool:
 
 def flatten_hierarchy_articles(hierarchy: List[Dict[str, Any]]) -> List[Tuple[str, str]]:
     """Aplati une hiérarchie parsée en liste ordonnée de (numéro, contenu) pour
-    les feuilles porteuses de texte (articles, préambule, signature, tableaux)."""
+    les feuilles porteuses de texte (articles, préambule, signature, tableaux,
+    dispositions implicites et notes)."""
     flat: List[Tuple[str, str]] = []
 
     def walk(nodes: Optional[List[Dict[str, Any]]]) -> None:

@@ -2,7 +2,8 @@
 
 Sortie Mistral validée par ce schéma avant toute insertion en base (règle
 mission : jamais d'insertion partielle). Zones calquées sur les feuilles
-PREAMBULE/SIGNATURE/TABLEAU du parser heuristique (src/extractor/parser.py).
+PREAMBULE/SIGNATURE/TABLEAU/DISPOSITION/NOTE du parser heuristique
+(src/extractor/parser.py).
 """
 
 from __future__ import annotations

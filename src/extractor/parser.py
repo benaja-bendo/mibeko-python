@@ -206,14 +206,22 @@ def _rejoin_split_article_headings(texte: str) -> str:
 # contenu du dernier article. On exige « le <jour> » après le lieu pour ne pas
 # confondre avec une ligne d'article qui débuterait par « Fait à … » (le « l »
 # de « le » est parfois OCRisé en « I » majuscule).
-SIGNATURE_PATTERN = re.compile(r"^Fait\s+à\b.*\b[lI]e\s+\d", re.IGNORECASE)
+SIGNATURE_PATTERN = re.compile(
+    r"^(?:Fait\s+à\b.*\b[lI]e\s+\d{1,2}(?:er)?\b.*|Pour\s+le\s+Directeur\s+général\s*:)$",
+    re.IGNORECASE,
+)
+
+# Note de bas de page placée après la signature (« (1) La justification… »).
+# On ne l'interprète comme une feuille NOTE que lorsque la signature est déjà
+# ouverte : le même motif peut parfaitement appartenir au corps d'un article.
+FOOTNOTE_PATTERN = re.compile(r"^\((\d+)\)\s*(.*)$")
 
 # En-têtes de rubrique d'un Journal Officiel (ministère, partie, sous-section…)
 # qui suivent parfois la signature du dernier acte d'une section. Servent
 # UNIQUEMENT, en mode signature, à clore la feuille SIGNATURE sans la polluer.
 _SECTION_NOISE_PATTERN = re.compile(
     r"^(?:MINIST[EÈ]RE|PR[EÉ]SIDENCE|PRIMATURE|PARTIE\b|ANNONCES|ACTE\s+EN\s+ABR[EÉ]G[EÉ]|"
-    r"[AB]\s*[-–—]\s|[-–—]\s*(?:DECRET|TEXTES|ANNONCES))",
+    r"[AB]\s*[-–—]\s|[-–—]\s*(?:DECRET|TEXTES|ANNONCES)|AVIS\s+N[°ºo])",
     re.IGNORECASE,
 )
 
@@ -302,6 +310,8 @@ class LegalDocumentParser:
     Produit une liste de noeuds racines de la forme :
     {"type": "TITRE", "number": "I", "title": "...", "content": "", "children": [...]}
     Les ARTICLEs portent leur texte dans "content" (retours à la ligne préservés).
+    Le corps placé sous une division mais dépourvu d'en-tête « Article » est
+    conservé dans des feuilles DISPOSITION_N au lieu d'être ignoré.
 
     Le texte qui précède le premier élément structurel d'un acte (qualité du
     signataire, visas « Vu … », considérants) est émis comme feuille PREAMBULE
@@ -392,6 +402,18 @@ class LegalDocumentParser:
         # plutôt que collée au contenu du dernier article.
         current_signature: Optional[Dict[str, Any]] = None
         signature_buffer: List[str] = []
+        # Certains avis/instructions sont structurés en titres et sections sans
+        # jamais employer le mot « Article ». Leur corps est une vraie unité de
+        # contenu : on le bufferise puis on l'attache à la division courante sous
+        # une feuille technique DISPOSITION_N.
+        disposition_buffer: List[str] = []
+        disposition_page: Optional[int] = None
+        disposition_end_page: Optional[int] = None
+        disposition_counter = 0
+        # Les notes après signature sont des feuilles racines NOTE_N, séparées
+        # du signataire et du dispositif tout en restant citables.
+        current_note: Optional[Dict[str, Any]] = None
+        note_buffer: List[str] = []
 
         def close_article() -> None:
             """Finalise l'article courant — ou le retire silencieusement de
@@ -422,6 +444,30 @@ class LegalDocumentParser:
                 open_nodes[-1][1]["children"].append(node)
             else:
                 roots.append(node)
+
+        def close_disposition() -> None:
+            """Attache le texte implicite à la division ouverte la plus fine."""
+            nonlocal disposition_counter, disposition_page, disposition_end_page
+            text = "\n".join(disposition_buffer).strip()
+            disposition_buffer.clear()
+            if not text:
+                disposition_page = None
+                disposition_end_page = None
+                return
+
+            disposition_counter += 1
+            node = {
+                "type": "DISPOSITION",
+                "number": f"DISPOSITION_{disposition_counter}",
+                "title": "",
+                "content": text,
+                "page": disposition_page,
+                "page_end": disposition_end_page,
+                "children": [],
+            }
+            attach_to_parent(node)
+            disposition_page = None
+            disposition_end_page = None
 
         def flush_preamble() -> None:
             """Émet le préambule bufferisé comme feuille de tête, une seule fois.
@@ -454,6 +500,29 @@ class LegalDocumentParser:
             signature_buffer.clear()
             current_signature = None
 
+        def close_note() -> None:
+            nonlocal current_note
+            if current_note is not None:
+                current_note["content"] = "\n".join(note_buffer).strip()
+            note_buffer.clear()
+            current_note = None
+
+        def open_note(number: str, first_line: str) -> None:
+            nonlocal current_note
+            close_note()
+            node = {
+                "type": "NOTE",
+                "number": f"NOTE_{number}",
+                "title": "",
+                "content": "",
+                "page": current_page,
+                "children": [],
+            }
+            roots.append(node)
+            current_note = node
+            if first_line:
+                note_buffer.append(first_line)
+
         def open_signature(first_line: str) -> None:
             nonlocal current_signature
             # Une signature (« Fait à … ») marque la fin du dispositif : le texte
@@ -463,6 +532,8 @@ class LegalDocumentParser:
             # Sans ce flush — contrairement à open_structure/open_article/open_table
             # — ce préambule était silencieusement perdu (roots = [SIGNATURE] seul).
             flush_preamble()
+            close_note()
+            close_disposition()
             close_signature()
             close_article()
             node = {
@@ -482,8 +553,12 @@ class LegalDocumentParser:
         def open_structure(level: str, number: str, title: str) -> None:
             nonlocal current_article
             flush_preamble()
+            close_note()
             close_signature()
             close_article()
+            # À faire AVANT de dépiler la structure : le bloc appartient à la
+            # division qui se ferme, pas à celle que l'on va ouvrir.
+            close_disposition()
             level_index = STRUCTURE_LEVELS.index(level)
             while open_nodes and open_nodes[-1][0] >= level_index:
                 open_nodes.pop()
@@ -502,7 +577,9 @@ class LegalDocumentParser:
         def open_article(number: str, inline_content: str) -> None:
             nonlocal current_article
             flush_preamble()
+            close_note()
             close_signature()
+            close_disposition()
             close_article()
             node = {
                 "type": "ARTICLE",
@@ -519,7 +596,9 @@ class LegalDocumentParser:
             # Feuille autonome rattachée à la section courante (sœur des articles),
             # pas au contenu de l'article précédent.
             flush_preamble()
+            close_note()
             close_signature()
+            close_disposition()
             close_article()
             node = {
                 "type": "TABLEAU",
@@ -565,6 +644,12 @@ class LegalDocumentParser:
                 open_signature(match_line)
                 continue
 
+            footnote_match = FOOTNOTE_PATTERN.match(match_line)
+            if footnote_match and (current_signature is not None or current_note is not None):
+                close_signature()
+                open_note(footnote_match.group(1), footnote_match.group(2).strip())
+                continue
+
             article_match = ARTICLE_PATTERN.match(match_line)
             if article_match:
                 article_num, article_content = _article_match_groups(article_match)
@@ -586,7 +671,12 @@ class LegalDocumentParser:
                 open_structure(*structure_match)
                 continue
 
-            if current_signature is not None:
+            if current_note is not None:
+                if _SECTION_NOISE_PATTERN.match(match_line):
+                    close_note()
+                else:
+                    note_buffer.append(match_line)
+            elif current_signature is not None:
                 # Contenu de la formule finale (nom du signataire…). Un en-tête de
                 # rubrique du JO (ministère, partie…) clôt la signature et est ignoré
                 # pour ne pas la polluer avec le début de l'acte suivant.
@@ -608,7 +698,17 @@ class LegalDocumentParser:
                 if preamble_page is None:
                     preamble_page = current_page
                 preamble_buffer.append(match_line)
+            elif open_nodes:
+                # Corps d'une division sans en-tête « Article ». `match_line`
+                # retire seulement les décorations Markdown de MinerU ; le texte
+                # juridique et ses retours à la ligne restent intacts.
+                if disposition_page is None:
+                    disposition_page = current_page
+                disposition_end_page = current_page
+                disposition_buffer.append(match_line)
 
+        close_note()
         close_signature()
         close_article()
+        close_disposition()
         return roots

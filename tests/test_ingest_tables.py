@@ -24,7 +24,7 @@ import pytest  # noqa: E402
 
 from conftest import stub_service_modules  # noqa: E402
 
-from src.db.models import ArticleVersion, CurationFlag, LegalDocument  # noqa: E402
+from src.db.models import Article, ArticleVersion, CurationFlag, LegalDocument  # noqa: E402
 
 with stub_service_modules():
     import src.api.main as main_module  # noqa: E402
@@ -78,6 +78,10 @@ def _ingest(hierarchy):
 
 def _versions(db):
     return [obj for obj in db.added if isinstance(obj, ArticleVersion)]
+
+
+def _articles(db):
+    return [obj for obj in db.added if isinstance(obj, Article)]
 
 
 def _flags(db, type_probleme=None):
@@ -141,6 +145,37 @@ def test_article_sans_tableau_reste_intact_et_sans_champ_superflu():
     assert version.contenu_texte == "Le présent décret…"
     assert version.source_locator == {"page": 1}
     assert _flags(db) == []
+
+
+def test_disposition_et_note_conservent_numero_format_et_pages():
+    db = _ingest([
+        {
+            "type": "DISPOSITION",
+            "number": "DISPOSITION_1",
+            "title": "",
+            "content": "La couverture de change peut être constituée.",
+            "page": 41,
+            "page_end": 42,
+            "children": [],
+        },
+        {
+            "type": "NOTE",
+            "number": "NOTE_1",
+            "title": "",
+            "content": "La justification résulte des titres de transport.",
+            "page": 43,
+            "children": [],
+        },
+    ])
+
+    assert [article.numero_article for article in _articles(db)] == ["DISPOSITION_1", "NOTE_1"]
+    disposition, note = _versions(db)
+    assert disposition.source_locator == {
+        "content_format": "disposition",
+        "page": 41,
+        "page_end": 42,
+    }
+    assert note.source_locator == {"content_format": "note", "page": 43}
 
 
 def test_arithmetique_fausse_devient_un_signalement_sans_bloquer_lingestion():
