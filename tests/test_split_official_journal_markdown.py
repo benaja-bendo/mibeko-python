@@ -469,3 +469,50 @@ def test_un_saut_de_page_ne_bloque_jamais_un_acte():
     titres = _titres(md)
     assert len(titres) == 2
     assert titres[1].startswith("Arrêté n° 10444 du 20 décembre 2010.")
+
+
+# --- Sommaire du JO : des titres alignés sans corps ne sont pas des actes -----
+#
+# Constat prod du 13/08/2026 : 25 des 27 documents `extraction_status='failed'`
+# sont des entrées de sommaire promues en actes. Le sommaire congolais aligne
+# « titre … numéro de page » sans parenthèses, donc hors de portée de
+# `toc_entry_regex` ; chaque ligne ouvrait un acte que la ligne suivante
+# refermait aussitôt, à zéro article. Rejoué sur `congo-jo-1959-29.md` :
+# 42 actes dont 6 vides avant, 36 actes dont 0 vide après.
+
+
+def test_bloc_de_sommaire_ne_produit_aucun_acte_vide():
+    """Extrait réel de congo-jo-1959-29.md (bloc sommaire, pages 727-730)."""
+    md = "\n".join([
+        "Arrêté n° 5067/AEFE./AE. du 12novembre 1959 fixant la date et les modalités des élections aux chambres de commerce 727",
+        "",
+        "Arrêté n° 5073/AE. du 17 novembre 1959 fixant les prix maxima applicables à la vente du pau au détail au Congo 728",
+        "",
+        "Décret n° 59-233 du 13 novembre 1959 portant application, pour les travaillleurs relevant du code du travail 729",
+        "",
+        "Décret n° 59-234 du 13 novembre 1959 fixant les dispositions particulières de la durée du travail 730",
+        "",
+        "Art. 1er. — Le présent décret sera publié au Journal officiel.",
+    ])
+    actes = split_official_journal_markdown(md)
+    # Seule la dernière ligne du sommaire, celle qui précède le corps, survit.
+    assert [a["titre"] for a in actes] == [
+        "Décret n° 59-234 du 13 novembre 1959 fixant les dispositions particulières de la durée du travail 730"
+    ]
+    assert all(a["contenu"].strip() for a in actes)
+
+
+def test_un_acte_reel_a_titre_finissant_par_un_nombre_est_conserve():
+    """Le filtre porte sur le contenu vide, jamais sur le numéro de page final :
+    mesuré sur les 60 JO de `data/pipeline/md/`, 129 actes RÉELS finissent par
+    un nombre. Les écarter détruirait du texte."""
+    md = "\n".join([
+        "Arrêté n° 10443 du 20 décembre 2010 portant agrément de la société ALPHA 1108",
+        "",
+        "LE MINISTRE DES FINANCES,",
+        "",
+        "Art. 1er. — La société ALPHA est agréée.",
+    ])
+    actes = split_official_journal_markdown(md)
+    assert len(actes) == 1
+    assert "La société ALPHA est agréée." in actes[0]["contenu"]

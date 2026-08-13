@@ -960,16 +960,42 @@ def split_official_journal_markdown(markdown_text: str) -> List[Dict[str, str]]:
     # Entrées du sommaire : « Loi n° 1/58 du ... (page 25). » — à ne pas
     # confondre avec le début réel d'un acte plus loin dans le document.
     toc_entry_regex = re.compile(r"\(\s*p(?:age)?\.?\s*\d+\s*\)\s*\.?\s*$", flags=re.IGNORECASE)
+    # Renvoi de page nu en fin de ligne de sommaire (« … de commerce 727 »),
+    # avec ou sans points de conduite. Ne sert QU'en conjonction avec un
+    # contenu vide (voir `flush`) : seul, il désignerait aussi de vrais actes.
+    _FIN_NUMERO_DE_PAGE_REGEX = re.compile(r"[\s.]\d{1,4}\.?$")
 
     def flush() -> None:
-        if current_title:
-            texts.append(
-                {
-                    "titre": current_title,
-                    "contenu": "\n".join(current_lines),
-                    "type": detect_texte_type(current_title),
-                }
-            )
+        if not current_title:
+            return
+        contenu = "\n".join(current_lines)
+        # Entrée de SOMMAIRE sans parenthèses : « … aux chambres de commerce
+        # 727 ». Le sommaire du Journal officiel congolais aligne un titre par
+        # ligne suivi du seul numéro de page, hors de portée de
+        # `toc_entry_regex` (qui n'attrape que « (page 25) ») — chaque ligne
+        # ouvrait donc un acte, aussitôt refermé par la ligne suivante. Constat
+        # prod du 13/08/2026 : 25 des 27 documents `extraction_status='failed'`
+        # sont nés là, tous à 0 article, alors que le texte réel vit dans
+        # l'acte homonyme découpé plus loin dans le corps du journal.
+        #
+        # Les DEUX conditions sont nécessaires, mesurées sur les 60 JO de
+        # `data/pipeline/md/` :
+        #   · contenu vide seul ne suffit pas — un « acte en abrégé »
+        #     (nomination d'une ligne) voit tout son texte absorbé par la
+        #     continuation multiligne du titre, et reste un acte réel ;
+        #   · numéro de page final seul ne suffit pas — 129 actes RÉELS en
+        #     portent un (le dernier du sommaire, qui absorbe le corps).
+        # Leur conjonction ne décrit que le sommaire : 40 des 43 actes vides
+        # du corpus local, et zéro acte porteur de texte.
+        if not contenu.strip() and _FIN_NUMERO_DE_PAGE_REGEX.search(current_title.strip()):
+            return
+        texts.append(
+            {
+                "titre": current_title,
+                "contenu": contenu,
+                "type": detect_texte_type(current_title),
+            }
+        )
 
     index = 0
     while index < len(lines):
