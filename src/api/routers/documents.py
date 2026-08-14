@@ -33,6 +33,7 @@ from src.db.models import (
     ExtractionRun,
     LegalDocument,
     MediaFile,
+    OfficialJournal,
     StructureNode,
 )
 
@@ -341,11 +342,20 @@ def delete_document(doc_id: str, db: Session = Depends(get_db), _user: Authentic
     # mais on ne purge le stockage qu'APRÈS le commit DB : si le commit échoue,
     # le PDF d'un document encore visible resterait sinon détruit (audit :
     # purge avant commit = destruction irréversible sur rollback DB).
-    object_keys_to_purge = [
-        media.object_key
+    minio_media_to_purge = [
+        media
         for media in db.query(MediaFile).filter(MediaFile.document_id == document.id).all()
         if media.storage_provider == "MINIO" and media.object_key
     ]
+    object_keys_to_purge = [media.object_key for media in minio_media_to_purge]
+    candidate_paths_by_key = {
+        media.object_key: {
+            media.object_key,
+            media.file_path,
+            f"s3://{media.bucket_name}/{media.object_key}",
+        }
+        for media in minio_media_to_purge
+    }
 
     # Suppression en cascade manuelle pour les tables sans FK CASCADE
     article_ids = [a.id for a in db.query(Article).filter(Article.document_id == document.id).all()]
@@ -358,9 +368,58 @@ def delete_document(doc_id: str, db: Session = Depends(get_db), _user: Authentic
     db.delete(document)
     db.commit()
 
-    # DB engagée : on purge le stockage MinIO en best-effort. Un échec ici laisse
-    # au pire des objets orphelins (récupérables), jamais un document sans son PDF.
-    for object_key in object_keys_to_purge:
+    # DB engagée : on ne purge que les objets devenus réellement orphelins. Les
+    # actes découpés depuis un même JO partagent volontairement les mêmes clés.
+    # Une panne de cette vérification doit favoriser la conservation de l'objet.
+    referenced_object_keys = set(object_keys_to_purge)
+    if object_keys_to_purge:
+        try:
+            referenced_object_keys = {
+                row[0]
+                for row in (
+                    db.query(MediaFile.object_key)
+                    .join(LegalDocument, LegalDocument.id == MediaFile.document_id)
+                    .filter(
+                        MediaFile.storage_provider == "MINIO",
+                        MediaFile.object_key.in_(object_keys_to_purge),
+                        LegalDocument.deleted_at.is_(None),
+                    )
+                    .distinct()
+                    .all()
+                )
+            }
+            journal_paths = {
+                row[0]
+                for row in (
+                    db.query(OfficialJournal.file_path)
+                    .filter(
+                        OfficialJournal.deleted_at.is_(None),
+                        OfficialJournal.file_path.in_(
+                            {
+                                path
+                                for candidate_paths in candidate_paths_by_key.values()
+                                for path in candidate_paths
+                            }
+                        ),
+                    )
+                    .all()
+                )
+            }
+            referenced_object_keys.update(
+                object_key
+                for object_key, candidate_paths in candidate_paths_by_key.items()
+                if candidate_paths & journal_paths
+            )
+        except Exception:
+            logger.exception(
+                "Vérification des références MinIO impossible après suppression du document %s : "
+                "aucun objet physique ne sera purgé.",
+                doc_id,
+            )
+
+    # Un échec de purge laisse au pire un objet orphelin (récupérable), jamais un
+    # document vivant sans son PDF.
+    for object_key in set(object_keys_to_purge) - referenced_object_keys:
         try:
             minio_service.delete_file(object_key)
         except Exception:
