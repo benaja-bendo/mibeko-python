@@ -47,6 +47,19 @@ STRUCTURE_PATTERNS: Dict[str, re.Pattern] = {
     for level, keyword in _LEVEL_KEYWORDS.items()
 }
 
+# MinerU omet parfois l'espace entre un numéro romain et l'intitulé :
+# « CHAPITRE IDISPOSITIONS GENERALES ». Ce filet n'est consulté qu'APRÈS
+# l'échec des motifs normaux, afin qu'un titre sain comme « CHAPITRE III : ... »
+# reste analysé par la grammaire principale sans ambiguïté romaine.
+_CANONICAL_ROMAN = (
+    r"(?=[IVXLCDM])M{0,4}(?:CM|CD|D?C{0,3})"
+    r"(?:XC|XL|L?X{0,3})(?:IX|IV|V?I{0,3})"
+)
+ATTACHED_ROMAN_STRUCTURE_PATTERN = re.compile(
+    rf"^(?P<level>(?i:PARTIE|LIVRE|TITRE|CHAPITRE|SECTION))\s+"
+    rf"(?P<number>{_CANONICAL_ROMAN})(?P<title>[A-ZÀ-ÖØ-Þ]{{2}}.*)$"
+)
+
 # "ARTICLE 1er : contenu...", "Art. 12.-", "Article L.122-4", "ARTICLE PREMIER",
 # "Art.4.‐ ..." (sans espace, tiret Unicode ‐ fréquent dans les Actes OHADA),
 # "Articles 194 :" (pluriel, en-tête d'un seul article numéroté malgré le
@@ -84,12 +97,14 @@ STRUCTURE_PATTERNS: Dict[str, re.Pattern] = {
 #   dans le numéro, tronquant le début du contenu de l'article. Plage
 #   accentuée incluse (« Dérogation ») sinon le "D" passait déjà le lookahead
 #   ASCII-only avant le "é" suivant.
-# - `\d+` de tête est atomique (`(?>...)`) : sans ça, le rejet d'une citation
-#   par virgule (cf. note sur `ARTICLE_PATTERN` plus bas) laissait le moteur
-#   reculer sur un numéro plus court (« 182 » -> « 18 »), créant un faux
-#   article « 18 » au lieu de ne rien matcher du tout.
+# - Tout le segment compact est atomique et un tiret n'est accepté dans le
+#   numéro que s'il est suivi de chiffres. Sans la première
+#   règle, une citation en plage (« articles 5-11, ... ») reculait jusqu'à « 5 »
+#   et recyclait le tiret comme séparateur. Sans la seconde, la ponctuation
+#   source « ARTICLE 3- L'acte... » devenait le faux numéro « 3- L » et avalait
+#   l'initiale du contenu.
 _NUMERO_BODY = (
-    r"(?>\d+)(?:\.\d+)*[a-zA-Z0-9\-]*"
+    r"(?>\d+(?:\.\d+)*(?:-\d+)*(?:(?:er|[eè]re?|[eè]me|bis|ter|quater|quinquies|sexies|septies|nouveau|nouvelle)|[a-z](?![a-zA-ZÀ-ÿ]))?)"
     r"(?:\s+(?:bis|ter|quater|quinquies|sexies|septies|nouveau|nouvelle|nouveaux|nouvelles|[a-z]\)?(?![a-zA-ZÀ-ÿ])))?"
 )
 
@@ -108,7 +123,7 @@ _NUMERO_BODY = (
 # citation plurielle ci-dessus, mais avec « article » au singulier donc non
 # couverte par son garde-fou. Trouvé en rejouant le Code Pénal en prod.
 ARTICLE_PATTERN = re.compile(
-    r"^(?:"
+    r"^\.?\s*(?:"
     rf"ARTICLES\.?\s*(?:[:.\-–—‐]\s*)?(?P<num_pl>PREMIER|[LDRA]?\.?\s*{_NUMERO_BODY})\s*[:.\-–—‐]+\s*(?P<content_pl>.*)"
     r"|"
     r"(?:ARTICLE|ART)\.?\s*(?:"
@@ -147,6 +162,55 @@ _SPLIT_HEADING_MAX_WORDS_PER_LINE = 3
 # titre d'article, même très éclaté, ne s'étend jamais sur des dizaines de
 # lignes — au-delà, ce n'est plus ce motif.
 _SPLIT_HEADING_MAX_FRAGMENTS = 20
+
+_TABLE_OF_CONTENTS_START_PATTERN = re.compile(
+    r"^(?:SOMMAIRE|TABLE\s+DES\s+MATI[ÈE]RES)\b",
+    re.IGNORECASE,
+)
+_TABLE_OF_CONTENTS_END_PATTERN = re.compile(
+    r"^(?:LE\s+CONSEIL\b|L['’]ASSEMBL[ÉE]E\b|LE\s+PR[ÉE]SIDENT\b|VU\b|"
+    r"APR[ÈE]S\s+EN\s+AVOIR\b|(?:ARTICLE|ART)\.?\s+(?:PREMIER|1(?:ER)?|\d+)\b)",
+    re.IGNORECASE,
+)
+
+
+def _strip_leading_table_of_contents(texte: str) -> str:
+    """Retire un sommaire placé avant le premier article du texte juridique.
+
+    Les recueils OHADA commencent souvent par plusieurs pages de sommaire dont
+    les lignes « LIVRE / TITRE / CHAPITRE » ressemblent exactement à la vraie
+    structure. Les conserver fait ouvrir la hiérarchie trop tôt, transforme les
+    fragments de pagination en ``DISPOSITION_N`` et classe ensuite les visas de
+    l'acte comme une disposition au lieu d'un préambule.
+
+    Le retrait est volontairement conservateur : uniquement le PREMIER
+    « SOMMAIRE / TABLE DES MATIÈRES », uniquement s'il précède tout article, et
+    uniquement si une formule juridique de reprise est trouvée. À défaut de
+    borne sûre, le texte est rendu intact.
+    """
+    if not texte:
+        return texte
+
+    lines = texte.split("\n")
+    contents_start: Optional[int] = None
+    article_seen = False
+
+    for index, line in enumerate(lines):
+        match_line = _clean_for_matching(line)
+        if ARTICLE_PATTERN.match(match_line):
+            article_seen = True
+        if not article_seen and _TABLE_OF_CONTENTS_START_PATTERN.match(match_line):
+            contents_start = index
+            break
+
+    if contents_start is None:
+        return texte
+
+    for index in range(contents_start + 1, len(lines)):
+        if _TABLE_OF_CONTENTS_END_PATTERN.match(_clean_for_matching(lines[index])):
+            return "\n".join(lines[:contents_start] + lines[index:])
+
+    return texte
 
 
 def _rejoin_split_article_headings(texte: str) -> str:
@@ -268,8 +332,14 @@ TABLE_HTML_PATTERN = re.compile(r"^<table[\s>]", re.IGNORECASE)
 TABLE_HTML_CLOSE = re.compile(r"</table\s*>", re.IGNORECASE)
 _TABLE_MAX_LINES = 200
 
-# Lignes de bruit à ignorer : images markdown, filets, numéros de page isolés.
-_NOISE_PATTERN = re.compile(r"^(?:!\[.*|[-_*=]{3,}|\d{1,3}|[o0]{3,})$")
+# Lignes de bruit à ignorer : images markdown, filets, numéros de page isolés
+# et marqueurs internes ajoutés par `merge-chunks`. Ces derniers décrivent le
+# traitement technique, jamais le texte juridique, et ne doivent donc entrer
+# ni dans un préambule ni dans le corps d'un article.
+_NOISE_PATTERN = re.compile(
+    r"^(?:!\[.*|[-_*=]{3,}|\d{1,3}|[o0]{3,}|<!--\s*chunk\b.*-->)$",
+    re.IGNORECASE,
+)
 
 # Préfixes markdown à retirer pour la détection (mais pas du contenu).
 _MD_PREFIX = re.compile(r"^[#>\s]*[*_]{0,3}\s*")
@@ -352,7 +422,9 @@ class LegalDocumentParser:
 
         if self.text_content:
             return _rejoin_split_article_headings(
-                strip_page_furniture(strip_latex_artifacts(self.text_content))
+                _strip_leading_table_of_contents(
+                    strip_page_furniture(strip_latex_artifacts(self.text_content))
+                )
             )
 
         if not self.pdf_path:
@@ -375,7 +447,9 @@ class LegalDocumentParser:
             full_text.append("\n".join(clean_lines))
 
         return _rejoin_split_article_headings(
-            strip_page_furniture(strip_latex_artifacts("\n".join(full_text)))
+            _strip_leading_table_of_contents(
+                strip_page_furniture(strip_latex_artifacts("\n".join(full_text)))
+            )
         )
 
     def parse_hierarchy(self) -> List[Dict[str, Any]]:
@@ -666,6 +740,14 @@ class LegalDocumentParser:
                     if m:
                         structure_match = (level, m.group(1), m.group(2))
                         break
+                if structure_match is None:
+                    attached = ATTACHED_ROMAN_STRUCTURE_PATTERN.match(match_line)
+                    if attached:
+                        structure_match = (
+                            attached.group("level").upper(),
+                            attached.group("number"),
+                            attached.group("title"),
+                        )
 
             if structure_match:
                 open_structure(*structure_match)

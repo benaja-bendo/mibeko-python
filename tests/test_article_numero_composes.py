@@ -248,3 +248,125 @@ def test_parse_hierarchy_ne_cree_pas_de_faux_article_depuis_une_citation():
     articles = _articles(hierarchy)
     numeros = [a["number"] for a in articles]
     assert numeros == ["181", "182", "183"]
+
+
+# --- Tiret séparateur des Actes uniformes OHADA -----------------------------
+
+def test_article_pattern_ne_met_pas_le_tiret_separateur_dans_le_numero():
+    """Cas réel exact (AUDCG 2010) : le tiret sépare le numéro du corps."""
+    m = ARTICLE_PATTERN.match("ARTICLE 1- Tout commerçant est soumis au présent Acte uniforme.")
+    assert m is not None
+    num, content = _article_match_groups(m)
+    assert num == "1"
+    assert content == "Tout commerçant est soumis au présent Acte uniforme."
+
+
+def test_article_pattern_ne_devore_pas_linitiale_apres_un_tiret_separateur():
+    """Cas réel exact (AUDCG 2010) : « L » appartient à « L'acte », pas au numéro."""
+    m = ARTICLE_PATTERN.match("ARTICLE 3- L'acte de commerce par nature est celui par lequel...")
+    assert m is not None
+    num, content = _article_match_groups(m)
+    assert num == "3"
+    assert content == "L'acte de commerce par nature est celui par lequel..."
+
+
+def test_article_pattern_garde_le_numero_compose_apres_un_tiret():
+    """Le correctif ne transforme pas un vrai article 853-1 en article 853."""
+    m = ARTICLE_PATTERN.match("ARTICLE 853-1- Les statuts peuvent prévoir une société par actions simplifiée.")
+    assert m is not None
+    num, content = _article_match_groups(m)
+    assert num == "853-1"
+    assert content == "Les statuts peuvent prévoir une société par actions simplifiée."
+
+
+def test_article_pattern_garde_un_suffixe_lettre_sans_tiret():
+    m = ARTICLE_PATTERN.match("ARTICLE 89A : Première disposition annexe.")
+    assert m is not None
+    num, content = _article_match_groups(m)
+    assert num == "89A"
+    assert content == "Première disposition annexe."
+
+
+def test_article_pattern_restitue_le_mot_initial_meme_sans_espace_apres_le_tiret():
+    for heading, numero, contenu in (
+        ("ARTICLE 117-A défaut d'accord écrit entre les parties.", "117", "A défaut d'accord écrit entre les parties."),
+        ("ARTICLE 133-Le preneur respecte les clauses du bail.", "133", "Le preneur respecte les clauses du bail."),
+    ):
+        m = ARTICLE_PATTERN.match(heading)
+        assert m is not None
+        num, content = _article_match_groups(m)
+        assert num == numero
+        assert content == contenu
+
+
+def test_article_pattern_rejette_une_citation_plurielle_en_plage_tiretee():
+    """Cas réel exact (AUPC 2015) : la plage 5-11 ne devient pas un article 5."""
+    assert ARTICLE_PATTERN.match("articles 5-11, 11-1 ou 33-1 ci-dessus") is None
+
+
+def test_parse_hierarchy_accepte_un_marqueur_article_precede_dun_point_ocr():
+    """Cas réel exact (AUDCG 2010) : l'article 115 ne doit plus disparaître."""
+    texte = (
+        "ARTICLE 114- Le preneur est tenu aux réparations d'entretien.\n"
+        ".ARTiCLE 115- A l'expiration du bail, le preneur verse une indemnité.\n"
+        "ARTICLE 116- Les parties fixent librement le montant du loyer.\n"
+    )
+    hierarchy = LegalDocumentParser(text_content=texte).parse_hierarchy()
+    articles = _articles(hierarchy)
+    assert [a["number"] for a in articles] == ["114", "115", "116"]
+
+
+def test_parse_hierarchy_ignore_les_marqueurs_internes_de_fusion():
+    texte = (
+        "<!-- chunk chunk_1_a_32.md -->\n"
+        "Préambule officiel.\n"
+        "ARTICLE 1- Première disposition.\n"
+        "<!-- chunk chunk_33_a_64.md -->\n"
+        "Suite de la première disposition.\n"
+        "ARTICLE 2- Deuxième disposition.\n"
+    )
+    hierarchy = LegalDocumentParser(text_content=texte).parse_hierarchy()
+    articles = _articles(hierarchy)
+    assert "<!-- chunk" not in hierarchy[0]["content"]
+    assert "<!-- chunk" not in articles[0]["content"]
+
+
+def test_parse_hierarchy_ignore_le_sommaire_place_avant_lacte():
+    texte = (
+        "# ACTE UNIFORME PORTANT SUR LE DROIT COMMERCIAL GÉNÉRAL\n"
+        "## SOMMAIRE\n"
+        "LIVRE I : STATUT DU COMMERÇANT 6\n"
+        "CHAPITRE I : DÉFINITION DU COMMERÇANT 6\n"
+        "Section 1 - Immatriculation des personnes\n"
+        "physiques et morales 21\n"
+        "Le Conseil des Ministres de l'OHADA ;\n"
+        "Vu le Traité relatif à l'harmonisation du droit des affaires ;\n"
+        "ARTICLE 1- Première disposition.\n"
+        "ARTICLE 2- Deuxième disposition.\n"
+    )
+    hierarchy = LegalDocumentParser(text_content=texte).parse_hierarchy()
+    articles = _articles(hierarchy)
+    types = [node["type"] for node in hierarchy]
+
+    assert [article["number"] for article in articles] == ["1", "2"]
+    assert types == ["PREAMBULE", "ARTICLE", "ARTICLE"]
+    assert "Le Conseil des Ministres" in hierarchy[0]["content"]
+    assert "physiques et morales 21" not in hierarchy[0]["content"]
+
+
+def test_parse_hierarchy_repare_un_titre_romain_colle_par_ocr():
+    texte = (
+        "ARTICLE 72- Disposition précédente.\n"
+        "## LIVRE III FICHIER NATIONAL\n"
+        "## CHAPITRE IDISPOSITIONS GENERALES\n"
+        "ARTICLE 73- Chaque État Partie organise un Fichier National.\n"
+    )
+    hierarchy = LegalDocumentParser(text_content=texte).parse_hierarchy()
+
+    assert hierarchy[0]["type"] == "ARTICLE"
+    assert hierarchy[0]["number"] == "72"
+    livre = next(node for node in hierarchy if node["type"] == "LIVRE")
+    chapitre = next(node for node in livre["children"] if node["type"] == "CHAPITRE")
+    assert chapitre["number"] == "I"
+    assert chapitre["title"] == "DISPOSITIONS GENERALES"
+    assert chapitre["children"][0]["number"] == "73"
