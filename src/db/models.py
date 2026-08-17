@@ -58,6 +58,14 @@ class LegalDocument(Base):
     consolidation_as_of = Column(Date, nullable=True)
     stock_code = Column(String(100), nullable=True)
     titre_officiel = Column(Text, nullable=False)
+    # Objet de l'acte derive de son corps, jamais un titre officiel : sur les
+    # « actes en abrege » du JO (nominations), le titre imprime se reduit au
+    # type, au numero et a la date. Ecrit cote Laravel apres relecture humaine
+    # (mibeko:proposer-libelles) ; le pipeline ne le renseigne JAMAIS — il est
+    # mappe ici pour la lecture (panneau d'ingestion) et pour tenir la regle de
+    # synchronisation des modeles avec les migrations Laravel.
+    libelle_descriptif = Column(Text, nullable=True)
+    libelle_descriptif_source = Column(String(20), nullable=True)
     reference_nor = Column(String(50), nullable=True)
     date_signature = Column(Date, nullable=True)
     date_publication = Column(Date, nullable=True)

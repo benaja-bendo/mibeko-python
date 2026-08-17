@@ -54,6 +54,7 @@ def _build_summary(document: LegalDocument, latest_run: Optional[ExtractionRun] 
     return {
         "id": document.id,
         "titre_officiel": document.titre_officiel,
+        "libelle_descriptif": document.libelle_descriptif,
         "stock_code": document.stock_code,
         "document_role": document.document_role,
         "type_code": document.type_code,
@@ -104,8 +105,13 @@ def list_documents(
         query = query.filter(LegalDocument.curation_status == curation)
     if q:
         needle = f"%{q.strip()}%"
+        # Le libelle descriptif entre dans la recherche : sur un acte en abrege
+        # (« Decret n° 2025-240 du 20 juin 2025. »), aucun mot de l'objet n'est
+        # dans le titre — chercher « nomination » ne trouverait rien sans lui.
         query = query.filter(
-            LegalDocument.titre_officiel.ilike(needle) | LegalDocument.stock_code.ilike(needle)
+            LegalDocument.titre_officiel.ilike(needle)
+            | LegalDocument.libelle_descriptif.ilike(needle)
+            | LegalDocument.stock_code.ilike(needle)
         )
     documents = query.offset(offset).limit(limit).all()
 
@@ -186,6 +192,8 @@ def get_document(doc_id: str, db: Session = Depends(get_db), _user: Authenticate
     detail = LegalDocumentDetail(
         id=document.id,
         titre_officiel=document.titre_officiel,
+        libelle_descriptif=document.libelle_descriptif,
+        libelle_descriptif_source=document.libelle_descriptif_source,
         stock_code=document.stock_code,
         document_key=document.document_key,
         document_role=document.document_role,

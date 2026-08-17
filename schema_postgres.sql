@@ -244,6 +244,12 @@ CREATE TABLE legal_documents (
     stock_code VARCHAR(100),
 
     titre_officiel TEXT NOT NULL,
+    -- Objet de l'acte DÉRIVÉ de son corps, jamais un titre officiel : sur les
+    -- « actes en abrégé » du JO (nominations), le titre imprimé se réduit au
+    -- type, au numéro et à la date. Écrit côté Laravel après relecture humaine
+    -- (mibeko:proposer-libelles) ; le pipeline Python ne le renseigne pas.
+    libelle_descriptif TEXT,
+    libelle_descriptif_source VARCHAR(20),
     -- Slug public (site/app) généré côté Laravel ; NULL tant que non backfillé.
     slug VARCHAR(255),
     reference_nor VARCHAR(50),
@@ -268,9 +274,19 @@ CREATE TABLE legal_documents (
     deleted_at TIMESTAMP(0) WITHOUT TIME ZONE
 );
 
+-- Un libellé ne s'écrit jamais sans dire d'où il vient, et une provenance ne se
+-- renseigne pas sans libellé (migration Laravel du 16/08/2026).
+ALTER TABLE legal_documents ADD CONSTRAINT legal_documents_libelle_descriptif_source_check
+CHECK ((libelle_descriptif IS NULL AND libelle_descriptif_source IS NULL)
+    OR (libelle_descriptif IS NOT NULL AND libelle_descriptif_source IN ('article', 'manuel')));
+
 CREATE INDEX idx_legal_docs_metadata ON legal_documents USING GIN (metadata);
 CREATE INDEX IF NOT EXISTS legal_documents_legal_scope_index ON legal_documents(legal_scope);
 CREATE INDEX IF NOT EXISTS legal_documents_watch_idx ON legal_documents(curation_status, watch_notified_at);
+-- Sur un acte en abrégé, le libellé est le SEUL endroit où « nomination » ou
+-- « chargé de mission » apparaît : il doit être cherchable comme le titre.
+CREATE INDEX IF NOT EXISTS idx_legal_documents_libelle_descriptif_trgm
+ON legal_documents USING gin (libelle_descriptif gin_trgm_ops);
 
 -- ⚠️ Unicité TOTALE (contrairement aux autres index uniques partiels ci-dessous,
 -- elle inclut les lignes soft-deleted) : un slug reste réservé même après

@@ -65,6 +65,9 @@ class LegalDocumentSummary(OrmBase):
     """Résumé léger d'un document pour les listes."""
     id: UUID
     titre_officiel: str
+    # Objet derive du corps de l'acte — jamais un titre officiel. Sur un acte
+    # en abrege, c'est la seule information lisible de la ligne de liste.
+    libelle_descriptif: Optional[str] = None
     stock_code: Optional[str] = None
     document_role: Optional[str] = None
     type_code: Optional[str] = None
@@ -84,6 +87,11 @@ class LegalDocumentDetail(OrmBase):
     """Détail complet d'un document avec ses fichiers et runs."""
     id: UUID
     titre_officiel: str
+    # Cf. LegalDocumentSummary : derive du corps, affiche a cote du titre
+    # officiel et jamais a sa place. `libelle_descriptif_source` dit si un
+    # humain l'a ecrit (`manuel`) ou s'il vient du premier article (`article`).
+    libelle_descriptif: Optional[str] = None
+    libelle_descriptif_source: Optional[str] = None
     stock_code: Optional[str] = None
     document_key: Optional[str] = None
     document_role: Optional[str] = None
