@@ -29,6 +29,15 @@ Trois garde-fous ferment les cas dangereux :
      libellées en dollars ;
   3. le résultat ne doit contenir ni reste de syntaxe LaTeX, ni opérateur, ni
      parenthèse — ce qui ressemble encore à une formule est refusé.
+
+Volontairement HORS PÉRIMÈTRE (décidé le 25/08/2026, mibeko-dashboard#25) : le
+numéro de loi écrit sans son préfixe, ``$15 - 62$`` pour « 15-62 ». Le garde-fou
+n° 2 le refuse déjà faute de marqueur LaTeX, et c'est bien ainsi : le convertir
+imposerait de relâcher ce garde-fou pour toute portion sans marqueur, c'est-à-dire
+de rendre convertibles les montants monétaires (« 60 $ ») et les vraies
+soustractions. La lecture correcte n'est ici accessible qu'au contexte — une
+occurrence sœur en clair dans le même article — donc à un humain ou à une passe
+de curation, pas à un nettoyage mécanique qui ne voit qu'une portion à la fois.
 """
 
 import re
@@ -63,17 +72,39 @@ POLICES = (
 # exposant nu recollé à son chiffre (« 1 $^{er}$ ») du cas général déjà géré
 # (base ET exposant tous deux à l'intérieur du `$`). Le chiffre capturé est
 # réémis tel quel : rien n'est perdu, il change seulement de groupe.
-_PORTION_RE = re.compile(r"(?P<base>\d)?(?P<avant>[^\S\r\n]*)\$(?P<inner>[^$\r\n]*)\$(?P<apres>[^\S\r\n]*)")
+_PORTION_RE = re.compile(
+    r"(?P<base>\d)?"
+    # Mot collé devant un indice NU (`Le $_{S}$`) : même accident que le
+    # chiffre devant un exposant nu, côté indice. Le lookahead exige que la
+    # portion commence par `_{`, sinon un mot quelconque serait aspiré ici.
+    r"(?:(?P<base_mot>[^\W\d_]{2,})(?=[^\S\r\n]*\$[^\S\r\n]*_\{))?"
+    r"(?P<avant>[^\S\r\n]*)\$(?P<inner>[^$\r\n]*)\$(?P<apres>[^\S\r\n]*)"
+)
 
 _MARQUEUR_RE = re.compile(r"\\|\^\{|_\{")
 _MATHFRAK_N_RE = re.compile(r"\\mathfrak\{([nN])\}")
 _POLICE_RE = re.compile(r"\\(?:" + "|".join(POLICES) + r")\{([^{}]*)\}")
-_EXPOSANT_O_RE = re.compile(r"([nN])\^\{o\}")
-_EXPOSANT_OS_RE = re.compile(r"([nN])\^\{os\}")
+# `[o0]` : l'OCR confond régulièrement la lettre o et le chiffre zéro dans
+# l'exposant de « n° ». Les deux graphies désignent la même abréviation, et
+# un même article publié porte parfois les deux côte à côte.
+_EXPOSANT_O_RE = re.compile(r"([nN])\^\{[o0]\}")
+_EXPOSANT_OS_RE = re.compile(r"([nN])\^\{[o0]s\}")
 _EXPOSANT_DEGRE_RE = re.compile(r"\^\{°\}")
 # `[^\W\d_]` = une lettre Unicode (ni chiffre, ni souligné) : l'équivalent
 # Python de `\pL`, que le module `re` standard ne connaît pas.
 _EXPOSANT_TEXTE_RE = re.compile(r"(?<![^\W\d_])\^\{([^\W\d_]{1,4})\}")
+# Indices `_{…}`, symétriques des exposants : MinerU rend en indice la lettre
+# finale d'un mot (« Les » → ``Le $_{S}$``, « ses » → ``$se_{S}$``). Deux formes
+# seulement sont admises, l'une et l'autre choisies pour ne JAMAIS attraper une
+# notation mathématique :
+#   - l'indice NU (la portion ne contient que `_{X}`) : la base est le mot
+#     resté hors du `$`, cas impossible pour une variable indicée ;
+#   - l'indice porté par une base d'AU MOINS DEUX lettres (`Se_{S}`), donc un
+#     début de mot — une variable mathématique s'écrit sur une seule lettre,
+#     et `u_{n}` reste ainsi refusé comme avant.
+_INDICE_NU_RE = re.compile(r"^_\{([^\W\d_]{1,4})\}$")
+_INDICE_MOT_RE = re.compile(r"([^\W\d_]{2,})_\{([^\W\d_]{1,4})\}")
+
 _RESTE_LATEX_RE = re.compile(r"[\\{}^_$]")
 
 # Ponctuation admise dans le texte final. Tout le reste (parenthèse, opérateur,
@@ -106,9 +137,10 @@ def analyser(texte: str) -> Analyse:
 
     def remplacer(match: "re.Match") -> str:
         base = match.group("base") or ""
+        base_mot = match.group("base_mot") or ""
         avant, inner, apres = match.group("avant"), match.group("inner"), match.group("apres")
-        brut = f"{base}{avant}${inner}${apres}"
-        clair = _decoder(inner)
+        brut = f"{base}{base_mot}{avant}${inner}${apres}"
+        clair = _decoder(inner, base_mot[-1:] or None)
 
         if clair is None:
             refuses.append(brut.strip())
@@ -126,9 +158,13 @@ def analyser(texte: str) -> Analyse:
         # insère à l'ouverture du mode mathématique était reproduit tel quel,
         # donnant « 1 er » au lieu de « 1er ».
         base_collee = base != "" and inner.lstrip().startswith("^{")
-        prefixe = "" if base_collee else (" " if avant or clair[:1].isspace() else "")
+        # Symétrique côté indice : le mot resté hors du `$` se recolle à la
+        # lettre que MinerU en avait détachée (« Le $_{S}$ » → « Les »).
+        indice_colle = base_mot != "" and inner.lstrip().startswith("_{")
+        colle = base_collee or indice_colle
+        prefixe = "" if colle else (" " if avant or clair[:1].isspace() else "")
         suffixe = " " if apres or clair[-1:].isspace() else ""
-        remplacement = f"{base}{prefixe}{clair.strip()}{suffixe}"
+        remplacement = f"{base}{base_mot}{prefixe}{clair.strip()}{suffixe}"
 
         convertis.append((brut.strip(), remplacement.strip()))
         return remplacement
@@ -138,9 +174,29 @@ def analyser(texte: str) -> Analyse:
     return Analyse(resultat, convertis, refuses + _marqueurs_hors_portion(texte))
 
 
-def _decoder(inner: str) -> Optional[str]:
+def _accorder_casse(lettre: str, precedente: Optional[str]) -> str:
+    """Abaisse la casse d'une lettre mise en indice au milieu d'un mot.
+
+    MinerU rend l'indice en capitale quelle que soit la casse d'origine : « Les »
+    ressort en ``Le $_{S}$``. Une majuscule qui suit une minuscule À L'INTÉRIEUR
+    d'un mot n'existe pas en français — c'est un artefact de rendu, pas une
+    information. On ne change donc jamais la lettre elle-même, seulement sa
+    casse, et seulement dans cette position-là.
+    """
+
+    if precedente and precedente.islower() and lettre.isupper():
+        return lettre.lower()
+
+    return lettre
+
+
+def _decoder(inner: str, precedente: Optional[str] = None) -> Optional[str]:
     """Réduit l'intérieur d'une portion à du texte brut, ou ``None`` si la
-    moindre chose y résiste."""
+    moindre chose y résiste.
+
+    ``precedente`` est la dernière lettre du mot resté hors du ``$`` quand la
+    portion est un indice nu : elle sert à accorder la casse, rien d'autre.
+    """
 
     # Sans marqueur LaTeX, ce n'est pas un artefact d'extraction : le `$` est un
     # symbole monétaire (« le US $ », « moins de 60 $ »).
@@ -173,6 +229,14 @@ def _decoder(inner: str) -> Optional[str]:
     # Jamais après une lettre : `x^{n}` est une puissance, pas un ordinal, et
     # l'aplatir en « xn » détruirait la formule.
     texte = _EXPOSANT_TEXTE_RE.sub(r"\1", texte)
+
+    # Indice nu : la base est le mot laissé hors du `$` par MinerU.
+    texte = _INDICE_NU_RE.sub(lambda m: _accorder_casse(m.group(1), precedente), texte)
+    # Indice porté par un début de mot : la base est dans la portion.
+    texte = _INDICE_MOT_RE.sub(
+        lambda m: m.group(1) + _accorder_casse(m.group(2), m.group(1)[-1:]),
+        texte,
+    )
 
     # Une commande non reconnue (\frac, \mathbb, \rightarrow, \prime…) a laissé
     # sa barre oblique, un exposant complexe ses accolades : refus.

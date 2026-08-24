@@ -41,6 +41,15 @@ FORMES_CONVERTIES = [
     ("gisement à  $276^{\\circ}43'$  du nord", "gisement à 276°43' du nord"),
     ("vitesse de  $40\\mathrm{km / h}$  max", "vitesse de 40km / h max"),
     ("complément de  $4 / 10^{\\circ}$  aux cadres", "complément de 4 / 10° aux cadres"),
+    # Indices : la lettre finale d'un mot rendue en indice par MinerU
+    # (mibeko-dashboard#25). La casse est accordée, jamais la lettre.
+    ("Le  $_{S}$  délégués permanents", "Les délégués permanents"),
+    ("ce  $_{s}$  demandes", "ces demandes"),
+    ("$Se_{S}$  fonctions", "Ses fonctions"),
+    # « n^{0} » avec le CHIFFRE zéro : confusion OCR avec la lettre o, déjà
+    # gérée. Un même article publié porte parfois les deux graphies.
+    ("Loi  $n^{0}$  25/29", "Loi n° 25/29"),
+    ("les  $n^{0s}$  1 et 2", "les nos 1 et 2"),
 ]
 
 # Formes qui doivent rester STRICTEMENT intactes.
@@ -57,6 +66,12 @@ FORMES_REFUSEES = [
     "seuil  $b \\in \\mathbb{R}^{n}$  fixé",
     "flèche  $\\rightarrow$  vers",
     "le terme  $u_{n}$  converge",
+    # Frontière de la règle indice (mibeko-dashboard#25) : une base d'UNE
+    # lettre est une variable mathématique, jamais un début de mot.
+    "la suite  $v_{k}$  majorée",
+    "le tenseur  $T_{ij}$  symétrique",
+    # Numéro de loi sans préfixe « n° » : hors périmètre, cf. le module.
+    "abrogeant la loi  $15 - 62$  du 3 février",
 ]
 
 
