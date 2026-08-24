@@ -92,6 +92,22 @@ def test_sans_json_aucun_marqueur():
     assert out == content
 
 
+def test_article_conserve_sa_page_de_fin_sans_deborder_sur_le_suivant():
+    roots = LegalDocumentParser(text_content="\n".join([
+        "[[MIBEKO_PAGE:4]]",
+        "Article premier : Début du texte.",
+        "[[MIBEKO_PAGE:5]]",
+        "Suite du même article.",
+        "[[MIBEKO_PAGE:6]]",
+        "Article 2 : Nouvel article.",
+    ])).parse_hierarchy()
+    articles = {node["number"]: node for node in roots if node["type"] == "ARTICLE"}
+
+    assert articles["premier"]["page"] == 4
+    assert articles["premier"]["page_end"] == 5
+    assert "page_end" not in articles["2"]
+
+
 if __name__ == "__main__":
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
     failures = 0

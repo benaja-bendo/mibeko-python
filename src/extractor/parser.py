@@ -460,6 +460,7 @@ class LegalDocumentParser:
         # Pile des noeuds structurels ouverts : [(index_niveau, noeud), ...]
         open_nodes: List[Tuple[int, Dict[str, Any]]] = []
         current_article: Optional[Dict[str, Any]] = None
+        current_article_end_page: Optional[int] = None
         content_buffer: List[str] = []
         # Page d'origine courante (1-based), alimentée par les marqueurs MinerU.
         # Reste None pour les entrées sans pagination (markdown brut).
@@ -499,7 +500,7 @@ class LegalDocumentParser:
             sur le Code civil en prod (144 cas), toujours suivi d'un rappel de
             Titre/Chapitre/Section dupliqué qui referme l'article via cette
             fonction (`open_structure`), jamais directement par `open_article`."""
-            nonlocal current_article
+            nonlocal current_article, current_article_end_page
             if current_article is not None:
                 inline = current_article.get("content", "").strip()
                 block = "\n".join(content_buffer).strip()
@@ -510,8 +511,14 @@ class LegalDocumentParser:
                         container.pop()
                 else:
                     current_article["content"] = full_content
+                    if (
+                        current_article_end_page is not None
+                        and current_article_end_page != current_article.get("page")
+                    ):
+                        current_article["page_end"] = current_article_end_page
             content_buffer.clear()
             current_article = None
+            current_article_end_page = None
 
         def attach_to_parent(node: Dict[str, Any]) -> None:
             if open_nodes:
@@ -649,7 +656,7 @@ class LegalDocumentParser:
             open_nodes.append((level_index, node))
 
         def open_article(number: str, inline_content: str) -> None:
-            nonlocal current_article
+            nonlocal current_article, current_article_end_page
             flush_preamble()
             close_note()
             close_signature()
@@ -665,6 +672,7 @@ class LegalDocumentParser:
             }
             attach_to_parent(node)
             current_article = node
+            current_article_end_page = current_page
 
         def open_table(html: str) -> None:
             # Feuille autonome rattachée à la section courante (sœur des articles),
@@ -770,6 +778,7 @@ class LegalDocumentParser:
                 # Contenu d'article : on préserve les retours à la ligne
                 # (listes à puces, alinéas) au lieu d'aplatir le texte.
                 content_buffer.append(stripped)
+                current_article_end_page = current_page
             elif open_nodes and not open_nodes[-1][1]["title"]:
                 # Titre d'unité écrit sur la ligne suivante (ex: "# TITRE II." puis
                 # "DU CONTRAT DE TRAVAIL").
