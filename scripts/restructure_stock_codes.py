@@ -9,8 +9,10 @@ Aucun re-parsing de PDF, AUCUN nouvel appel LLM, AUCUNE écriture MinIO : le
 markdown déjà stocké (`EXTRACTION_MARKDOWN`) est relu tel quel et reparsé
 avec `LegalDocumentParser` corrigé, puis `ingest_hierarchy` remplace la
 structure existante (structure_nodes/articles/article_versions) — comme le
-ferait un `structure-batch --force` s'il en avait le pouvoir (il ne l'a pas :
-idempotent par document_key, cf. CLAUDE.md).
+ferait un `structure-batch` s'il savait retraiter un document déjà structuré —
+ce qu'il ne sait pas, et ne saura pas : son idempotence par `document_key` est
+précisément ce qui empêche de créer un doublon (cf. CLAUDE.md ; l'option
+`--force`, sans effet, a été retirée le 25/08/2026).
 
 Vérifié en amont (lecture seule, 2026-08-02) : aucun de ces 9 documents ne
 porte de revue humaine (0 article `is_verified`, 0 `reviewed_by`, 0 flag

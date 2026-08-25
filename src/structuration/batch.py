@@ -67,7 +67,6 @@ def run_batch(
     data_dir: Path,
     source_key: Optional[str] = None,
     limit: Optional[int] = None,
-    force: bool = False,
     include_hors_perimetre: bool = False,
 ) -> Dict[str, Any]:
     """Structure les entrées éligibles de tous les manifestes (ou d'un seul).
@@ -75,6 +74,15 @@ def run_batch(
     qu'une de ses entrées change (pas seulement à la toute fin). Par défaut,
     exclut les traités internationaux/CEMAC et les lots privés (hors périmètre
     v1, cf. DEFAULT_EXCLUDED_TYPE_SOURCES) — comptés séparément.
+
+    PAS d'option de retraitement forcé, et ce n'est pas un oubli : l'idempotence
+    tient ici à `document_key`, qui identifie le document en base. Un « force »
+    ne pourrait pas la contourner sans créer un second document pour le même
+    texte — précisément ce que cette clé existe pour empêcher. Retraiter un
+    document déjà structuré suppose donc de décider de son sort (le corriger, le
+    remplacer, le supprimer), ce qui relève de la curation et non d'un drapeau de
+    ligne de commande. Un flag `--force` a existé jusqu'au 25/08/2026 : il était
+    accepté, transmis jusqu'ici, et ignoré — voir mibeko-python#4.
     """
     summary: Dict[str, Any] = {
         "traites": 0, "sautes": 0, "hors_perimetre": 0, "erreurs": [], "deja_existants": 0

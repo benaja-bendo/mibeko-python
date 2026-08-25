@@ -323,12 +323,11 @@ def process_batch(source_key, limit, dry_run, force, include_hors_perimetre):
 @click.option('--source', 'source_key', default=None, help="Limiter à un manifeste (ex. sgg-jo)")
 @click.option('--limit', default=None, type=int, help='Plafond de documents traités pour cette exécution')
 @click.option('--dry-run', is_flag=True, help='Parsing + LLM + validation seuls, aucune écriture')
-@click.option('--force', is_flag=True, help='Retraiter même si déjà à jour (sans effet : idempotence par document_key)')
 @click.option(
     '--include-hors-perimetre', is_flag=True,
     help="Inclure aussi les traités internationaux/CEMAC et lots privés (exclus du périmètre v1 par défaut)",
 )
-def structure_batch(source_key, limit, dry_run, force, include_hors_perimetre):
+def structure_batch(source_key, limit, dry_run, include_hors_perimetre):
     """Structuration (parseur + Mistral) du carnet, piloté par le manifeste. Idempotent."""
     import json as _json
     from src.acquisition.config import data_dir
@@ -350,7 +349,7 @@ def structure_batch(source_key, limit, dry_run, force, include_hors_perimetre):
 
         click.secho("Structuration du carnet (parseur + Mistral) …", fg="cyan")
         summary = run_batch(
-            db, target, source_key=source_key, limit=limit, force=force, include_hors_perimetre=include_hors_perimetre
+            db, target, source_key=source_key, limit=limit, include_hors_perimetre=include_hors_perimetre
         )
         click.secho(
             f"Traités : {summary['traites']} · déjà existants : {summary['deja_existants']} · "
