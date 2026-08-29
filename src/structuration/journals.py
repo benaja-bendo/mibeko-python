@@ -227,6 +227,7 @@ def split_and_persist_journal_acts(
             object_key=pdf_media["object_key"], file_path=pdf_media["file_path"],
             original_filename=pdf_media["original_filename"], mime_type="application/pdf",
             file_category="SOURCE_PDF", file_size=pdf_media["size_bytes"],
+            page_count=pdf_media.get("page_count"),
             checksum_sha256=pdf_media["checksum_sha256"],
             description="PDF source acquis par l'usine à textes (JO, acte détaché du routage corrigé)",
         )

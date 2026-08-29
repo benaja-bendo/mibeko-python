@@ -102,6 +102,11 @@ class MediaFile(Base):
     mime_type = Column(String(100), default="application/pdf")
     file_category = Column(String(50), nullable=False, default="SOURCE_PDF")
     file_size = Column(BigInteger, nullable=True)
+    # Nombre de pages d'un PDF source. Nullable : renseigne a l'ingestion pour
+    # les nouveaux fichiers, par rattrapage pour les anciens. Sert au controle
+    # des reperes de page du dossier de travail cote Laravel, qui se tait tant
+    # que la valeur est inconnue (migration 2026_08_29_140000).
+    page_count = Column(Integer, nullable=True)
     checksum_sha256 = Column(String(64), nullable=True)
     description = Column(String(255), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)

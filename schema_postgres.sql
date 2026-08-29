@@ -329,6 +329,7 @@ CREATE TABLE media_files (
     mime_type VARCHAR(100),
     file_category VARCHAR(50) NOT NULL CHECK (file_category IN ('SOURCE_PDF', 'EXTRACTION_MARKDOWN', 'EXTRACTION_JSON')),
     file_size BIGINT,
+    page_count INTEGER CHECK (page_count IS NULL OR page_count > 0),
     checksum_sha256 VARCHAR(64),
     description VARCHAR(255),
     created_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,

@@ -27,6 +27,7 @@ from src.db.schema_check import check_schema
 from src.db.models import Article, ArticleVersion, CurationFlag, ExtractionRun, Institution, LegalDocument, MediaFile, OfficialJournal, StructureNode
 from src.services.mineru_service import mineru_service
 from src.services.minio_service import minio_service
+from src.services.pdf_pages import compter_pages_pdf
 from src.extractor.parser import LegalDocumentParser
 from src.extractor.tables import (
     LegalTable,
@@ -220,6 +221,7 @@ def build_media_record(
     payload_size: int,
     checksum_sha256: str,
     description: Optional[str] = None,
+    page_count: Optional[int] = None,
 ) -> MediaFile:
     """Construit un enregistrement media_files coherent avec le stockage MinIO."""
 
@@ -233,6 +235,7 @@ def build_media_record(
         mime_type=mime_type,
         file_category=file_category,
         file_size=payload_size,
+        page_count=page_count,
         checksum_sha256=checksum_sha256,
         description=description,
     )
@@ -2535,6 +2538,7 @@ async def upload_document(
             payload_size=upload.size,
             checksum_sha256=pdf_checksum,
             description="PDF source depose depuis l'interface web",
+            page_count=compter_pages_pdf(upload.path),
         )
 
         db.add(new_doc)

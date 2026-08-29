@@ -40,6 +40,7 @@ from src.api.main import (
 from src.db.models import CurationFlag, ExtractionRun, LegalDocument
 from src.extractor.parser import LegalDocumentParser
 from src.services.minio_service import minio_service
+from src.services.pdf_pages import compter_pages_pdf
 from src.services.mistral_service import mistral_service as default_mistral_client
 from src.structuration.journals import ensure_official_journal, split_and_persist_journal_acts, titre_jo_depuis_manifeste
 from src.structuration.schema import validate_texte_juridique
@@ -367,6 +368,7 @@ def structure_document(
             payload_size=entry.size_bytes,
             checksum_sha256=entry.sha256,
             description="PDF source acquis par l'usine à textes",
+            page_count=compter_pages_pdf(str(pdf_local_path)),
         )
         db.add(pdf_media)
 

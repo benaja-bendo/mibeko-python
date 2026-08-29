@@ -215,6 +215,100 @@ def backfill_manifest(data_dir_opt):
             click.echo(f"    - {name}")
 
 
+@cli.command("backfill-page-count")
+@click.option('--limit', default=0, help='Nombre maximum de PDF DISTINCTS à mesurer (0 = tous)')
+@click.option('--execute', is_flag=True, default=False, help='Écrit en base (sinon simulation)')
+def backfill_page_count(limit, execute):
+    """Rétro-remplit media_files.page_count depuis les PDF source stockés dans MinIO.
+
+    Mesure une fois par FICHIER, pas par ligne : un même journal officiel est
+    rattaché à chacun des actes qu'on en découpe, et la base compte des dizaines
+    de milliers de lignes pour quelques milliers de fichiers réels. Le nombre de
+    pages étant une propriété du fichier, une mesure suffit pour toutes ses
+    lignes — mesuré en dev le 29/08/2026 : 53 838 lignes pour 1 370 PDF
+    distincts, soit ~39 téléchargements évités sur 40.
+
+    Simulation par défaut. Les objets illisibles sont listés plutôt que de faire
+    échouer la passe : un fichier abîmé ne doit pas empêcher de mesurer les autres.
+    """
+    import tempfile
+    from collections import defaultdict
+
+    from src.db.database import SessionLocal
+    from src.db.models import MediaFile
+    from src.services.minio_service import minio_service
+    from src.services.pdf_pages import compter_pages_pdf
+
+    db = SessionLocal()
+    try:
+        lignes = (
+            db.query(MediaFile)
+            .filter(MediaFile.file_category == "SOURCE_PDF", MediaFile.page_count.is_(None))
+            .order_by(MediaFile.created_at)
+            .all()
+        )
+
+        # Regroupement par empreinte : deux lignes de même SHA-256 désignent le
+        # même fichier. Sans empreinte, on se rabat sur la clé d'objet.
+        groupes = defaultdict(list)
+        for media in lignes:
+            groupes[media.checksum_sha256 or f"key:{media.object_key}"].append(media)
+
+        cles = list(groupes)
+        if limit:
+            cles = cles[:limit]
+
+        click.secho(
+            f"{len(lignes)} ligne(s) sans nombre de pages · {len(groupes)} fichier(s) distinct(s)"
+            + (f" · {len(cles)} à mesurer" if limit else "")
+            + ("" if execute else " — SIMULATION, aucune écriture"),
+            fg="cyan",
+        )
+
+        mesures, lignes_touchees, illisibles = 0, 0, []
+        for cle in cles:
+            medias = groupes[cle]
+            donnees = None
+            for media in medias:
+                donnees = minio_service.get_file_bytes(media.object_key)
+                if donnees:
+                    break
+
+            # `get_file_bytes` renvoie None en cas d'échec, il ne lève pas.
+            if not donnees:
+                illisibles.append((medias[0].object_key, "objet absent ou illisible dans MinIO"))
+                continue
+
+            with tempfile.NamedTemporaryFile(suffix=".pdf") as tmp:
+                tmp.write(donnees)
+                tmp.flush()
+                pages = compter_pages_pdf(tmp.name)
+
+            if pages is None:
+                illisibles.append((medias[0].object_key, "PDF illisible"))
+                continue
+
+            click.echo(f"  {medias[0].object_key} → {pages} page(s) ({len(medias)} ligne(s))")
+            if execute:
+                for media in medias:
+                    media.page_count = pages
+            mesures += 1
+            lignes_touchees += len(medias)
+
+        if execute:
+            db.commit()
+
+        click.secho(
+            f"Fichiers mesurés : {mesures} · lignes renseignées : {lignes_touchees} · illisibles : {len(illisibles)}"
+            + ("" if execute else " · rien écrit (ajouter --execute)"),
+            fg="green" if execute else "yellow",
+        )
+        for cle_objet, motif in illisibles:
+            click.echo(f"    - {cle_objet} : {motif}")
+    finally:
+        db.close()
+
+
 @cli.command("acquire")
 @click.option('--carnet', 'carnet_opt', default=None, help='Carnet YAML (défaut : data/corpus/corpus-v1.yaml)')
 @click.option('--source', 'source_key', default=None, help="Limiter à une série du carnet (ex. jo-recents) ou 'textes'")
