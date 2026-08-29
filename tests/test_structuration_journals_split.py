@@ -201,6 +201,27 @@ def test_jo_multi_actes_televerse_une_seule_fois_pour_n_documents(tmp_path: Path
     assert len(object_keys) == 1  # même objet MinIO référencé par les 2 actes
 
 
+def test_jo_multi_actes_propage_le_nombre_de_pages_a_tous_les_actes(tmp_path: Path, monkeypatch):
+    """Le contrôle aval des repères PDF ne doit pas attendre un backfill pour
+    les actes nouvellement découpés depuis un JO déjà disponible localement."""
+    data_dir = tmp_path / "data"
+    entry = _seed_entry(data_dir, "sgg-jo/congo-jo-2026-47", MD_JO_SOMMAIRE_PUIS_DEUX_ACTES)
+    db = RegistryFakeSession()
+    _patch_ingest_hierarchy_noop(monkeypatch)
+    monkeypatch.setattr(structurer, "minio_service", FakeMinioService())
+    monkeypatch.setattr(structurer, "compter_pages_pdf", lambda _path: 12)
+
+    result = structure_document(db, data_dir, entry, mistral_client=ValidMetadataMistralClient())
+
+    assert result["statut"] == "structure"
+    pdf_rows = [
+        obj for obj in db.added
+        if isinstance(obj, MediaFile) and obj.file_category == "SOURCE_PDF"
+    ]
+    assert len(pdf_rows) == 2
+    assert {media.page_count for media in pdf_rows} == {12}
+
+
 def test_jo_un_seul_acte_reste_un_document_unique(tmp_path: Path, monkeypatch):
     """Mission phase 1 : « ou un seul [document] si le .md prouve que le JO ne
     contient qu'un acte » — le flux normal (document unique) doit continuer à

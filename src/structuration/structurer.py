@@ -540,6 +540,9 @@ def _structure_official_journal_entry(
             pdf_media={
                 "object_key": pdf_object_key, "file_path": pdf_s3_path,
                 "original_filename": pdf_local_path.name, "size_bytes": entry.size_bytes,
+                # Tous les actes pointent vers le même JO : mesurer une fois
+                # avant le découpage et propager la propriété à chaque média.
+                "page_count": compter_pages_pdf(str(pdf_local_path)),
                 "checksum_sha256": entry.sha256,
             },
             md_media={
