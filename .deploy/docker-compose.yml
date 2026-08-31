@@ -1,8 +1,15 @@
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "20m"
+    max-file: "3"
+
 services:
   api:
     image: ghcr.io/${GITHUB_REPOSITORY}:latest
     container_name: mibeko-python
     restart: unless-stopped
+    logging: *default-logging
     env_file: [.env]
     environment:
       PORT: "8000"
