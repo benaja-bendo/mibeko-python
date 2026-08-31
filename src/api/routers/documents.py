@@ -4,7 +4,6 @@ Expose les fonctionnalités d'ingestion qui étaient uniquement disponibles via 
 """
 
 import datetime
-import logging
 import uuid
 from math import ceil
 from typing import Optional
@@ -26,18 +25,14 @@ from src.api.schemas import (
     PaginatedArticles,
 )
 from src.db.database import get_db
-from src.services.minio_service import minio_service
 from src.db.models import (
     Article,
     ArticleVersion,
     ExtractionRun,
     LegalDocument,
     MediaFile,
-    OfficialJournal,
     StructureNode,
 )
-
-logger = logging.getLogger("mibeko.api")
 
 router = APIRouter(prefix="/api/v1/documents", tags=["documents"])
 
@@ -336,99 +331,42 @@ def get_document_articles(
 
 
 # ---------------------------------------------------------------------------
-# DELETE /api/documents/{doc_id}  — suppression
+# DELETE /api/documents/{doc_id}  — suppression réversible
 # ---------------------------------------------------------------------------
 
 @router.delete("/{doc_id}", status_code=204)
 def delete_document(doc_id: str, db: Session = Depends(get_db), _user: AuthenticatedUser = Depends(require_editor)):
-    """Supprime un document et toutes ses données associées (cascade)."""
+    """Masque un document et ses articles sans détruire leur contenu ni leurs fichiers."""
     document = db.query(LegalDocument).filter(LegalDocument.id == doc_id, LegalDocument.deleted_at.is_(None)).first()
     if not document:
         raise HTTPException(status_code=404, detail="Document non trouvé")
 
-    # On collecte les clés MinIO à purger AVANT de supprimer les media_files,
-    # mais on ne purge le stockage qu'APRÈS le commit DB : si le commit échoue,
-    # le PDF d'un document encore visible resterait sinon détruit (audit :
-    # purge avant commit = destruction irréversible sur rollback DB).
-    minio_media_to_purge = [
-        media
-        for media in db.query(MediaFile).filter(MediaFile.document_id == document.id).all()
-        if media.storage_provider == "MINIO" and media.object_key
-    ]
-    object_keys_to_purge = [media.object_key for media in minio_media_to_purge]
-    candidate_paths_by_key = {
-        media.object_key: {
-            media.object_key,
-            media.file_path,
-            f"s3://{media.bucket_name}/{media.object_key}",
-        }
-        for media in minio_media_to_purge
-    }
-
-    # Suppression en cascade manuelle pour les tables sans FK CASCADE
-    article_ids = [a.id for a in db.query(Article).filter(Article.document_id == document.id).all()]
-    if article_ids:
-        db.query(ArticleVersion).filter(ArticleVersion.article_id.in_(article_ids)).delete(synchronize_session=False)
-    db.query(Article).filter(Article.document_id == document.id).delete(synchronize_session=False)
-    db.query(StructureNode).filter(StructureNode.document_id == document.id).delete(synchronize_session=False)
-    db.query(ExtractionRun).filter(ExtractionRun.document_id == document.id).delete(synchronize_session=False)
-    db.query(MediaFile).filter(MediaFile.document_id == document.id).delete(synchronize_session=False)
-    db.delete(document)
+    deleted_at = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
+    db.query(Article).filter(
+        Article.document_id == document.id,
+        Article.deleted_at.is_(None),
+    ).update({Article.deleted_at: deleted_at}, synchronize_session=False)
+    document.deleted_at = deleted_at
     db.commit()
 
-    # DB engagée : on ne purge que les objets devenus réellement orphelins. Les
-    # actes découpés depuis un même JO partagent volontairement les mêmes clés.
-    # Une panne de cette vérification doit favoriser la conservation de l'objet.
-    referenced_object_keys = set(object_keys_to_purge)
-    if object_keys_to_purge:
-        try:
-            referenced_object_keys = {
-                row[0]
-                for row in (
-                    db.query(MediaFile.object_key)
-                    .join(LegalDocument, LegalDocument.id == MediaFile.document_id)
-                    .filter(
-                        MediaFile.storage_provider == "MINIO",
-                        MediaFile.object_key.in_(object_keys_to_purge),
-                        LegalDocument.deleted_at.is_(None),
-                    )
-                    .distinct()
-                    .all()
-                )
-            }
-            journal_paths = {
-                row[0]
-                for row in (
-                    db.query(OfficialJournal.file_path)
-                    .filter(
-                        OfficialJournal.deleted_at.is_(None),
-                        OfficialJournal.file_path.in_(
-                            {
-                                path
-                                for candidate_paths in candidate_paths_by_key.values()
-                                for path in candidate_paths
-                            }
-                        ),
-                    )
-                    .all()
-                )
-            }
-            referenced_object_keys.update(
-                object_key
-                for object_key, candidate_paths in candidate_paths_by_key.items()
-                if candidate_paths & journal_paths
-            )
-        except Exception:
-            logger.exception(
-                "Vérification des références MinIO impossible après suppression du document %s : "
-                "aucun objet physique ne sera purgé.",
-                doc_id,
-            )
 
-    # Un échec de purge laisse au pire un objet orphelin (récupérable), jamais un
-    # document vivant sans son PDF.
-    for object_key in set(object_keys_to_purge) - referenced_object_keys:
-        try:
-            minio_service.delete_file(object_key)
-        except Exception:
-            logger.warning("Purge MinIO best-effort échouée pour l'objet %s (document %s supprimé en DB).", object_key, doc_id)
+# ---------------------------------------------------------------------------
+# POST /api/documents/{doc_id}/restore  — restauration
+# ---------------------------------------------------------------------------
+
+@router.post("/{doc_id}/restore", status_code=204)
+def restore_document(doc_id: str, db: Session = Depends(get_db), _user: AuthenticatedUser = Depends(require_editor)):
+    """Restaure un document soft-deleted et les articles masqués avec lui."""
+    document = db.query(LegalDocument).filter(LegalDocument.id == doc_id).first()
+    if not document:
+        raise HTTPException(status_code=404, detail="Document non trouvé")
+    if document.deleted_at is None:
+        raise HTTPException(status_code=409, detail="Le document n'est pas supprimé")
+
+    deleted_at = document.deleted_at
+    db.query(Article).filter(
+        Article.document_id == document.id,
+        Article.deleted_at == deleted_at,
+    ).update({Article.deleted_at: None}, synchronize_session=False)
+    document.deleted_at = None
+    db.commit()

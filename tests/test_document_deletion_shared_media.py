@@ -1,10 +1,9 @@
-"""Suppression d'un acte : les objets MinIO partagés restent disponibles."""
+"""Suppression d'un acte : soft-delete réversible, aucun artefact détruit."""
 
 import os
 import sys
 import uuid
-from datetime import date
-from types import SimpleNamespace
+from datetime import date, datetime, timedelta
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -12,7 +11,7 @@ import pytest
 
 from conftest import stub_service_modules
 from src.db.database import SessionLocal
-from src.db.models import LegalDocument, MediaFile, OfficialJournal
+from src.db.models import Article, LegalDocument, MediaFile, OfficialJournal
 
 with stub_service_modules():
     from src.api.routers import documents as documents_router
@@ -66,30 +65,25 @@ def shared_source_documents():
         db.close()
 
 
-def test_un_objet_partage_n_est_purge_qu_apres_suppression_du_dernier_document(
-    shared_source_documents,
-    monkeypatch,
-):
+def test_supprimer_deux_documents_partageant_un_objet_conserve_les_medias(shared_source_documents):
     db, first_document_id, second_document_id, object_key = shared_source_documents
-    deleted_object_keys = []
-    monkeypatch.setattr(
-        documents_router,
-        "minio_service",
-        SimpleNamespace(delete_file=lambda key: deleted_object_keys.append(key) or True),
-    )
 
     documents_router.delete_document(str(first_document_id), db, _user=object())
 
-    assert deleted_object_keys == []
+    first = db.query(LegalDocument).filter(LegalDocument.id == first_document_id).one()
+    assert first.deleted_at is not None
     assert db.query(LegalDocument).filter(LegalDocument.id == second_document_id).first() is not None
+    assert db.query(MediaFile).filter(MediaFile.document_id == first_document_id).count() == 1
     assert db.query(MediaFile).filter(MediaFile.document_id == second_document_id).count() == 1
 
     documents_router.delete_document(str(second_document_id), db, _user=object())
 
-    assert deleted_object_keys == [object_key]
+    second = db.query(LegalDocument).filter(LegalDocument.id == second_document_id).one()
+    assert second.deleted_at is not None
+    assert db.query(MediaFile).filter(MediaFile.object_key == object_key).count() == 2
 
 
-def test_un_objet_reference_par_un_journal_officiel_n_est_pas_purge(monkeypatch):
+def test_un_objet_reference_par_un_journal_officiel_n_est_pas_purge():
     db = SessionLocal()
     object_key = f"documents/flux/tests/{uuid.uuid4()}/journal.pdf"
     journal = OfficialJournal(
@@ -119,20 +113,68 @@ def test_un_objet_reference_par_un_journal_officiel_n_est_pas_purge(monkeypatch)
     )
     db.commit()
 
-    deleted_object_keys = []
-    monkeypatch.setattr(
-        documents_router,
-        "minio_service",
-        SimpleNamespace(delete_file=lambda key: deleted_object_keys.append(key) or True),
-    )
-
     try:
         documents_router.delete_document(str(document.id), db, _user=object())
 
-        assert deleted_object_keys == []
+        db.refresh(document)
+        assert document.deleted_at is not None
+        assert db.query(MediaFile).filter(MediaFile.document_id == document.id).count() == 1
         assert db.query(OfficialJournal).filter(OfficialJournal.id == journal.id).first() is not None
     finally:
         db.rollback()
+        db.query(MediaFile).filter(MediaFile.document_id == document.id).delete(synchronize_session=False)
+        db.query(LegalDocument).filter(LegalDocument.id == document.id).delete(synchronize_session=False)
         db.query(OfficialJournal).filter(OfficialJournal.id == journal.id).delete(synchronize_session=False)
+        db.commit()
+        db.close()
+
+
+def test_un_document_supprime_est_restaurable_avec_ses_articles():
+    db = SessionLocal()
+    document = LegalDocument(
+        titre_officiel="Acte restaurable",
+        document_role="FLUX",
+        curation_status="draft",
+    )
+    db.add(document)
+    db.flush()
+    article = Article(
+        document_id=document.id,
+        numero_article="1",
+        ordre_affichage=1,
+        validation_status="pending",
+    )
+    article_deja_retire = Article(
+        document_id=document.id,
+        numero_article="2",
+        ordre_affichage=2,
+        validation_status="pending",
+        deleted_at=datetime.now() - timedelta(days=1),
+    )
+    db.add_all([article, article_deja_retire])
+    db.commit()
+
+    try:
+        documents_router.delete_document(str(document.id), db, _user=object())
+        db.refresh(document)
+        db.refresh(article)
+        db.refresh(article_deja_retire)
+
+        assert document.deleted_at is not None
+        assert article.deleted_at is not None
+        assert article_deja_retire.deleted_at is not None
+
+        documents_router.restore_document(str(document.id), db, _user=object())
+        db.refresh(document)
+        db.refresh(article)
+        db.refresh(article_deja_retire)
+
+        assert document.deleted_at is None
+        assert article.deleted_at is None
+        assert article_deja_retire.deleted_at is not None
+    finally:
+        db.rollback()
+        db.query(Article).filter(Article.document_id == document.id).delete(synchronize_session=False)
+        db.query(LegalDocument).filter(LegalDocument.id == document.id).delete(synchronize_session=False)
         db.commit()
         db.close()

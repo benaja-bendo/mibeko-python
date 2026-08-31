@@ -48,7 +48,9 @@ Sauf `/` et `/console`, tous les endpoints sont préfixés par `/api/v1`.
 - `GET /api/v1/documents/{doc_id}`
   - **Description** : détails complets d'un document.
 - `DELETE /api/v1/documents/{doc_id}`
-  - **Description** : supprime un document et ses données associées (articles, versions, fichiers…).
+  - **Description** : soft-delete réversible du document et de ses articles ; aucun fichier ni artefact n'est purgé.
+- `POST /api/v1/documents/{doc_id}/restore`
+  - **Description** : restaure le document et les articles retirés lors de la même opération.
 - `POST /api/v1/documents/upload`
   - **Description** : dépose un PDF (et, en option, des extractions `.md`/`.json`) dans MinIO et en base.
   - **Type de contenu** : `multipart/form-data`.
