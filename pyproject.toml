@@ -19,3 +19,13 @@ dependencies = [
     "sqlalchemy-utils==0.42.1",
     "uvicorn==0.27.1",
 ]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.16.5",
+]
+
+test = [
+    "pytest>=9.1.1",
+    "pytest-cov>=7.1.0"
+]
