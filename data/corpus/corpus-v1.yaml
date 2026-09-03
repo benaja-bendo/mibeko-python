@@ -302,15 +302,22 @@ textes:
     manifeste: ohada-actes
     dest: ohada/actes-uniformes
     type_source: acte_uniforme
-    # ⚠️ RECUEIL À DÉCOUPER, pas un acte unique : ce seul PDF contient TROIS
-    # textes — l'Acte uniforme relatif à la médiation (18 art.), l'Acte
-    # uniforme relatif au droit de l'arbitrage (36 art., dont l'art. 36 qui
-    # abroge expressément celui du 11 mars 1999) et le Règlement d'arbitrage
-    # de la CCJA. Tous adoptés le 23/11/2017 à Conakry. Après parsing, passer
-    # par suggest-boundaries-md / split-compilation-md avant structuration,
-    # sinon on recrée un « Code Bleu Ohada » en miniature (numérotations qui
-    # repartent à 1 dans un même document). Le bouton de la fiche arbitrage
-    # sert explnum_id=480 = la version 1999 abrogée.
+    # RECUEIL, pas un acte unique : ce seul PDF contenait TROIS textes, tous
+    # adoptés le 23/11/2017 à Conakry — l'Acte uniforme relatif à la médiation,
+    # l'Acte uniforme relatif au droit de l'arbitrage (art. 36 : abroge
+    # expressément celui du 11 mars 1999) et le Règlement d'arbitrage de la
+    # CCJA (procédure de la Cour, pas un Acte uniforme — type_code TEXTE, pas
+    # AU). Le bouton de la fiche arbitrage sert explnum_id=480 = la version
+    # 1999 abrogée : ne jamais l'utiliser.
+    #
+    # DÉCOUPÉ ET STRUCTURÉ le 09/08/2026 (bornes posées à la main : page à page
+    # via suggest-boundaries-md/split-compilation-md, dont le jeu de motifs ne
+    # reconnaît pas « ACTE UNIFORME » — mibeko-python#7) :
+    #   - stock:au-mediation-2017            20 articles (18 numérotés)
+    #   - stock:au-arbitrage-2017            40 articles (36 numérotés, art. 36 vérifié)
+    #   - stock:reglement-arbitrage-ccja-2017 43 articles (41 numérotés), type_code TEXTE
+    # Détail : mibeko-python#17 (0 flag non résolu sur les trois, review, prêts pour la
+    # relecture éditoriale puis publication comme mibeko-dashboard#57).
     source: {url: "https://biblio.ohada.org/doc_num.php?explnum_id=2799"}
 
 # ---------------------------------------------------------------------------
