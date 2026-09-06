@@ -9,9 +9,11 @@ développement réelle (flush + rollback, jamais de commit) : c'est une
 requête SQL véritable (ILIKE/préfixe) que mocker rendrait creuse.
 """
 
+import datetime
 import uuid
 
 import pytest
+from psycopg2.extras import DateRange
 
 from src.acquisition.manifest import ManifestEntry
 from src.db.database import SessionLocal
@@ -164,6 +166,9 @@ def test_structure_arret_cree_document_article_version_et_citations(tmp_path):
     assert document.type_code == "JURIS"
     assert document.legal_scope == "ohada"
     assert document.curation_status == "draft"
+    # Autorité dès le prononcé : pas de gate "date d'entrée en vigueur
+    # inconnue" à assumer en masse pour publier de la jurisprudence.
+    assert document.date_entree_vigueur.isoformat() == "2023-07-13"
     assert document.libelle_descriptif == "B AG c/ Société Générale de Cote d'Ivoire, dite SGCI, SA"
     assert document.libelle_descriptif_source == "article"
 
@@ -259,3 +264,53 @@ def test_resolve_au_article_trouve_un_acte_uniforme_reel_du_corpus(db_session):
 def test_resolve_au_article_sans_correspondance_renvoie_none(db_session):
     resolved = resolve_au_article(db_session, "portant sur un acte totalement inventé", "999")
     assert resolved is None
+
+
+def test_construire_plan_promotion_resout_contre_la_cible_connectee(db_session):
+    """`promote_jurisprudence_citations.construire_plan` doit résoudre contre
+    la session qui lui est donnée — jamais copier un id calculé ailleurs
+    (c'est tout l'objet de ce module : dev et prod peuvent avoir des id
+    différents pour le même Acte uniforme)."""
+    from src.promotion.promote_jurisprudence_citations import construire_plan
+
+    domaine_test = f"un domaine de test {uuid.uuid4().hex[:8]}"
+    acte = LegalDocument(
+        titre_officiel=f"Acte uniforme portant sur {domaine_test} (révisé)",
+        document_key=f"flux:test-promotion-au-{uuid.uuid4()}",
+        document_role="FLUX",
+        type_code="AU",
+        legal_scope="ohada",
+        curation_status="published",
+    )
+    db_session.add(acte)
+    db_session.flush()
+    article_cible = Article(document_id=acte.id, numero_article="42", ordre_affichage=0)
+    db_session.add(article_cible)
+    db_session.flush()
+
+    decision = LegalDocument(
+        titre_officiel=f"Arrêt CCJA n° 999/2099 du 01/01/2099 ({domaine_test})",
+        document_key=f"flux:test-promotion-decision-{uuid.uuid4()}",
+        document_role="FLUX",
+        type_code="JURIS",
+        legal_scope="ohada",
+        curation_status="draft",
+    )
+    db_session.add(decision)
+    db_session.flush()
+    article_decision = Article(document_id=decision.id, numero_article="999/2099", ordre_affichage=0)
+    db_session.add(article_decision)
+    db_session.flush()
+    db_session.add(
+        ArticleVersion(
+            article_id=article_decision.id,
+            contenu_texte=f"l'article 42 de l'Acte uniforme portant sur {domaine_test} a été violé.",
+            validity_period=DateRange(datetime.date(2099, 1, 1), None),
+        )
+    )
+    db_session.flush()
+
+    plan = construire_plan(db_session)
+    ligne = next(l for l in plan.lignes if l.decision_id == str(decision.id))
+
+    assert ligne.cited_article_id == str(article_cible.id)

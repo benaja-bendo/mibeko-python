@@ -34,9 +34,13 @@ from src.db.models import Article, ArticleVersion, JurisprudenceCitation, LegalD
 TYPE_CODE = "JURIS"
 
 # "Arrêt N° 163/2023 du 13 juillet 2023" apparaît toujours en tête du corps —
-# fiable et déjà présent, pas besoin de reparser la page de résultats.
+# fiable et déjà présent, pas besoin de reparser la page de résultats. Trois
+# variantes réelles observées sur un lot de 184 arrêts (06/09/2026) : « ARRET »
+# sans circonflexe (Arr[êe]t), une espace parfois glissée après le « / »
+# (« 066/ 2023 »), et l'année parfois absente du numéro (« Arrêt N° 045 du 09
+# mars 2023 ») — récupérée alors depuis la date qui suit.
 NUMERO_ET_DATE_RE = re.compile(
-    r"Arrêt\s+N°\s*(?P<numero>\d+/\d{4})\s+du\s+(?P<date_texte>\d{1,2}\s+\S+\s+\d{4})",
+    r"Arr[êe]t\s+N°\s*(?P<numero>\d+)\s*(?:/\s*(?P<annee>\d{4}))?\s+du\s+(?P<date_texte>\d{1,2}\s+\S+\s+\d{4})",
     re.IGNORECASE,
 )
 CHAMBRE_RE = re.compile(r"(?P<chambre>Première|Deuxième|Troisième|Quatrième)\s+chambre", re.IGNORECASE)
@@ -115,8 +119,12 @@ def parse_arret_html(raw: bytes) -> ParsedArret:
     date_decision = None
     match = NUMERO_ET_DATE_RE.search(texte)
     if match:
-        numero = match.group("numero")
         date_decision = extract_french_date(match.group("date_texte"))
+        # L'année manque parfois du numéro lui-même (« Arrêt N° 045 du 09 mars
+        # 2023 ») : celle de la date de la décision est la même par
+        # construction (le numéro d'un arrêt CCJA se remet à 1 chaque année).
+        annee = match.group("annee") or (str(date_decision.year) if date_decision else None)
+        numero = f"{match.group('numero')}/{annee}" if annee else match.group("numero")
 
     chambre_match = CHAMBRE_RE.search(texte)
     chambre = f"{chambre_match.group('chambre')} chambre" if chambre_match else None
@@ -239,6 +247,13 @@ def structure_arret(db: Session, entry: ManifestEntry, data_dir: Path) -> Dict[s
             legal_scope="ohada",
             date_signature=parsed.date_decision,
             date_publication=parsed.date_decision,
+            # Une décision n'a pas d'« entrée en vigueur » au sens d'une loi,
+            # mais elle est autorité dès son prononcé — contrairement à
+            # `date_entree_vigueur_inconnue`, qui affiche « inconnue » à
+            # l'éditeur (PublishModal côté front) pour un cas qui n'a ici
+            # rien d'inconnu : la date existe, elle est juste la même que
+            # date_signature.
+            date_entree_vigueur=parsed.date_decision,
             curation_status="draft",
             extraction_status="completed",
             libelle_descriptif=parties,
@@ -338,8 +353,13 @@ def _extraire_parties(texte_integral: str) -> Optional[str]:
     on ne garde que X/Y, jamais les mentions de conseil (avocats), qui
     n'identifient pas l'affaire elle-même.
     """
+    # « Arrêt » insensible à la casse UNIQUEMENT (ARRET sans circonflexe,
+    # constaté en réel) via un groupe (?i:...) scopé : un `re.IGNORECASE`
+    # global ferait aussi matcher « la Cour » minuscule à l'intérieur même
+    # de « Avocat à la Cour) » — présent dans quasi CHAQUE mention de
+    # conseil — et couperait le nom de la partie en plein milieu.
     match = re.search(
-        r"Affaire\s*:\s*(?P<demandeur>.+?)\s+Contre\s+(?P<defendeur>.+?)(?=\s+Arrêt\s+N°|\s+La\s+Cour)",
+        r"Affaire\s*:\s*(?P<demandeur>.+?)\s+Contre\s+(?P<defendeur>.+?)(?=\s+(?i:Arr[êe]t\s+N°)|\s+La\s+Cour)",
         texte_integral,
     )
     if not match:
@@ -347,12 +367,25 @@ def _extraire_parties(texte_integral: str) -> Optional[str]:
     # `defendeur` peut concaténer plusieurs co-défendeurs (un seul « Contre »
     # dans le texte source pour N parties) : collapse des espaces après le
     # retrait des mentions de conseil, sinon leur suppression en laisse un
-    # blanc double bien visible entre deux noms de partie.
-    demandeur = " ".join(re.sub(r"\(Conseils?\s*:.*?\)", "", match.group("demandeur")).split())
-    defendeur = " ".join(re.sub(r"\(Conseils?\s*:.*?\)", "", match.group("defendeur")).split())
+    # blanc double bien visible entre deux noms de partie. La parenthèse
+    # ouvrante manque parfois dans la source elle-même (« XConseil : ... »,
+    # constaté le 06/09/2026 sur plusieurs arrêts réels) : on la rend
+    # optionnelle plutôt que de laisser le fragment intact faute de match.
+    demandeur = " ".join(re.sub(r"\(?Conseils?\s*:.*?\)", "", match.group("demandeur")).split())
+    defendeur = " ".join(re.sub(r"\(?Conseils?\s*:.*?\)", "", match.group("defendeur")).split())
     if not demandeur or not defendeur:
         return None
-    return f"{demandeur} c/ {defendeur}"
+
+    libelle = f"{demandeur} c/ {defendeur}"
+    # Filet de sécurité : sur un lot réel de 184 arrêts, ~5% ont une mise en
+    # forme des mentions de conseil trop irrégulière pour ce nettoyage
+    # (« c/ » utilisé à la place de « Contre », parenthèse fermante absente…)
+    # et laissent passer un nom d'avocat. Mieux vaut aucun libellé qu'un
+    # libellé qui mélange une partie et son conseil — même logique que ne
+    # jamais fabriquer un titre_officiel qui n'existe pas dans la source.
+    if re.search(r"\bConseils?\b|\bAvocats?\b", libelle, re.IGNORECASE):
+        return None
+    return libelle
 
 
 def _daterange_depuis(date_decision: Optional[datetime.date]) -> DateRange:
