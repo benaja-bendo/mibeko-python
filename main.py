@@ -347,6 +347,32 @@ def ohada_recon(out):
     click.secho("→ Valider ce rapport avant d'inscrire les URLs dans le carnet.", fg="yellow")
 
 
+@cli.command("juricaf-acquire")
+@click.option('--start-page', default=1, type=int, help='Page de résultats de départ (pagination juricaf.org)')
+@click.option('--max-pages', default=None, type=int, help='Nombre de pages de résultats à parcourir ce run')
+@click.option('--limit', default=None, type=int, help='Plafond de téléchargements RÉELS pour cette exécution')
+def juricaf_acquire(start_page, max_pages, limit):
+    """Jurisprudence CCJA sur juricaf.org (mibeko-python#19) : texte intégral, idempotent, reprenable."""
+    import json as _json
+    from src.acquisition.config import data_dir
+    from src.acquisition.juricaf import run_juricaf_acquire
+
+    click.secho(
+        f"Acquisition juricaf.org (page {start_page}"
+        + (f", {max_pages} page(s)" if max_pages else "")
+        + (f", limite {limit} téléchargement(s)" if limit else "")
+        + ") …",
+        fg="cyan",
+    )
+    report = run_juricaf_acquire(data_dir(), start_page=start_page, max_pages=max_pages, limit=limit)
+    click.echo(_json.dumps(report, ensure_ascii=False, indent=2))
+    click.secho(
+        f"{len(report['telecharges'])} téléchargé(s), {report['deja_connus']} déjà connu(s), "
+        f"{len(report['doublons'])} doublon(s), {len(report['erreurs'])} erreur(s).",
+        fg="green" if not report["erreurs"] else "yellow",
+    )
+
+
 @cli.command("link-journals")
 @click.option('--dry-run', is_flag=True, help="Montre le plan de rattachement, aucune écriture")
 def link_journals(dry_run):
