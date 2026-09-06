@@ -396,6 +396,72 @@ def juricaf_structure(limit):
     )
 
 
+@cli.command("juricaf-promote-citations")
+@click.option("--execute", "executer", is_flag=True,
+              help="Écrit réellement dans la cible (défaut : dry-run contre le profil lecture seule).")
+@click.option("--rapport", "rapport_chemin", default=None,
+              help="Chemin du rapport JSON (défaut : data/pipeline/meta/promote-citations-<horodatage>.json).")
+def juricaf_promote_citations(executer, rapport_chemin):
+    """Promeut les citations jurisprudence vers la cible, en RE-RÉSOLVANT contre elle
+    (mibeko-python#19) — jamais en copiant un id calculé côté dev. À lancer après
+    `push-corpus` : les décisions doivent déjà exister dans la cible.
+    """
+    from pathlib import Path
+
+    from sqlalchemy.orm import Session
+
+    from src.acquisition.config import data_dir
+    from src.db.prod_readonly import (
+        SQLSTATE_LECTURE_SEULE,
+        CibleProdAmbigue,
+        ConfigurationProdManquante,
+        assert_read_only,
+        charger_cible,
+        creer_engine,
+    )
+    from src.promotion.promote_jurisprudence_citations import construire_plan, executer as executer_plan
+    from src.promotion.push_corpus import charger_cible_ecriture
+
+    click.secho("\n  ███  PROMOTION DES CITATIONS DE JURISPRUDENCE  ███\n", fg="red", bold=True)
+
+    try:
+        cible_ro = charger_cible()
+    except (ConfigurationProdManquante, CibleProdAmbigue) as exc:
+        click.secho(f"Refus : {exc}", fg="red")
+        raise SystemExit(1)
+    engine_ro = creer_engine(cible_ro)
+    sqlstate = assert_read_only(engine_ro)
+    if sqlstate == SQLSTATE_LECTURE_SEULE:
+        click.secho("Préflight : lecture seule prouvée (SQLSTATE 25006).", fg="green")
+
+    with Session(bind=engine_ro) as session_ro:
+        plan = construire_plan(session_ro)
+        session_ro.rollback()
+
+    click.secho(
+        f"Plan : {len(plan.lignes)} citation(s), {plan.resolues()} résolue(s) vers le corpus, "
+        f"{plan.decisions_sans_texte} décision(s) sans texte (probablement pas encore poussées).",
+        fg="cyan",
+    )
+
+    if not executer:
+        click.secho("Dry-run — aucune écriture. Relancer avec --execute pour appliquer.", fg="yellow")
+        return
+
+    engine_rw = charger_cible_ecriture()
+    if rapport_chemin is None:
+        from datetime import datetime
+
+        horodatage = datetime.now().strftime("%Y%m%d-%H%M%S")
+        rapport_chemin = str(data_dir() / "pipeline" / "meta" / f"promote-citations-{horodatage}.json")
+    rapport = executer_plan(engine_rw, plan, rapport_chemin=rapport_chemin)
+    click.secho(
+        f"{rapport['inserees']} ligne(s) insérée(s), {rapport['deja_presentes']} déjà présente(s). "
+        f"Rapport : {rapport_chemin}",
+        fg="green",
+    )
+
+
 @cli.command("link-journals")
 @click.option('--dry-run', is_flag=True, help="Montre le plan de rattachement, aucune écriture")
 def link_journals(dry_run):
