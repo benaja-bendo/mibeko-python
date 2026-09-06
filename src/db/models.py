@@ -215,3 +215,21 @@ class ArticleVersion(Base):
     validation_status = Column(String(255), default="pending")
 
     article = relationship("Article", back_populates="versions")
+
+
+class JurisprudenceCitation(Base):
+    """Represente la citation d'un article par une decision de justice (mibeko-python#19).
+
+    cited_article_id reste NULL quand la reference designe un texte hors
+    perimetre du corpus Mibeko (droit national d'un autre Etat membre,
+    Code civil...) : reference_brute porte alors seule la citation.
+    """
+
+    __tablename__ = "jurisprudence_citations"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    decision_id = Column(UUID(as_uuid=True), ForeignKey("legal_documents.id", ondelete="CASCADE"), nullable=False)
+    cited_article_id = Column(UUID(as_uuid=True), ForeignKey("articles.id", ondelete="SET NULL"), nullable=True)
+    reference_brute = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

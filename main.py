@@ -373,6 +373,29 @@ def juricaf_acquire(start_page, max_pages, limit):
     )
 
 
+@cli.command("juricaf-structure")
+@click.option('--limit', default=None, type=int, help='Plafond d\'arrêts structurés pour cette exécution')
+def juricaf_structure(limit):
+    """Structure les arrêts CCJA acquis (mibeko-python#19) : document + article + citations, idempotent."""
+    import json as _json
+    from src.acquisition.config import data_dir
+    from src.db.database import SessionLocal
+    from src.structuration.jurisprudence import run_juricaf_structure
+
+    click.secho("Structuration des arrêts juricaf.org …", fg="cyan")
+    db = SessionLocal()
+    try:
+        summary = run_juricaf_structure(db, data_dir(), limit=limit)
+    finally:
+        db.close()
+    click.echo(_json.dumps(summary, ensure_ascii=False, indent=2, default=str))
+    click.secho(
+        f"{summary['structures']} structuré(s), {summary['deja_existants']} déjà existant(s), "
+        f"{len(summary['erreurs'])} erreur(s).",
+        fg="green" if not summary["erreurs"] else "yellow",
+    )
+
+
 @cli.command("link-journals")
 @click.option('--dry-run', is_flag=True, help="Montre le plan de rattachement, aucune écriture")
 def link_journals(dry_run):
