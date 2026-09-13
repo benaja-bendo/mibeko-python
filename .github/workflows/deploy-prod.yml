@@ -108,6 +108,13 @@ jobs:
             MINERU_API_KEY=${{ secrets.MINERU_API_KEY }}
             MINERU_LANG=${{ secrets.MINERU_LANG || 'fr' }}
 
+            # mibeko-python#21 : la veille périodique structure via Mistral (métadonnées
+            # d'en-tête uniquement), un usage jusqu'ici absent de ce déploiement — clé
+            # dédiée, distincte de celle de l'assistant (laravel/ai, autre compte/repo).
+            MISTRAL_API_KEY=${{ secrets.MISTRAL_API_KEY }}
+            VEILLE_HOUR_UTC=${{ secrets.VEILLE_HOUR_UTC || '2' }}
+            VEILLE_HEALTHCHECK_URL=${{ secrets.VEILLE_HEALTHCHECK_URL }}
+
             GITHUB_REPOSITORY=$REPO_LC
             EOF
 

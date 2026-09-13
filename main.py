@@ -331,6 +331,55 @@ def acquire(carnet_opt, source_key, dry_run, limit):
     click.echo(_json.dumps(report, ensure_ascii=False, indent=2))
 
 
+@cli.command("veille-corpus")
+@click.option(
+    '--once', is_flag=True,
+    help="Un seul passage puis sortie (défaut du conteneur : boucle quotidienne)",
+)
+@click.option(
+    '--dry-run', is_flag=True,
+    help="Découverte + parsing + LLM sans écriture — exige --once (sinon Mistral serait appelé en boucle pour rien)",
+)
+@click.option(
+    '--hour-utc', default=None, type=int,
+    help="Heure UTC du passage quotidien en mode boucle (défaut : VEILLE_HOUR_UTC ou 2)",
+)
+def veille_corpus(once, dry_run, hour_utc):
+    """Veille périodique (mibeko-python#21) : découvre et ingère les nouveaux JO en
+    `draft`. Ne publie jamais. Périmètre fixe : série `jo-recents`, manifeste `sgg-jo`."""
+    import datetime as _dt
+    import json as _json
+    import os
+    import time
+
+    from src.veille.runner import run_once
+    from src.veille.scheduler import next_run_at, seconds_until
+
+    if dry_run and not once:
+        click.secho(
+            "Erreur : --dry-run n'a de sens qu'avec --once (--dry-run appelle quand même Mistral).",
+            fg="red",
+        )
+        raise SystemExit(1)
+
+    if once:
+        click.secho(f"Veille : un seul passage{' (dry-run)' if dry_run else ''} …", fg="cyan")
+        report = run_once(dry_run=dry_run)
+        click.echo(_json.dumps(report, ensure_ascii=False, indent=2))
+        raise SystemExit(1 if report.get("echec") else 0)
+
+    hour = hour_utc if hour_utc is not None else int(os.getenv("VEILLE_HOUR_UTC", "2"))
+    click.secho(f"Veille : daemon quotidien à {hour:02d}h00 UTC …", fg="cyan")
+    while True:
+        now = _dt.datetime.now(_dt.timezone.utc)
+        target = next_run_at(now, hour)
+        wait = seconds_until(now, target)
+        click.echo(f"    prochain passage : {target.isoformat()} (dans {wait:.0f} s)")
+        time.sleep(wait)
+        report = run_once(dry_run=False)
+        click.echo(_json.dumps(report, ensure_ascii=False, indent=2))
+
+
 @cli.command("ohada-recon")
 @click.option('--out', default=None, help='Rapport markdown (défaut : data/manifests/ohada-recon.md)')
 def ohada_recon(out):

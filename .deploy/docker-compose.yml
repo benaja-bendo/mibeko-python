@@ -39,6 +39,20 @@ services:
       timeout: 5s
       retries: 5
 
+  # Veille périodique (mibeko-python#21) : découvre et ingère les nouveaux JO
+  # en `draft`, jamais leur publication. Conteneur séparé de `api` — un daemon
+  # en boucle ne doit pas partager son cycle de vie avec le serveur HTTP
+  # (mêmes réseaux/volumes, même image, comme mibeko-scheduler côté Laravel).
+  veille:
+    image: ghcr.io/${GITHUB_REPOSITORY}:latest
+    container_name: mibeko-python-veille
+    restart: unless-stopped
+    logging: *default-logging
+    env_file: [.env]
+    command: ["python", "main.py", "veille-corpus"]
+    networks: [proxy, db_internal, mineru_internal]
+    depends_on: [api]
+
 networks:
   proxy:
     external: true
