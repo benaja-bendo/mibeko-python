@@ -528,6 +528,38 @@ def test_stock_sans_aucune_date_llm_ne_fabrique_jamais_de_date(tmp_path: Path, m
     assert flag.document_id is None
 
 
+def test_acte_isole_deja_existant_ne_fabrique_jamais_un_second_document(tmp_path: Path, monkeypatch):
+    """Scénario (e) des six incidents du plan « boîte de réception »
+    (mibeko-python#23, critère de clôture de L1) : une structuration rejouée
+    pour une entrée déjà structurée avec succès (relance après incident
+    postérieur à la première écriture, réponse LLM perdue puis rejouée…) ne
+    doit jamais fabriquer un second document. Le dédoublonnage tient au
+    document_key, jamais au fait d'avoir déjà tenté l'appel — ce chemin
+    (acte isolé, pas un JO multi-actes) n'avait jamais été exercé par un
+    test bien que `FakeSession` le permette depuis le début.
+    """
+    import uuid
+
+    from src.db.models import LegalDocument
+
+    data_dir = tmp_path / "data"
+    entry = _seed_entry(data_dir, "sgg-jo/congo-jo-deja-existant")
+    existing = LegalDocument(
+        id=uuid.uuid4(), titre_officiel="Déjà en base", document_role="FLUX",
+        document_key="peu-importe-ici-fakequery-ignore-le-filtre", curation_status="draft",
+    )
+    db = FakeSession(existing_document=existing)
+
+    monkeypatch.setattr(structurer, "minio_service", FakeMinioService())
+    monkeypatch.setattr(structurer, "ingest_hierarchy", lambda *args, **kwargs: None)
+
+    result = structure_document(db, data_dir, entry, mistral_client=ValidMetadataMistralClient())
+
+    assert result["statut"] == "deja_existant"
+    assert result["document_id"] == existing.id
+    assert not any(isinstance(obj, LegalDocument) for obj in db.added)
+
+
 class ListeSommaireMistralClient:
     """Simule le sommaire d'un JO multi-actes : Mistral renvoie une LISTE
     d'objets (un par acte) au lieu de l'objet unique attendu — cas réel observé

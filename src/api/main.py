@@ -17,6 +17,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import func, text
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from src.api.routers import documents as documents_router
@@ -1782,7 +1783,28 @@ async def deposer_document(
 
         job = IngestionJob(kind=IngestionJob.KIND_DEPOT, manifest_id=entry.id, requested_by=_user.email)
         db.add(job)
-        db.commit()
+        try:
+            db.commit()
+        except IntegrityError:
+            # Deux dépôts simultanés du même PDF (incident (a) du plan
+            # « boîte de réception ») : `ingestion_provenances.manifest_id`
+            # est UNIQUE en base — entry.id étant dérivé du SHA-256, les deux
+            # requêtes calculent le MÊME id et une seule gagne la course.
+            # `manifest.save()` (ci-dessus, hors transaction) a pu écrire deux
+            # fois la même entrée avant que l'une des deux ne perde ici — sans
+            # conséquence, contenu identique. Le perdant n'écrit ni provenance
+            # ni job en double : il renvoie le même 409 que le second dépôt
+            # explicite d'un fichier déjà connu.
+            db.rollback()
+            connu = _resolve_known_sha256(db, upload.sha256) or {"document_id": None, "manifest_id": entry.id}
+            return JSONResponse(
+                status_code=409,
+                content={
+                    "message": "Ce fichier vient d'être déposé par une autre requête (même empreinte SHA-256).",
+                    **connu,
+                    "actions": ["ouvrir_le_dossier", "reprendre_le_traitement", "nouvelle_extraction"],
+                },
+            )
 
         return JSONResponse(
             status_code=201,
