@@ -217,6 +217,85 @@ class ArticleVersion(Base):
     article = relationship("Article", back_populates="versions")
 
 
+class IngestionProvenance(Base):
+    """Provenance structurée d'un fichier acquis (dépôt web ou veille).
+
+    Remplace le rôle de source de vérité que jouait jusqu'ici
+    data/manifests/*.jsonl (mibeko-python#23, § 3.7 du plan « boîte de
+    réception ») : ce fichier n'a aucun verrou lecture-modification-écriture
+    et perdrait des mises à jour concurrentes une fois dépôt web, veille et
+    worker actifs ensemble. Le JSONL reste produit en export périodique.
+
+    Schéma piloté par la migration Laravel (dashboard#140) — ce modèle ne
+    fait que la lire/écrire, jamais de DDL côté Python (invariant n°1,
+    mibeko-python/CLAUDE.md).
+    """
+
+    __tablename__ = "ingestion_provenances"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    manifest_id = Column(String(255), nullable=False, unique=True)
+    type_source = Column(String(40), nullable=False)
+    source_url = Column(String(255), nullable=True)
+    sha256 = Column(String(64), nullable=False)
+    fetched_at = Column(DateTime, nullable=True)
+    evenements = Column(JSONB, nullable=False, default=list)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class IngestionJob(Base):
+    """Travail de la file durable de l'usine à textes (mibeko-python#23).
+
+    extraction_runs.document_id est NOT NULL : un run ne peut pas exister
+    avant le document, or un dépôt est un travail AVANT d'être un document.
+    `fencing_token` empêche un worker dont le bail (`locked_at`/`locked_by`)
+    a expiré d'écrire après qu'un autre worker a repris le travail — vérifié
+    avant toute écriture finale, jamais seulement à la réservation.
+
+    Schéma piloté par la migration Laravel (dashboard#140), cf.
+    `IngestionProvenance` ci-dessus pour le même invariant.
+    """
+
+    __tablename__ = "ingestion_jobs"
+
+    KIND_DEPOT = "depot"
+    KIND_VEILLE = "veille"
+    KIND_REPRISE = "reprise"
+
+    STEP_RECU = "recu"
+    STEP_PARSE = "parse"
+    STEP_STRUCTURE = "structure"
+    STEP_CONTROLE = "controle"
+    STEP_TERMINE = "termine"
+
+    STATUS_PENDING = "pending"
+    STATUS_RUNNING = "running"
+    STATUS_FAILED = "failed"
+    STATUS_DONE = "done"
+
+    ERROR_TRANSITOIRE = "transitoire"
+    ERROR_DEFINITIVE = "definitive"
+    ERROR_INFORMATION_MANQUANTE = "information_manquante"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    kind = Column(String(20), nullable=False)
+    manifest_id = Column(String(255), nullable=True)
+    step = Column(String(20), nullable=False, default=STEP_RECU)
+    status = Column(String(20), nullable=False, default=STATUS_PENDING)
+    attempts = Column(Integer, nullable=False, default=0)
+    max_attempts = Column(Integer, nullable=False, default=3)
+    locked_at = Column(DateTime, nullable=True)
+    locked_by = Column(String(255), nullable=True)
+    fencing_token = Column(BigInteger, nullable=False, default=0)
+    last_error = Column(Text, nullable=True)
+    error_class = Column(String(30), nullable=True)
+    result = Column(JSONB, nullable=False, default=dict)
+    requested_by = Column(String(255), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 class JurisprudenceCitation(Base):
     """Represente la citation d'un article par une decision de justice (mibeko-python#19).
 

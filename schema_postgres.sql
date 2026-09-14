@@ -647,6 +647,56 @@ CREATE TABLE role_has_permissions (
 
 
 -- ===========================================================
+-- 8b. USINE À TEXTES : FILE D'INGESTION DURABLE ET PROVENANCE
+--     (mibeko-python#23, migrations Laravel dashboard#140 — schéma piloté
+--     par Laravel, cf. invariant n°1 de mibeko-python/CLAUDE.md)
+-- ===========================================================
+
+-- Provenance structurée d'un fichier acquis (dépôt web ou veille) : remplace
+-- le rôle de source de vérité que jouait jusqu'ici data/manifests/*.jsonl,
+-- qui n'a aucun verrou lecture-modification-écriture (§ 3.7 du plan
+-- « boîte de réception », docs/pipeline/plan-boite-de-reception-2026-09.md).
+CREATE TABLE ingestion_provenances (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    manifest_id VARCHAR(255) NOT NULL UNIQUE,
+    type_source VARCHAR(40) NOT NULL,
+    source_url VARCHAR(255),
+    sha256 CHAR(64) NOT NULL,
+    fetched_at TIMESTAMP(0) WITHOUT TIME ZONE,
+    evenements JSONB NOT NULL DEFAULT '[]'::jsonb,
+    created_at TIMESTAMP(0) WITHOUT TIME ZONE,
+    updated_at TIMESTAMP(0) WITHOUT TIME ZONE
+);
+
+CREATE INDEX IF NOT EXISTS ingestion_provenances_sha256_index ON ingestion_provenances (sha256);
+
+-- File de travaux : extraction_runs.document_id est NOT NULL, or un dépôt est
+-- un travail AVANT d'être un document. fencing_token empêche un worker dont
+-- le bail (locked_at/locked_by) a expiré d'écrire après qu'un autre worker a
+-- repris le travail (SELECT … FOR UPDATE SKIP LOCKED côté worker Python).
+CREATE TABLE ingestion_jobs (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    kind VARCHAR(20) NOT NULL CHECK (kind IN ('depot', 'veille', 'reprise')),
+    manifest_id VARCHAR(255),
+    step VARCHAR(20) NOT NULL DEFAULT 'recu' CHECK (step IN ('recu', 'parse', 'structure', 'controle', 'termine')),
+    status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'running', 'failed', 'done')),
+    attempts INTEGER NOT NULL DEFAULT 0,
+    max_attempts INTEGER NOT NULL DEFAULT 3,
+    locked_at TIMESTAMP(0) WITHOUT TIME ZONE,
+    locked_by VARCHAR(255),
+    fencing_token BIGINT NOT NULL DEFAULT 0,
+    last_error TEXT,
+    error_class VARCHAR(30) CHECK (error_class IS NULL OR error_class IN ('transitoire', 'definitive', 'information_manquante')),
+    result JSONB NOT NULL DEFAULT '{}'::jsonb,
+    requested_by VARCHAR(255),
+    created_at TIMESTAMP(0) WITHOUT TIME ZONE,
+    updated_at TIMESTAMP(0) WITHOUT TIME ZONE
+);
+
+CREATE INDEX IF NOT EXISTS ingestion_jobs_manifest_id_index ON ingestion_jobs (manifest_id);
+CREATE INDEX IF NOT EXISTS ingestion_jobs_status_step_created_at_index ON ingestion_jobs (status, step, created_at);
+
+-- ===========================================================
 -- 9. TRIGGERS : REFRESH SEARCH TSV (Full Text Search)
 -- ===========================================================
 CREATE OR REPLACE FUNCTION fn_refresh_article_version_tsv()
