@@ -191,7 +191,8 @@ def split_and_persist_journal_acts(
             document_key = base_document_key
 
         document = db.query(LegalDocument).filter(LegalDocument.document_key == document_key).first()
-        if document is None:
+        is_new_document = document is None
+        if is_new_document:
             document = LegalDocument(
                 id=uuid.uuid4(),
                 official_journal_id=official_journal_id,
@@ -221,6 +222,18 @@ def split_and_persist_journal_acts(
             merge_metadata(document, provenance)
         if reference_nor_detectee:
             merge_metadata(document, {"reference_nor_detectee": reference_nor_detectee})
+
+        if not is_new_document:
+            # Acte déjà persisté par un run antérieur — reprise après coupure
+            # (mibeko-python#23, § identités du plan « boîte de réception ») :
+            # ne jamais rejouer ingest_hierarchy sur un acte existant, elle
+            # purge la structure avant réinsertion (clear_document_structure)
+            # et écraserait silencieusement toute relecture humaine déjà
+            # faite dessus. On complète seulement les actes manquants du même
+            # Journal officiel ; celui-ci compte dans la liste renvoyée à
+            # l'appelant (§3.6 : la reprise doit savoir ce qui existe déjà).
+            created.append(document)
+            continue
 
         pdf_row = MediaFile(
             document_id=document.id, storage_provider="MINIO", bucket_name=minio_service.bucket_name,

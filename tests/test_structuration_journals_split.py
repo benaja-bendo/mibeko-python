@@ -340,7 +340,15 @@ def test_jo_acte_sans_contenu_entre_deux_titres_est_marque_en_echec(tmp_path: Pa
 
 def test_jo_multi_actes_est_idempotent_sur_rejeu(tmp_path: Path, monkeypatch):
     """Rejouer la même entrée ne doit pas dupliquer les actes déjà en base
-    (retrouvés par `document_key`, comme le reste du pipeline)."""
+    (retrouvés par `document_key`, comme le reste du pipeline).
+
+    mibeko-python#23, § identités : l'ancienne version sondait seulement le
+    premier acte et court-circuitait tout le reste sur « déjà existant » —
+    corrigé, `split_and_persist_journal_acts` est idempotente PAR ACTE
+    (elle ne rejoue jamais `ingest_hierarchy` sur un acte déjà persisté) et
+    est donc appelée systématiquement. Le second appel réussit normalement
+    (`statut='structure'`) : ce qui compte est qu'aucun document
+    supplémentaire n'apparaisse, pas que l'appel soit court-circuité."""
     data_dir = tmp_path / "data"
     entry = _seed_entry(data_dir, "sgg-jo/congo-jo-2026-43", MD_JO_SOMMAIRE_PUIS_DEUX_ACTES)
     db = RegistryFakeSession()
@@ -352,8 +360,52 @@ def test_jo_multi_actes_est_idempotent_sur_rejeu(tmp_path: Path, monkeypatch):
     documents_apres_premier_run = [obj for obj in db.added if isinstance(obj, LegalDocument)]
     assert len(documents_apres_premier_run) == 2
 
-    # Second appel : la probe sur le document_key du 1er acte doit court-circuiter.
+    # Second appel : les deux actes existent déjà (mêmes document_key), donc
+    # aucun nouveau document — mais l'appel n'est plus court-circuité.
     result2 = structure_document(db, data_dir, entry, mistral_client=ValidMetadataMistralClient())
-    assert result2["statut"] == "deja_existant"
+    assert result2["statut"] == "structure"
+    assert len(result2["document_ids"]) == 2  # les deux actes, retrouvés
     documents_apres_second_run = [obj for obj in db.added if isinstance(obj, LegalDocument)]
     assert len(documents_apres_second_run) == 2  # aucun document supplémentaire créé
+
+
+def test_jo_reprise_apres_coupure_complete_seulement_lacte_manquant(tmp_path: Path, monkeypatch):
+    """mibeko-python#23, scénario d'incident (f) du plan « boîte de
+    réception » : un crash entre l'acte 1 et l'acte 2 d'un JO ne doit ni
+    perdre l'acte 1 déjà persisté, ni le re-parser (ça écraserait toute
+    relecture humaine déjà faite dessus) — la reprise complète EXACTEMENT
+    ce qui manque, jamais plus."""
+    data_dir = tmp_path / "data"
+    entry = _seed_entry(data_dir, "sgg-jo/congo-jo-2026-44", MD_JO_SOMMAIRE_PUIS_DEUX_ACTES)
+    db = RegistryFakeSession()
+    ingest_calls: list = []
+    monkeypatch.setattr(structurer, "ingest_hierarchy", lambda *a, **k: ingest_calls.append(a))
+    monkeypatch.setattr(journals_module, "ingest_hierarchy", lambda *a, **k: ingest_calls.append(a))
+    monkeypatch.setattr(structurer, "minio_service", FakeMinioService())
+
+    # Run complet de référence : 2 actes, ingest_hierarchy appelée 2 fois.
+    result1 = structure_document(db, data_dir, entry, mistral_client=ValidMetadataMistralClient())
+    assert result1["statut"] == "structure"
+    documents_complets = [obj for obj in db.added if isinstance(obj, LegalDocument)]
+    assert len(documents_complets) == 2
+    assert len(ingest_calls) == 2
+
+    # Simule un crash qui n'a persisté QUE le premier acte : on retire le
+    # second de la base fake avant de rejouer (le job/manifeste, lui,
+    # redemande le même dépôt — comportement de reprise, pas un nouveau dépôt).
+    premier_acte = min(documents_complets, key=lambda d: d.titre_officiel)
+    db._legal_documents = [premier_acte]
+    ingest_calls.clear()
+    nb_ajouts_avant_reprise = len(db.added)  # cumulatif : `db.added` ne se réinitialise jamais
+
+    result2 = structure_document(db, data_dir, entry, mistral_client=ValidMetadataMistralClient())
+
+    assert result2["statut"] == "structure"
+    assert len(result2["document_ids"]) == 2  # les deux actes : le retrouvé + le complété
+    nouveaux_documents = [
+        obj for obj in db.added[nb_ajouts_avant_reprise:] if isinstance(obj, LegalDocument)
+    ]
+    assert len(nouveaux_documents) == 1  # exactement l'acte manquant, pas de doublon sur le premier
+    # Un seul nouvel appel à ingest_hierarchy : celui de l'acte manquant.
+    # L'acte déjà là n'est JAMAIS re-parsé.
+    assert len(ingest_calls) == 1

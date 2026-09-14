@@ -474,6 +474,16 @@ def _structure_official_journal_entry(
     créée (règle « n'invente jamais », cf. `journals.py`) : les actes sont
     insérés quand même, non rattachés. Le rattrapage de la fiche reste le
     rôle de la commande existante `link-journals` une fois la date connue.
+
+    Reprise après coupure (mibeko-python#23, § identités) : cette fonction
+    n'essaie plus de deviner si le JO est « déjà fait » en sondant un seul
+    acte — `split_and_persist_journal_acts` est idempotente PAR ACTE (elle
+    ne rejoue jamais `ingest_hierarchy` sur un acte déjà persisté) et est
+    donc appelée systématiquement, y compris quand une partie des actes
+    existe déjà. La liste `document_ids` renvoyée couvre TOUJOURS tous les
+    actes du JO — anciens et nouveaux — jamais seulement ceux créés à cet
+    appel : un appelant qui compare l'avant/après sait exactement ce qui
+    manquait et a été comblé.
     """
     extracted_texts = split_official_journal_markdown(markdown_text)
     if len(extracted_texts) <= 1:
@@ -487,10 +497,6 @@ def _structure_official_journal_entry(
             "document_ids": [],
             "motif": f"{len(extracted_texts)} acte(s) détecté(s) dans le Journal officiel (dry-run)",
         }
-
-    probe_key = build_document_key("FLUX", None, f"{extracted_texts[0]['titre'].strip()} — {basename}")
-    if db.query(LegalDocument).filter(LegalDocument.document_key == probe_key).first():
-        return {"statut": "deja_existant", "document_id": None, "document_ids": [], "motif": None}
 
     # UUID déterministe (pas de FK, sert uniquement à scoper la clé objet
     # MinIO) : un re-run produit exactement le même chemin de stockage —
@@ -530,7 +536,10 @@ def _structure_official_journal_entry(
     }
 
     try:
-        created_documents = split_and_persist_journal_acts(
+        # Couvre TOUS les actes du JO (déjà persistés ou nouveaux) : voir la
+        # docstring de la fonction — idempotente par acte, jamais seulement
+        # « ce qui a été créé à cet appel ».
+        journal_acts = split_and_persist_journal_acts(
             db,
             markdown_text=markdown_text,
             basename=basename,
@@ -553,7 +562,7 @@ def _structure_official_journal_entry(
             json_media=json_media_ref,
             provenance=provenance,
         )
-        if not created_documents:
+        if not journal_acts:
             db.rollback()
             return {"statut": "erreur", "document_id": None, "document_ids": [], "motif": "aucun acte persisté malgré >1 acte détecté"}
         db.commit()
@@ -563,8 +572,8 @@ def _structure_official_journal_entry(
 
     return {
         "statut": "structure",
-        "document_id": ",".join(str(d.id) for d in created_documents),
-        "document_ids": [str(d.id) for d in created_documents],
+        "document_id": ",".join(str(d.id) for d in journal_acts),
+        "document_ids": [str(d.id) for d in journal_acts],
         "motif": None,
     }
 
