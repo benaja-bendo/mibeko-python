@@ -301,12 +301,34 @@ def structure_document(
     date_signature = _parse_iso_date(llm_metadata.get("date_signature"))
     date_publication = _parse_iso_date(llm_metadata.get("date_publication"))
     # La contrainte DB chk_legal_documents_role_logic exige consolidation_as_of
-    # NOT NULL pour un STOCK (et NULL pour un FLUX). Même repli que l'upload
-    # manuel (api/main.py : date du jour), en préférant les dates réelles du
-    # texte quand le LLM les a extraites.
+    # NOT NULL pour un STOCK : impossible d'insérer sans date réelle, mais
+    # plus question d'en FABRIQUER une (mibeko-python#23, § objectif n°9) — le
+    # repli `datetime.utcnow().date()` d'avant ce correctif inventait
+    # silencieusement une date de consolidation qui n'existait pas dans le
+    # texte. Sans date réelle, le document n'est pas créé : signalement
+    # `blocking` et reprise humaine (le dépôt web ne demande pas non plus de
+    # date pour un texte consolidé, § 3.2 du plan « boîte de réception » —
+    # elle ne peut venir que du contenu lui-même).
     consolidation_as_of = None
     if document_role == "STOCK":
-        consolidation_as_of = date_publication or date_signature or datetime.datetime.utcnow().date()
+        consolidation_as_of = date_publication or date_signature
+        if consolidation_as_of is None:
+            db.add(CurationFlag(
+                document_id=None,
+                source="llm",
+                type_probleme="consolidation_date_manquante",
+                severity="blocking",
+                description=(
+                    f"Date de consolidation introuvable pour « {titre_officiel} » : ni date de "
+                    "publication ni date de signature extraites — à compléter avant insertion "
+                    "(jamais une date fabriquée)."
+                ),
+            ))
+            db.commit()
+            return {
+                "statut": "erreur", "document_id": None,
+                "motif": "date de consolidation introuvable — à compléter (STOCK)",
+            }
 
     try:
         document = LegalDocument(

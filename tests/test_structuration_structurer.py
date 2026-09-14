@@ -502,8 +502,13 @@ def test_flux_garde_consolidation_as_of_null(tmp_path: Path, monkeypatch):
     assert document.consolidation_as_of is None
 
 
-def test_stock_sans_aucune_date_llm_replie_sur_la_date_du_jour(tmp_path: Path, monkeypatch):
-    from src.db.models import LegalDocument
+def test_stock_sans_aucune_date_llm_ne_fabrique_jamais_de_date(tmp_path: Path, monkeypatch):
+    """mibeko-python#23, § objectif n°9 : avant ce correctif, l'absence de
+    date de publication/signature se repliait silencieusement sur la date du
+    jour pour satisfaire chk_legal_documents_role_logic. Plus aucune date
+    n'est fabriquée : le document n'est PAS créé, un signalement `blocking`
+    est posé pour reprise humaine."""
+    from src.db.models import CurationFlag, LegalDocument
 
     data_dir = tmp_path / "data"
     entry = _seed_entry(data_dir, "sgg-codes/congo-code-sans-date", type_source="code")
@@ -514,10 +519,13 @@ def test_stock_sans_aucune_date_llm_replie_sur_la_date_du_jour(tmp_path: Path, m
 
     result = structure_document(db, data_dir, entry, mistral_client=ValidMetadataMistralClient())
 
-    assert result["statut"] == "structure"
-    document = next(obj for obj in db.added if isinstance(obj, LegalDocument))
-    assert document.document_role == "STOCK"
-    assert document.consolidation_as_of is not None
+    assert result["statut"] == "erreur"
+    assert "date de consolidation introuvable" in result["motif"]
+    assert not any(isinstance(obj, LegalDocument) for obj in db.added)
+    flag = next(obj for obj in db.added if isinstance(obj, CurationFlag))
+    assert flag.type_probleme == "consolidation_date_manquante"
+    assert flag.severity == "blocking"
+    assert flag.document_id is None
 
 
 class ListeSommaireMistralClient:

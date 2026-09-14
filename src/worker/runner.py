@@ -257,16 +257,17 @@ def _classify_structuration_motif(motif: str) -> str:
       échec") → transitoire, une relance peut réussir sans rien changer
       d'autre ;
     - une réponse Mistral reçue mais invalide pour le schéma (message
-      "validation du schéma en échec", ex. nature introuvable) →
-      information_manquante — le signalement `blocking` est déjà posé par
-      `structure_document` lui-même, jamais un troisième appel identique
-      (§ 3.6/L1 du plan « boîte de réception ») ;
+      "validation du schéma en échec", ex. nature introuvable), ou une date
+      de consolidation introuvable pour un STOCK (message "date de
+      consolidation introuvable") → information_manquante — le signalement
+      `blocking` est déjà posé par `structure_document` lui-même, jamais un
+      troisième appel identique (§ 3.6/L1 du plan « boîte de réception ») ;
     - tout le reste (markdown introuvable, échec d'insertion DB, parseur en
       échec) → definitive, une donnée ou un bug, pas un incident réseau.
     """
     if "appel Mistral en échec" in motif:
         return IngestionJob.ERROR_TRANSITOIRE
-    if "validation du schéma en échec" in motif:
+    if "validation du schéma en échec" in motif or "date de consolidation introuvable" in motif:
         return IngestionJob.ERROR_INFORMATION_MANQUANTE
     return IngestionJob.ERROR_DEFINITIVE
 
