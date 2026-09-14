@@ -620,6 +620,90 @@ def structure_batch(source_key, limit, dry_run, include_hors_perimetre):
         db.close()
 
 
+@cli.command("worker")
+@click.option('--once', is_flag=True, help="Réserve et traite un seul travail disponible, puis sort.")
+@click.option('--loop', is_flag=True, help="Boucle continue (mode conteneur) : réserve, traite, patiente, recommence.")
+@click.option(
+    '--poll-interval', default=None, type=float,
+    help="Secondes entre deux réservations quand aucun travail n'est disponible (défaut : WORKER_POLL_SECONDS ou 15).",
+)
+def worker(once, loop, poll_interval):
+    """Worker de la file `ingestion_jobs` (mibeko-python#23) : réserve un travail
+    (SELECT … FOR UPDATE SKIP LOCKED) et l'exécute jusqu'à son terme (parse → structure)."""
+    import time
+
+    from src.acquisition.config import data_dir
+    from src.db.database import SessionLocal
+    from src.db.models import IngestionJob
+    from src.worker.runner import backoff_seconds, process_job, reserve_job
+
+    if once == loop:
+        click.secho("Erreur : préciser exactement un de --once ou --loop.", fg="red")
+        raise SystemExit(1)
+
+    target = data_dir()
+    interval = poll_interval if poll_interval is not None else float(os.getenv("WORKER_POLL_SECONDS", "15"))
+
+    def _run_one():
+        """Réserve et traite au plus un travail. Renvoie l'état final relu en
+        base (`None` si aucun travail n'était disponible). Session dédiée à
+        cet appel : jamais partagée entre deux réservations successives."""
+        db = SessionLocal()
+        try:
+            job = reserve_job(db)
+            if job is None:
+                return None
+            click.secho(f"job {job.id} ({job.kind}, {job.manifest_id}) : réservé, étape « {job.step} »", fg="cyan")
+            process_job(db, target, job)
+            db.expire_all()
+            return db.query(IngestionJob).filter(IngestionJob.id == job.id).first()
+        finally:
+            db.close()
+
+    def _report(etat) -> int:
+        """Affiche l'état d'un travail traité et renvoie le code de sortie
+        approprié pour `--once` (0 sauf échec définitif)."""
+        if etat.status == IngestionJob.STATUS_DONE:
+            click.secho(f"job {etat.id} : terminé", fg="green")
+            return 0
+        if etat.status == IngestionJob.STATUS_FAILED:
+            click.secho(f"job {etat.id} : échec définitif ({etat.error_class}) — {etat.last_error}", fg="red")
+            return 1
+        if etat.status == IngestionJob.STATUS_PENDING:
+            click.secho(
+                f"job {etat.id} : échec transitoire (tentative {etat.attempts}/{etat.max_attempts}) — "
+                f"repassé en attente, {etat.last_error}",
+                fg="yellow",
+            )
+            return 0
+        # status encore "running" : le jeton a expiré en cours de route, un
+        # autre worker a repris la main (cf. src/worker/runner.py::process_job).
+        click.secho(f"job {etat.id} : abandonné — un autre worker a repris la main", fg="yellow")
+        return 0
+
+    if once:
+        etat = _run_one()
+        if etat is None:
+            click.secho("Aucun travail disponible.", fg="cyan")
+            raise SystemExit(0)
+        raise SystemExit(_report(etat))
+
+    click.secho(f"Worker : boucle continue (intervalle {interval:.0f}s sans travail) …", fg="cyan")
+    while True:
+        etat = _run_one()
+        if etat is None:
+            time.sleep(interval)
+            continue
+        _report(etat)
+        if etat.status == IngestionJob.STATUS_PENDING:
+            # Échec transitoire : le backoff s'applique au niveau de la boucle
+            # (pas de colonne de planification par job, cf. runner.py::
+            # _finalize_failure) — un seul worker (§ 3.3 du plan), donc ce
+            # délai retarde toute la file, pas seulement le job en cause ;
+            # assumé pour "quelques travaux par jour, un seul worker".
+            time.sleep(backoff_seconds(etat.attempts))
+
+
 @cli.command("prod-preflight")
 def prod_preflight():
     """Contrôle une session de diagnostic sur la PROD : prouve la lecture seule puis l'état des lieux."""
