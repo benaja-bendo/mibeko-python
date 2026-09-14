@@ -282,8 +282,15 @@ def structure_document(
         # d'unicité stable entre rejeux, variante (volume/spécial) préservée.
         # reference_nor reste vide : un journal n'est pas un acte, et son
         # numéro y provoquerait des collisions d'unicité avec de vrais actes.
+        # entry.titre n'est JAMAIS appliqué ici : un titre imposé sur un JO
+        # casserait cette identité déterministe.
         titre_officiel = titre_jo_depuis_manifeste(entry, basename)
         numero = None
+    elif entry.titre:
+        # Titre imposé par l'éditeur au dépôt (§ 3.2 du plan « boîte de
+        # réception ») : fidèle à ce qu'il a saisi, jamais recalculé depuis le
+        # LLM une fois fourni.
+        titre_officiel = entry.titre
     elif numero:
         titre_officiel = f"{nature} n° {numero}"
     else:

@@ -5,8 +5,10 @@ import json
 import logging
 import os
 import re
+import shutil
 import time
 import uuid
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from fastapi import BackgroundTasks, Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
@@ -22,9 +24,11 @@ from src.api.auth import AuthenticatedUser, require_editor
 from src.api.config import EXPOSE_API_DOCS, INGESTION_CONSOLE_ENABLED, IS_PRODUCTION, SERVICE_VERSION
 from src.api.schemas import GlobalStatsOut, HealthOut
 from src.api.upload_utils import BodySizeLimitMiddleware, read_upload_capped, sanitize_filename, stream_upload_to_tmp
+from src.acquisition.config import data_dir, manifests_dir, sources_dir
+from src.acquisition.manifest import Manifest, ManifestEntry, known_checksums, utc_now_iso
 from src.db.database import SessionLocal, get_db, init_db
 from src.db.schema_check import check_schema
-from src.db.models import Article, ArticleVersion, CurationFlag, ExtractionRun, Institution, LegalDocument, MediaFile, OfficialJournal, StructureNode
+from src.db.models import Article, ArticleVersion, CurationFlag, ExtractionRun, IngestionJob, IngestionProvenance, Institution, LegalDocument, MediaFile, OfficialJournal, StructureNode
 from src.services.mineru_service import mineru_service
 from src.services.minio_service import minio_service
 from src.services.pdf_pages import compter_pages_pdf
@@ -1633,6 +1637,257 @@ async def _collapse_chunks(files: List[UploadFile], kind: str) -> Tuple[bytes, s
         return merged_text.encode("utf-8"), "merged.md", warnings
     merged_json, warnings = merge_json_chunks(items)
     return json.dumps(merged_json, ensure_ascii=False).encode("utf-8"), "merged.json", warnings
+
+
+DEPOT_TYPE_SOURCES = {"journal_officiel", "code", "acte_uniforme", "acte"}
+
+
+def _resolve_known_sha256(
+    db: Session, sha256: str, manifests_directory: Optional[Path] = None,
+) -> Optional[Dict[str, Any]]:
+    """Un PDF déjà connu, sous une des formes possibles (§ 3.6, identité n°1 :
+    l'empreinte SHA-256 complète est la seule façon fiable de reconnaître un
+    même fichier, jamais le titre). Trois sources, dans l'ordre où elles
+    apparaissent dans le temps : déjà un document en base (`MediaFile`), déjà
+    la provenance d'un job (`IngestionProvenance`, § 3.7 — dépôt ou veille,
+    traité ou pas encore), ou déjà dans un manifeste hérité d'avant
+    l'existence d'`IngestionProvenance`. `None` si le SHA est inédit.
+
+    `manifests_directory` : injection pour les tests (`None` = `manifests_dir()`
+    réel).
+    """
+    media = (
+        db.query(MediaFile)
+        .filter(MediaFile.checksum_sha256 == sha256, MediaFile.file_category == "SOURCE_PDF")
+        .first()
+    )
+    if media is not None:
+        return {"document_id": str(media.document_id), "manifest_id": None}
+
+    provenance = db.query(IngestionProvenance).filter(IngestionProvenance.sha256 == sha256).first()
+    if provenance is not None:
+        return {"document_id": None, "manifest_id": provenance.manifest_id}
+
+    manifest_id = known_checksums(manifests_directory or manifests_dir()).get(sha256)
+    if manifest_id is not None:
+        return {"document_id": None, "manifest_id": manifest_id}
+
+    return None
+
+
+@app.post("/api/v1/depots", tags=["depots"])
+async def deposer_document(
+    type_source: str = Form(...),
+    titre: Optional[str] = Form(None),
+    source_url: Optional[str] = Form(None),
+    jo_numero: Optional[str] = Form(None),
+    jo_date: Optional[str] = Form(None),
+    pdf_file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    _user: AuthenticatedUser = Depends(require_editor),
+):
+    """Chemin unique de dépôt (mibeko-python#23, § 3.2/L1 du plan « boîte de
+    réception ») : remplace à terme `/documents/upload` et
+    `/official-journals/upload`. Ne traite rien lui-même — fabrique une
+    entrée de manifeste, sa provenance, et dépose un job `kind=depot` ; le
+    worker (`python main.py worker`) fait le reste, exactement comme la
+    veille (§ 3.4). Trois branches pour une seule question à l'éditeur
+    (« qu'est-ce que c'est ? ») : Journal officiel (FLUX, découpé en actes),
+    texte consolidé (STOCK), ou acte isolé (FLUX, nature déduite de l'en-tête,
+    jamais inventée).
+    """
+    if type_source not in DEPOT_TYPE_SOURCES:
+        return JSONResponse(
+            status_code=422,
+            content={"message": f"type_source doit être l'un de : {sorted(DEPOT_TYPE_SOURCES)}."},
+        )
+
+    resolved_jo_date = None
+    if type_source == "journal_officiel":
+        if not jo_numero or not jo_date:
+            return JSONResponse(
+                status_code=422,
+                content={"message": "jo_numero et jo_date sont obligatoires pour un Journal officiel."},
+            )
+        resolved_jo_date = parse_optional_date(jo_date)
+        if not resolved_jo_date:
+            return JSONResponse(status_code=422, content={"message": "jo_date doit être au format YYYY-MM-DD."})
+
+    target_data_dir = data_dir()
+    upload = await stream_upload_to_tmp(pdf_file, STORAGE_TMP_DIR, filename_prefix="depot_")
+    try:
+        if upload.size == 0:
+            return JSONResponse(status_code=422, content={"message": "Le fichier PDF est vide."})
+
+        connu = _resolve_known_sha256(db, upload.sha256)
+        if connu is not None:
+            return JSONResponse(
+                status_code=409,
+                content={
+                    "message": "Ce fichier a déjà été déposé (même empreinte SHA-256).",
+                    **connu,
+                    "actions": ["ouvrir_le_dossier", "reprendre_le_traitement", "nouvelle_extraction"],
+                },
+            )
+
+        # data/sources/ est immuable (CLAUDE.md racine) : le PDF déplacé ici
+        # ne bouge plus jamais — process_entry/structure_document le lisent
+        # depuis le disque local, jamais depuis MinIO (qui n'entre en jeu
+        # qu'une fois le document créé, dans structure_document lui-même).
+        safe_stem = sanitize_path_component(os.path.splitext(pdf_file.filename or "document")[0])[:80] or "document"
+        final_filename = f"{upload.sha256[:12]}-{safe_stem}.pdf"
+        entry_id = f"depots/{final_filename[:-4]}"
+        final_path = sources_dir() / "depots" / final_filename
+        final_path.parent.mkdir(parents=True, exist_ok=True)
+        shutil.move(upload.path, str(final_path))
+
+        entry = ManifestEntry(
+            id=entry_id,
+            fichier=str(final_path.relative_to(target_data_dir)),
+            sha256=upload.sha256,
+            size_bytes=upload.size,
+            type_source=type_source,
+            source_url=source_url or None,
+            fetched_at=utc_now_iso(),
+            jo_annee=resolved_jo_date.year if resolved_jo_date else None,
+            jo_numero=jo_numero if type_source == "journal_officiel" else None,
+            jo_date=resolved_jo_date.isoformat() if resolved_jo_date else None,
+            titre=titre or None,
+        )
+        entry.add_event("depot_web", f"depot:{_user.email}", detail=type_source)
+
+        manifest = Manifest(manifests_dir() / "depots.jsonl")
+        manifest.upsert(entry)
+        manifest.save()
+
+        if not source_url:
+            # Signalement non bloquant (§ 3.2) : visible dans « À vérifier »,
+            # ne retarde jamais le traitement.
+            db.add(CurationFlag(
+                document_id=None,
+                source="human",
+                type_probleme="provenance_url_absente",
+                severity="warning",
+                description=f"Dépôt web sans URL officielle : « {pdf_file.filename or entry_id} ».",
+            ))
+
+        db.add(IngestionProvenance(
+            manifest_id=entry.id,
+            type_source=type_source,
+            source_url=source_url or None,
+            sha256=upload.sha256,
+            fetched_at=datetime.datetime.utcnow(),
+            evenements=[{"quand": utc_now_iso(), "quoi": "depot_web", "par": _user.email}],
+        ))
+
+        job = IngestionJob(kind=IngestionJob.KIND_DEPOT, manifest_id=entry.id, requested_by=_user.email)
+        db.add(job)
+        db.commit()
+
+        return JSONResponse(
+            status_code=201,
+            content={
+                "message": "Document déposé, en file de traitement.",
+                "job_id": str(job.id),
+                "manifest_id": entry.id,
+            },
+        )
+    except HTTPException:
+        db.rollback()
+        raise
+    except Exception:
+        db.rollback()
+        logger.exception("ERREUR 500 dans deposer_document")
+        return JSONResponse(status_code=500, content={"message": "Erreur interne du serveur."})
+    finally:
+        if os.path.exists(upload.path):
+            os.remove(upload.path)
+
+
+_INGESTION_JOB_STATUSES = {
+    IngestionJob.STATUS_PENDING, IngestionJob.STATUS_RUNNING,
+    IngestionJob.STATUS_FAILED, IngestionJob.STATUS_DONE,
+}
+
+
+@app.get("/api/v1/ingestion/jobs", tags=["depots"])
+def list_ingestion_jobs(
+    status: Optional[str] = None,
+    limit: int = 50,
+    db: Session = Depends(get_db),
+    _user: AuthenticatedUser = Depends(require_editor),
+):
+    """Liste les travaux de la file `ingestion_jobs`, plus récents d'abord —
+    alimente l'onglet « En cours » (L5a, front#43). Pas de SSE (§ 2.5 :
+    `notify_clients` vit en mémoire du processus `api`, un worker séparé ne
+    peut pas l'appeler) : le front interroge à intervalle régulier, comme
+    ailleurs.
+    """
+    if status is not None and status not in _INGESTION_JOB_STATUSES:
+        return JSONResponse(status_code=422, content={"message": f"status doit être l'un de : {sorted(_INGESTION_JOB_STATUSES)}."})
+
+    query = db.query(IngestionJob)
+    if status is not None:
+        query = query.filter(IngestionJob.status == status)
+    jobs = query.order_by(IngestionJob.created_at.desc()).limit(min(max(limit, 1), 200)).all()
+
+    return {
+        "jobs": [
+            {
+                "id": str(job.id),
+                "kind": job.kind,
+                "manifest_id": job.manifest_id,
+                "step": job.step,
+                "status": job.status,
+                "attempts": job.attempts,
+                "max_attempts": job.max_attempts,
+                "error_class": job.error_class,
+                "last_error": job.last_error,
+                "result": job.result,
+                "created_at": job.created_at.isoformat() if job.created_at else None,
+                "updated_at": job.updated_at.isoformat() if job.updated_at else None,
+            }
+            for job in jobs
+        ]
+    }
+
+
+@app.post("/api/v1/ingestion/jobs/{job_id}/relancer", tags=["depots"])
+def relancer_ingestion_job(
+    job_id: str,
+    db: Session = Depends(get_db),
+    _user: AuthenticatedUser = Depends(require_editor),
+):
+    """Relance manuellement un job `failed`. Seul point d'entrée qui repose un
+    troisième appel LLM identique après un échec `information_manquante`
+    (§ L1 du plan : « ne redemande jamais la même chose sans signal
+    nouveau ») — un humain qui relance délibérément EST le signal nouveau.
+    Remet le job à `pending` SANS toucher `step` : une étape déjà réussie
+    (`result`) n'est jamais rejouée (§ 3.6, identité n°2). `attempts` est
+    remis à zéro — sinon un job déjà au plafond échouerait de nouveau
+    immédiatement, sans laisser sa chance à la relance demandée.
+    """
+    try:
+        job_uuid = uuid.UUID(job_id)
+    except ValueError:
+        return JSONResponse(status_code=422, content={"message": "job_id invalide."})
+
+    job = db.query(IngestionJob).filter(IngestionJob.id == job_uuid).first()
+    if job is None:
+        return JSONResponse(status_code=404, content={"message": "Travail introuvable."})
+    if job.status != IngestionJob.STATUS_FAILED:
+        return JSONResponse(
+            status_code=409,
+            content={"message": f"Seul un travail « failed » peut être relancé (statut actuel : {job.status})."},
+        )
+
+    job.status = IngestionJob.STATUS_PENDING
+    job.attempts = 0
+    job.last_error = None
+    job.error_class = None
+    db.commit()
+
+    return {"message": "Travail relancé.", "id": str(job.id), "step": job.step}
 
 
 @app.post("/api/v1/documents/upload", tags=["documents"])

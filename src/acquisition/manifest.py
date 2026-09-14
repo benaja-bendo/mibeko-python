@@ -62,6 +62,9 @@ class ManifestEntry(BaseModel):
     statut: str = "telecharge"
     retroactif: bool = False           # True = fichier acquis avant l'usine
     variantes_multiples: Optional[list[str]] = None  # ids sœurs, même (jo_annee, jo_numero) : arbitrage humain
+    # Champs du dépôt web (mibeko-python#23, § 3.2) — optionnels, rétro-
+    # compatibles avec les entrées acquises en lot qui ne les portent pas.
+    titre: Optional[str] = None        # titre imposé par l'éditeur ; sinon dérivé de l'en-tête (structurer.py)
     evenements: list[ManifestEvent] = Field(default_factory=list)
 
     def add_event(self, quoi: str, par: str, detail: Optional[str] = None) -> None:
