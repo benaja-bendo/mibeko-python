@@ -22,6 +22,7 @@ from src.db.models import Article, CurationFlag, LegalDocument  # noqa: E402
 
 with stub_service_modules():
     import src.api.main as main_module  # noqa: E402
+    import src.services.ingestion as ingestion_module  # noqa: E402
     from src.api.main import ingest_hierarchy  # noqa: E402
 
 
@@ -68,6 +69,11 @@ class FakeSession:
 
 @pytest.fixture(autouse=True)
 def _noop_clear_document_structure(monkeypatch):
+    # `ingest_hierarchy` vit désormais dans src/services/ingestion.py
+    # (mibeko-python#23) : son appel interne à `clear_document_structure`
+    # résout le nom via __globals__ de CE module, pas celui de `main_module`
+    # (simple ré-export) — patcher seulement main_module serait sans effet.
+    monkeypatch.setattr(ingestion_module, "clear_document_structure", lambda db, document_id: None)
     monkeypatch.setattr(main_module, "clear_document_structure", lambda db, document_id: None)
 
 
