@@ -635,6 +635,7 @@ def worker(once, loop, poll_interval):
     from src.acquisition.config import data_dir
     from src.db.database import SessionLocal
     from src.db.models import IngestionJob
+    from src.worker.healthcheck import ping as healthcheck_ping
     from src.worker.runner import backoff_seconds, process_job, reserve_job
 
     if once == loop:
@@ -689,12 +690,21 @@ def worker(once, loop, poll_interval):
         raise SystemExit(_report(etat))
 
     click.secho(f"Worker : boucle continue (intervalle {interval:.0f}s sans travail) …", fg="cyan")
+    # Dead man's switch (WORKER_HEALTHCHECK_URL, no-op si absent) : personne
+    # ne surveillait la liveness du worker avant ce ticket (§ L1 du plan
+    # « boîte de réception »). Un ping de succès à chaque tour de boucle —
+    # qu'un travail ait été traité ou non — prouve que le worker tourne
+    # encore ; son absence prolongée alerte, sans dépendre du worker lui-même
+    # pour le signaler s'il est mort.
+    healthcheck_ping("/start")
     while True:
         etat = _run_one()
         if etat is None:
+            healthcheck_ping("")
             time.sleep(interval)
             continue
         _report(etat)
+        healthcheck_ping("")
         if etat.status == IngestionJob.STATUS_PENDING:
             # Échec transitoire : le backoff s'applique au niveau de la boucle
             # (pas de colonne de planification par job, cf. runner.py::

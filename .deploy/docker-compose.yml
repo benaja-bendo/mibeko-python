@@ -41,10 +41,12 @@ services:
       timeout: 5s
       retries: 5
 
-  # Veille périodique (mibeko-python#21) : découvre et ingère les nouveaux JO
-  # en `draft`, jamais leur publication. Conteneur séparé de `api` — un daemon
-  # en boucle ne doit pas partager son cycle de vie avec le serveur HTTP
-  # (mêmes réseaux/volumes, même image, comme mibeko-scheduler côté Laravel).
+  # Veille périodique (mibeko-python#21) : découvre les nouveaux JO et DÉPOSE
+  # un travail (kind=veille) par entrée — ne les traite plus elle-même depuis
+  # mibeko-python#23 § 3.4 (le worker ci-dessous fait le reste). Conteneur
+  # séparé de `api` — un daemon en boucle ne doit pas partager son cycle de
+  # vie avec le serveur HTTP (mêmes réseaux/volumes, même image, comme
+  # mibeko-scheduler côté Laravel).
   veille:
     image: ghcr.io/${GITHUB_REPOSITORY}:latest
     container_name: mibeko-python-veille
@@ -52,6 +54,25 @@ services:
     logging: *default-logging
     env_file: [.env]
     command: ["python", "main.py", "veille-corpus"]
+    volumes:
+      - mibeko_python_data:/app/data
+    networks: [proxy, db_internal, mineru_internal]
+    depends_on: [api]
+
+  # Worker de la file `ingestion_jobs` (mibeko-python#23, § L1) : traite tout
+  # travail déposé, par le web (`POST /api/v1/depots`) comme par la veille
+  # (`kind=veille`), jusqu'à son terme (parse → structure). Remplace le rôle
+  # de TRAITEMENT du conteneur `veille` ci-dessus — deux boucles concurrentes
+  # sur la même base et les mêmes artefacts seraient une source d'incidents
+  # inutile (§ 3.4). Un seul worker : § 3.3 du plan (« quelques travaux par
+  # jour »), pas de Redis ni de Celery.
+  worker:
+    image: ghcr.io/${GITHUB_REPOSITORY}:latest
+    container_name: mibeko-python-worker
+    restart: unless-stopped
+    logging: *default-logging
+    env_file: [.env]
+    command: ["python", "main.py", "worker", "--loop"]
     volumes:
       - mibeko_python_data:/app/data
     networks: [proxy, db_internal, mineru_internal]
