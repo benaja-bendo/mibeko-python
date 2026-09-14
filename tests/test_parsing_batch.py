@@ -74,6 +74,10 @@ async def _fake_mineru_timeout(pdf_path: Path):
     raise TimeoutError()
 
 
+async def _fake_mistral_ocr_ok(pdf_path: Path):
+    return f"# markdown Mistral OCR pour {pdf_path.name}", '{"pages": []}'
+
+
 def test_document_natif_produit_md_et_metriques_sans_mineru(tmp_path: Path):
     data_dir = tmp_path / "data"
     entry = _seed_entry(data_dir, "sgg-jo", "sgg-jo/congo-jo-2026-13", "sources/sgg/JO/congo-jo-2026-13.pdf", CLEAN_TEXT)
@@ -131,6 +135,69 @@ def test_exception_sans_message_produit_une_erreur_lisible(tmp_path: Path):
     assert result["methode"] == "erreur"
     assert result["erreur"] == "TimeoutError (sans message)"
     assert result["erreur"] != ""
+
+
+def test_document_scanne_route_vers_mistral_ocr_injecte(tmp_path: Path):
+    """mibeko-python#22 : l'injection explicite mistral_ocr_runner produit un
+    artefact étiqueté 'mistral_ocr', indépendamment d'OCR_BACKEND."""
+    data_dir = tmp_path / "data"
+    entry = _seed_entry(data_dir, "sgg-jo", "sgg-jo/scan-mistral-1", "sources/sgg/JO/scan-mistral-1.pdf", text=None)
+
+    result = process_entry(data_dir, entry, mistral_ocr_runner=_fake_mistral_ocr_ok)
+
+    assert result["methode"] == "mistral_ocr"
+    paths = artefact_paths(data_dir, entry.id)
+    assert paths["md"].is_file()
+    assert paths["json"].is_file()
+    assert "markdown Mistral OCR" in paths["md"].read_text(encoding="utf-8")
+    assert is_already_processed(data_dir, entry) is True  # 'mistral_ocr' est whitelisté
+
+
+def test_mineru_runner_explicite_prime_sur_ocr_backend(tmp_path: Path, monkeypatch):
+    """Un mineru_runner injecté l'emporte toujours, même si OCR_BACKEND vaut
+    'mistral' (défaut) — la compatibilité des appels existants ne dépend
+    jamais de la variable d'environnement."""
+    import src.parsing.batch as batch_module
+
+    monkeypatch.setattr(batch_module, "OCR_BACKEND", "mistral")
+    data_dir = tmp_path / "data"
+    entry = _seed_entry(data_dir, "sgg-jo", "sgg-jo/scan-mineru-force", "sources/sgg/JO/scan-mineru-force.pdf", text=None)
+
+    result = process_entry(data_dir, entry, mineru_runner=_fake_mineru_ok)
+
+    assert result["methode"].startswith("mineru")
+
+
+def test_ocr_backend_mineru_utilise_run_mineru_par_defaut(tmp_path: Path, monkeypatch):
+    """Sans aucune injection, OCR_BACKEND='mineru' fait retomber sur
+    run_mineru (repli dev/incident, cf. § L0 du plan boîte de réception)."""
+    import src.parsing.batch as batch_module
+
+    monkeypatch.setattr(batch_module, "OCR_BACKEND", "mineru")
+    monkeypatch.setattr(batch_module, "run_mineru", _fake_mineru_ok)
+    data_dir = tmp_path / "data"
+    entry = _seed_entry(data_dir, "sgg-jo", "sgg-jo/scan-backend-mineru", "sources/sgg/JO/scan-backend-mineru.pdf", text=None)
+
+    result = process_entry(data_dir, entry)
+
+    assert result["methode"].startswith("mineru")
+
+
+def test_ocr_backend_mistral_utilise_run_mistral_ocr_par_defaut(tmp_path: Path, monkeypatch):
+    """Sans aucune injection, OCR_BACKEND='mistral' (défaut de production,
+    décision du 14/09/2026) appelle run_mistral_ocr."""
+    import src.parsing.batch as batch_module
+
+    monkeypatch.setattr(batch_module, "OCR_BACKEND", "mistral")
+    monkeypatch.setattr(batch_module, "run_mistral_ocr", _fake_mistral_ocr_ok)
+    data_dir = tmp_path / "data"
+    entry = _seed_entry(data_dir, "sgg-jo", "sgg-jo/scan-backend-mistral", "sources/sgg/JO/scan-backend-mistral.pdf", text=None)
+
+    result = process_entry(data_dir, entry)
+
+    assert result["methode"] == "mistral_ocr"
+    paths = artefact_paths(data_dir, entry.id)
+    assert "markdown Mistral OCR" in paths["md"].read_text(encoding="utf-8")
 
 
 def test_idempotence_relance_saute_le_document_deja_traite(tmp_path: Path):

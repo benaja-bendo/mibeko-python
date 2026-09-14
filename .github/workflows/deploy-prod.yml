@@ -115,6 +115,15 @@ jobs:
             VEILLE_HOUR_UTC=${{ secrets.VEILLE_HOUR_UTC || '2' }}
             VEILLE_HEALTHCHECK_URL=${{ secrets.VEILLE_HEALTHCHECK_URL }}
 
+            # mibeko-python#22 : Mistral OCR remplace MinerU comme moteur OCR par
+            # défaut (décision du 14/09/2026, docs/decisions.md). Clé dédiée,
+            # distincte de MISTRAL_API_KEY ci-dessus, pour lire les coûts OCR
+            # séparément de la structuration — si le secret n'est pas renseigné,
+            # le service retombe sur MISTRAL_API_KEY (cf. mistral_ocr_service.py).
+            OCR_BACKEND=${{ secrets.OCR_BACKEND || 'mistral' }}
+            MISTRAL_OCR_API_KEY=${{ secrets.MISTRAL_OCR_API_KEY }}
+            MISTRAL_OCR_MODEL=${{ secrets.MISTRAL_OCR_MODEL || 'mistral-ocr-4-1' }}
+
             GITHUB_REPOSITORY=$REPO_LC
             EOF
 

@@ -2,8 +2,10 @@
 
 Une commande unique (`python main.py process-batch`) traite tout ce qui est au
 statut `telecharge` (ou `erreur`, pour retenter) dans les manifestes de
-`data/manifests/` : triage natif d'abord (`src.parsing.triage`), MinerU
-(local ou cloud selon `MINERU_BACKEND`) seulement si le natif ne suffit pas.
+`data/manifests/` : triage natif d'abord (`src.parsing.triage`), OCR ensuite
+si le natif ne suffit pas — Mistral OCR par défaut (`OCR_BACKEND=mistral`,
+décision du 14/09/2026), MinerU (local ou cloud selon `MINERU_BACKEND`) en
+repli explicite via `OCR_BACKEND=mineru`.
 
 Idempotent : une entrée dont l'artefact + les métriques existent déjà pour le
 même SHA source est sautée (sauf `force=True`). Reprend après interruption :
@@ -15,6 +17,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import time
 from pathlib import Path
 from typing import Any, Awaitable, Callable, Dict, List, Optional, Tuple
@@ -23,6 +26,14 @@ from src.acquisition.manifest import Manifest, ManifestEntry, utc_now_iso
 from src.parsing.triage import triage_pdf
 
 MineruRunner = Callable[[Path], Awaitable[Tuple[str, str]]]
+
+# Moteur OCR utilisé quand le triage juge le texte natif insuffisant.
+# "mistral" (défaut, décision du 14/09/2026, docs/decisions.md) ou "mineru"
+# (repli manuel pour le dev/test local avec le harnais mineru-local/, ou en
+# cas d'incident sur Mistral OCR). N'affecte PAS un appel qui injecte
+# explicitement mineru_runner/mistral_ocr_runner (tests) : seul le choix du
+# runner par défaut, en l'absence d'injection, en dépend.
+OCR_BACKEND = os.getenv("OCR_BACKEND", "mistral").strip().lower()
 
 # Décision §9-10 du plan (docs/pipeline/01-plan.md) : le carnet v1 exclut les
 # traités internationaux/CEMAC (hors périmètre produit v1, provenance conservée
@@ -64,7 +75,7 @@ def is_already_processed(data_dir: Path, entry: ManifestEntry) -> bool:
     if metrics.get("source_sha256") != entry.sha256:
         return False  # source_sha256 change en pratique seulement si data/sources/ a été altéré
     methode = metrics.get("methode")
-    if methode not in ("native", "mineru_local", "mineru_cloud"):
+    if methode not in ("native", "mineru_local", "mineru_cloud", "mistral_ocr"):
         return False
     if not paths["md"].is_file():
         return False
@@ -108,11 +119,26 @@ def _mineru_backend_label() -> str:
     return f"mineru_{getattr(mineru_service, 'backend', 'cloud')}"
 
 
+async def run_mistral_ocr(pdf_path: Path) -> Tuple[str, str]:
+    """Soumet le PDF à Mistral OCR et retourne (markdown, json_brut).
+
+    Lève ParsingError sur échec — même contrat que `run_mineru`, pour que
+    `process_entry` traite les deux moteurs de façon interchangeable.
+    """
+    from src.services.mistral_ocr_service import MistralOcrError, mistral_ocr_service
+
+    try:
+        return await mistral_ocr_service.extract(pdf_path)
+    except MistralOcrError as exc:
+        raise ParsingError(str(exc)) from exc
+
+
 def process_entry(
     data_dir: Path,
     entry: ManifestEntry,
     force: bool = False,
     mineru_runner: Optional[MineruRunner] = None,
+    mistral_ocr_runner: Optional[MineruRunner] = None,
 ) -> Dict[str, Any]:
     """Traite une entrée : triage puis, si besoin, MinerU. Écrit les artefacts
     et les métriques sur disque. Retourne le résumé (dict) ; ne lève PAS sur
@@ -149,10 +175,23 @@ def process_entry(
         paths["metrics"].write_text(json.dumps(metrics, ensure_ascii=False, indent=2), encoding="utf-8")
         return {"id": entry.id, "skipped": False, **metrics}
 
-    runner = mineru_runner or run_mineru
+    # Un runner injecté explicitement (tests, ou appelant voulant forcer un
+    # moteur précis) l'emporte toujours sur OCR_BACKEND — seul le choix du
+    # moteur PAR DÉFAUT en dépend. mineru_runner reste prioritaire sur
+    # mistral_ocr_runner si les deux sont fournis (compat des appels existants
+    # qui n'utilisaient que mineru_runner).
+    if mineru_runner is not None:
+        runner, label = mineru_runner, _mineru_backend_label
+    elif mistral_ocr_runner is not None:
+        runner, label = mistral_ocr_runner, lambda: "mistral_ocr"
+    elif OCR_BACKEND == "mineru":
+        runner, label = run_mineru, _mineru_backend_label
+    else:
+        runner, label = run_mistral_ocr, lambda: "mistral_ocr"
+
     try:
         md_text, json_text = asyncio.run(runner(pdf_path))
-    except Exception as exc:  # MinerU HTTP, timeout, ParsingError… : tout est un échec de cette entrée
+    except Exception as exc:  # OCR HTTP, timeout, ParsingError… : tout est un échec de cette entrée
         metrics["methode"] = "erreur"
         # str(exc) est vide pour certaines exceptions sans message (ex.
         # httpx.ReadTimeout()) — vérifié en pratique (04/07/2026) : ne jamais
@@ -169,7 +208,7 @@ def process_entry(
         paths["json"].parent.mkdir(parents=True, exist_ok=True)
         paths["json"].write_text(json_text, encoding="utf-8")
 
-    metrics["methode"] = _mineru_backend_label()
+    metrics["methode"] = label()
     metrics["duree_secondes"] = round(time.monotonic() - started, 2)
     paths["metrics"].parent.mkdir(parents=True, exist_ok=True)
     paths["metrics"].write_text(json.dumps(metrics, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -222,6 +261,7 @@ def run_batch(
     limit: Optional[int] = None,
     force: bool = False,
     mineru_runner: Optional[MineruRunner] = None,
+    mistral_ocr_runner: Optional[MineruRunner] = None,
     include_hors_perimetre: bool = False,
 ) -> Dict[str, Any]:
     """Traite les entrées éligibles de tous les manifestes (ou d'un seul).
@@ -247,7 +287,10 @@ def run_batch(
             if limit is not None and processed >= limit:
                 break
 
-            result = process_entry(data_dir, entry, force=force, mineru_runner=mineru_runner)
+            result = process_entry(
+                data_dir, entry, force=force,
+                mineru_runner=mineru_runner, mistral_ocr_runner=mistral_ocr_runner,
+            )
             processed += 1
             entry_changed = False
 
