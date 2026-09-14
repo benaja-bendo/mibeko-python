@@ -537,14 +537,14 @@ def link_journals(dry_run):
 @cli.command("process-batch")
 @click.option('--source', 'source_key', default=None, help="Limiter à un manifeste (ex. sgg-jo)")
 @click.option('--limit', default=None, type=int, help='Plafond de documents traités pour cette exécution')
-@click.option('--dry-run', is_flag=True, help='Triage seul : prévisualise natif vs MinerU, aucune écriture')
+@click.option('--dry-run', is_flag=True, help='Triage seul : prévisualise natif vs OCR, aucune écriture')
 @click.option('--force', is_flag=True, help='Retraiter même si déjà à jour (SHA source inchangé)')
 @click.option(
     '--include-hors-perimetre', is_flag=True,
     help="Inclure aussi les traités internationaux/CEMAC et lots privés (exclus du périmètre v1 par défaut)",
 )
 def process_batch(source_key, limit, dry_run, force, include_hors_perimetre):
-    """Triage (natif → MinerU) du carnet, piloté par le manifeste. Idempotent."""
+    """Triage (natif → OCR, Mistral OCR par défaut) du carnet, piloté par le manifeste. Idempotent."""
     import json as _json
     from src.acquisition.config import data_dir
     from src.parsing.batch import dry_run_report, run_batch
@@ -559,10 +559,10 @@ def process_batch(source_key, limit, dry_run, force, include_hors_perimetre):
         native = sum(1 for r in report if r.get("methode_prevue") == "native")
         mineru = sum(1 for r in report if r.get("methode_prevue") == "mineru")
         erreurs = sum(1 for r in report if "erreur" in r)
-        click.secho(f"{len(report)} document(s) : {native} natif, {mineru} MinerU, {erreurs} erreur(s)", fg="cyan")
+        click.secho(f"{len(report)} document(s) : {native} natif, {mineru} OCR, {erreurs} erreur(s)", fg="cyan")
         return
 
-    click.secho("Traitement du carnet (triage natif → MinerU si besoin) …", fg="cyan")
+    click.secho("Traitement du carnet (triage natif → OCR si besoin) …", fg="cyan")
     summary = run_batch(
         target, source_key=source_key, limit=limit, force=force, include_hors_perimetre=include_hors_perimetre
     )
