@@ -8,17 +8,20 @@ comportement réel du moteur (MVCC Postgres).
 import os
 import sys
 from datetime import datetime, timedelta
+from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import pytest
 
+from src.acquisition.manifest import Manifest, ManifestEntry
 from src.db.database import SessionLocal
 from src.db.models import IngestionJob
 from src.worker.runner import (
     backoff_seconds,
     classify_error,
     finalize_job,
+    process_job,
     renew_lease,
     reserve_job,
 )
@@ -250,3 +253,248 @@ def test_backoff_seconds_croit_puis_plafonne():
     assert backoff_seconds(2) == 60.0
     assert backoff_seconds(3) == 120.0
     assert backoff_seconds(20) == 1800.0  # plafond
+
+
+# ---------------------------------------------------------------------------
+# process_job : orchestration réelle (IngestionJob sur vraie base Postgres,
+# comme ci-dessus) avec le pipeline (parse/structure) INJECTÉ — pas de MinIO
+# ni de Mistral réels ici, cf. tests/test_structuration_*.py pour les tests
+# du pipeline lui-même. Ce qui est prouvé : l'enchaînement des étapes, la
+# reprise depuis job.step/job.result, la classification des échecs, et
+# l'abandon quand le jeton expire en cours de route.
+# ---------------------------------------------------------------------------
+
+def _entry(entry_id: str = "sgg-jo/test-entry", **overrides) -> ManifestEntry:
+    defaults = dict(
+        id=entry_id,
+        fichier="sources/sgg/test.pdf",
+        sha256="0" * 64,
+        size_bytes=100,
+        type_source="journal_officiel",
+        statut="telecharge",
+    )
+    defaults.update(overrides)
+    return ManifestEntry(**defaults)
+
+
+def _write_manifest_entry(data_dir: Path, source_key: str, entry: ManifestEntry) -> None:
+    manifest = Manifest(data_dir / "manifests" / f"{source_key}.jsonl")
+    manifest.upsert(entry)
+    manifest.save()
+
+
+def test_process_job_enchaine_parse_puis_structure(db, tmp_path):
+    entry = _entry()
+    _write_manifest_entry(tmp_path, "sgg-jo", entry)
+    job = _make_job(db, manifest_id=entry.id)
+    try:
+        reserved = reserve_job(db)
+        assert reserved.id == job.id
+
+        def fake_process_entry(data_dir, e, force=False):
+            assert e.id == entry.id
+            return {"id": e.id, "skipped": False, "methode": "native"}
+
+        def fake_structure_document(db_, data_dir, e, dry_run=False):
+            assert e.id == entry.id
+            return {"statut": "structure", "document_id": "doc-123", "motif": None}
+
+        ok = process_job(
+            db, tmp_path, reserved,
+            process_entry_fn=fake_process_entry,
+            structure_document_fn=fake_structure_document,
+        )
+
+        assert ok is True
+        relu = db.query(IngestionJob).filter(IngestionJob.id == job.id).first()
+        assert relu.status == IngestionJob.STATUS_DONE
+        assert relu.step == IngestionJob.STEP_TERMINE
+        assert relu.result["parse"]["methode"] == "native"
+        assert relu.result["structure"]["document_ids"] == ["doc-123"]
+
+        manifest_relu = Manifest(tmp_path / "manifests" / "sgg-jo.jsonl")
+        assert manifest_relu.get(entry.id).statut == "structure"
+    finally:
+        _cleanup(job.id)
+
+
+def test_process_job_reprend_depuis_l_etape_structure_sans_rejouer_le_parse(db, tmp_path):
+    entry = _entry(entry_id="sgg-jo/reprise-entry", statut="parse")
+    _write_manifest_entry(tmp_path, "sgg-jo", entry)
+    job = _make_job(
+        db, manifest_id=entry.id,
+        step=IngestionJob.STEP_PARSE,
+        result={"parse": {"methode": "native"}},
+    )
+    try:
+        reserved = reserve_job(db)
+
+        def fake_process_entry(*a, **k):
+            raise AssertionError("ne doit jamais être rappelé : l'étape parse a déjà réussi")
+
+        def fake_structure_document(db_, data_dir, e, dry_run=False):
+            return {"statut": "structure", "document_id": "doc-999", "motif": None}
+
+        ok = process_job(
+            db, tmp_path, reserved,
+            process_entry_fn=fake_process_entry,
+            structure_document_fn=fake_structure_document,
+        )
+
+        assert ok is True
+        relu = db.query(IngestionJob).filter(IngestionJob.id == job.id).first()
+        assert relu.status == IngestionJob.STATUS_DONE
+        # le résultat de parse déjà enregistré est préservé, pas écrasé
+        assert relu.result["parse"]["methode"] == "native"
+        assert relu.result["structure"]["document_ids"] == ["doc-999"]
+    finally:
+        _cleanup(job.id)
+
+
+def test_process_job_manifeste_introuvable_echoue_en_definitive(db, tmp_path):
+    job = _make_job(db, manifest_id="sgg-jo/inexistant")
+    try:
+        reserved = reserve_job(db)
+        ok = process_job(
+            db, tmp_path, reserved,
+            process_entry_fn=lambda *a, **k: {}, structure_document_fn=lambda *a, **k: {},
+        )
+
+        assert ok is True
+        relu = db.query(IngestionJob).filter(IngestionJob.id == job.id).first()
+        assert relu.status == IngestionJob.STATUS_FAILED
+        assert relu.error_class == IngestionJob.ERROR_DEFINITIVE
+        assert "introuvable" in relu.last_error
+    finally:
+        _cleanup(job.id)
+
+
+def test_process_job_echec_transitoire_repasse_pending_si_tentatives_restantes(db, tmp_path):
+    entry = _entry(entry_id="sgg-jo/transitoire-entry")
+    _write_manifest_entry(tmp_path, "sgg-jo", entry)
+    job = _make_job(db, manifest_id=entry.id, max_attempts=3, attempts=0)
+    try:
+        reserved = reserve_job(db)
+        # Capturé AVANT tout commit ultérieur : `reserved` reste la même
+        # identité dans la session `db`, `expire_on_commit` rafraîchirait
+        # sinon cet attribut à sa toute dernière valeur en base au moment de
+        # l'assertion, pas à la valeur voulue ici (piège de test, pas du code
+        # — `process_job` ne lit jamais l'objet après le premier commit, il
+        # capture `job.fencing_token` dans une variable locale dès l'entrée).
+        jeton_initial = reserved.fencing_token
+
+        def fake_process_entry(*a, **k):
+            raise ConnectionError("panne réseau simulée")
+
+        ok = process_job(
+            db, tmp_path, reserved,
+            process_entry_fn=fake_process_entry, structure_document_fn=lambda *a, **k: {},
+        )
+
+        assert ok is True
+        relu = db.query(IngestionJob).filter(IngestionJob.id == job.id).first()
+        assert relu.status == IngestionJob.STATUS_PENDING
+        assert relu.error_class == IngestionJob.ERROR_TRANSITOIRE
+        assert relu.attempts == 1
+
+        # éligible à une nouvelle réservation immédiate (pas de colonne de
+        # planification dédiée — cf. docstring de _finalize_failure).
+        reprise = reserve_job(db)
+        assert reprise is not None and reprise.id == job.id
+        assert reprise.fencing_token == jeton_initial + 1
+    finally:
+        _cleanup(job.id)
+
+
+def test_process_job_echec_transitoire_definitif_apres_epuisement_des_tentatives(db, tmp_path):
+    entry = _entry(entry_id="sgg-jo/transitoire-epuise")
+    _write_manifest_entry(tmp_path, "sgg-jo", entry)
+    job = _make_job(db, manifest_id=entry.id, max_attempts=1, attempts=0)
+    try:
+        reserved = reserve_job(db)
+
+        def fake_process_entry(*a, **k):
+            raise ConnectionError("panne réseau simulée")
+
+        ok = process_job(
+            db, tmp_path, reserved,
+            process_entry_fn=fake_process_entry, structure_document_fn=lambda *a, **k: {},
+        )
+
+        assert ok is True
+        relu = db.query(IngestionJob).filter(IngestionJob.id == job.id).first()
+        assert relu.status == IngestionJob.STATUS_FAILED  # max_attempts=1 atteint
+        assert relu.attempts == 1
+    finally:
+        _cleanup(job.id)
+
+
+def test_process_job_echec_validation_llm_classe_information_manquante(db, tmp_path):
+    entry = _entry(entry_id="sgg-jo/info-manquante", statut="parse")
+    _write_manifest_entry(tmp_path, "sgg-jo", entry)
+    job = _make_job(
+        db, manifest_id=entry.id,
+        step=IngestionJob.STEP_PARSE,
+        result={"parse": {"methode": "native"}},
+    )
+    try:
+        reserved = reserve_job(db)
+
+        def fake_structure_document(db_, data_dir, e, dry_run=False):
+            return {
+                "statut": "erreur", "document_id": None,
+                "motif": "validation du schéma en échec : nature manquante",
+            }
+
+        ok = process_job(
+            db, tmp_path, reserved,
+            process_entry_fn=lambda *a, **k: {}, structure_document_fn=fake_structure_document,
+        )
+
+        assert ok is True
+        relu = db.query(IngestionJob).filter(IngestionJob.id == job.id).first()
+        assert relu.status == IngestionJob.STATUS_FAILED
+        assert relu.error_class == IngestionJob.ERROR_INFORMATION_MANQUANTE
+    finally:
+        _cleanup(job.id)
+
+
+def test_process_job_abandonne_si_le_bail_expire_entre_parse_et_structure(db, tmp_path):
+    """Incident (c)/(d) du plan « boîte de réception » : un autre worker
+    reprend le job (bail expiré) PENDANT que celui-ci exécute encore l'étape
+    parse — l'écriture du checkpoint parse doit être refusée et l'étape
+    structure ne doit JAMAIS démarrer."""
+    entry = _entry(entry_id="sgg-jo/bail-perdu")
+    _write_manifest_entry(tmp_path, "sgg-jo", entry)
+    job = _make_job(db, manifest_id=entry.id)
+    try:
+        reserved = reserve_job(db)
+
+        def fake_process_entry(*a, **k):
+            autre_session = SessionLocal()
+            try:
+                row = autre_session.query(IngestionJob).filter(IngestionJob.id == job.id).first()
+                row.fencing_token += 1
+                row.locked_by = "worker-b:9999"
+                autre_session.commit()
+            finally:
+                autre_session.close()
+            return {"id": entry.id, "skipped": False, "methode": "native"}
+
+        structure_appele = []
+
+        def fake_structure_document(*a, **k):
+            structure_appele.append(1)
+            return {"statut": "structure", "document_id": "jamais-ecrit", "motif": None}
+
+        ok = process_job(
+            db, tmp_path, reserved,
+            process_entry_fn=fake_process_entry, structure_document_fn=fake_structure_document,
+        )
+
+        assert ok is False
+        assert structure_appele == []  # jamais appelé : le jeton était déjà perdu
+        relu = db.query(IngestionJob).filter(IngestionJob.id == job.id).first()
+        assert relu.locked_by == "worker-b:9999"  # jamais écrasé par le worker évincé
+    finally:
+        _cleanup(job.id)
