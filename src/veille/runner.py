@@ -66,9 +66,11 @@ def _deposer_jobs_veille(db, manifest: Manifest, dry_run: bool = False) -> Dict[
     avec elle) dès qu'il détecte la coupure, sans dépendre d'un appel
     explicite qui pourrait ne jamais arriver.
     """
+    import datetime as _dt
+
     from sqlalchemy import text
 
-    from src.db.models import IngestionJob
+    from src.db.models import IngestionJob, IngestionProvenance
 
     deposes: List[str] = []
     deja_en_file: List[str] = []
@@ -103,6 +105,36 @@ def _deposer_jobs_veille(db, manifest: Manifest, dry_run: bool = False) -> Dict[
             # suivante — sinon il resterait tenu jusqu'au prochain dépôt réel.
             db.commit()
             continue
+
+        # Provenance Postgres (§ 3.7 du plan « boîte de réception ») : avant
+        # ce correctif, seul POST /api/v1/depots l'écrivait — la veille ne
+        # déposait qu'un IngestionJob, sans jamais renseigner d'où venait le
+        # fichier. Idempotent par construction (une ligne par manifest_id,
+        # contrainte UNIQUE) : une entrée "erreur" redéposée après un échec
+        # définitif reste éligible indéfiniment (§ eligibilité ci-dessus),
+        # donc revue par ce même passage plusieurs fois — sans ce garde, le
+        # second passage violerait la contrainte.
+        provenance_existante = (
+            db.query(IngestionProvenance)
+            .filter(IngestionProvenance.manifest_id == entry.id)
+            .first()
+        )
+        if provenance_existante is None:
+            fetched_at = None
+            if entry.fetched_at:
+                try:
+                    fetched_at = _dt.datetime.fromisoformat(entry.fetched_at)
+                except ValueError:
+                    fetched_at = None
+            db.add(IngestionProvenance(
+                manifest_id=entry.id,
+                type_source=entry.type_source,
+                source_url=entry.source_url,
+                sha256=entry.sha256,
+                fetched_at=fetched_at,
+                evenements=[{"quand": entry.fetched_at, "quoi": "veille", "par": "veille-corpus"}],
+            ))
+
         job = IngestionJob(kind=IngestionJob.KIND_VEILLE, manifest_id=entry.id, requested_by="veille-corpus")
         db.add(job)
         db.commit()  # relâche aussi le verrou (même transaction)

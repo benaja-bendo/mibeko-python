@@ -13,7 +13,7 @@ import pytest
 
 from src.acquisition.manifest import Manifest, ManifestEntry
 from src.db.database import SessionLocal
-from src.db.models import IngestionJob
+from src.db.models import IngestionJob, IngestionProvenance
 from src.veille.runner import _deposer_jobs_veille
 
 
@@ -44,6 +44,9 @@ def _cleanup_par_manifest_id(*manifest_ids: str) -> None:
         cleanup_db.query(IngestionJob).filter(IngestionJob.manifest_id.in_(manifest_ids)).delete(
             synchronize_session=False
         )
+        cleanup_db.query(IngestionProvenance).filter(IngestionProvenance.manifest_id.in_(manifest_ids)).delete(
+            synchronize_session=False
+        )
         cleanup_db.commit()
     finally:
         cleanup_db.close()
@@ -64,6 +67,49 @@ def test_depose_un_job_pour_une_entree_eligible(db, tmp_path):
         assert job.requested_by == "veille-corpus"
     finally:
         _cleanup_par_manifest_id("sgg-jo/nouvelle-entree")
+
+
+def test_depose_aussi_la_provenance_postgres(db, tmp_path):
+    """§ 3.7 du plan « boîte de réception » : avant ce correctif, seul
+    POST /api/v1/depots écrivait IngestionProvenance — la veille ne
+    renseignait jamais d'où venait le fichier qu'elle avait déposé."""
+    manifest = Manifest(tmp_path / "sgg-jo.jsonl")
+    manifest.upsert(_entry(
+        "sgg-jo/avec-provenance",
+        source_url="https://sgg.cg/jo/2026-13",
+        fetched_at="2026-09-16T08:00:00+00:00",
+        sha256="a" * 64,
+    ))
+
+    try:
+        _deposer_jobs_veille(db, manifest, dry_run=False)
+
+        provenance = (
+            db.query(IngestionProvenance)
+            .filter(IngestionProvenance.manifest_id == "sgg-jo/avec-provenance")
+            .first()
+        )
+        assert provenance is not None
+        assert provenance.type_source == "journal_officiel"
+        assert provenance.source_url == "https://sgg.cg/jo/2026-13"
+        assert provenance.sha256 == "a" * 64
+        assert provenance.fetched_at is not None
+    finally:
+        _cleanup_par_manifest_id("sgg-jo/avec-provenance")
+
+
+def test_dry_run_ne_deposse_pas_la_provenance(db, tmp_path):
+    manifest = Manifest(tmp_path / "sgg-jo.jsonl")
+    manifest.upsert(_entry("sgg-jo/dry-run-provenance"))
+
+    _deposer_jobs_veille(db, manifest, dry_run=True)
+
+    assert (
+        db.query(IngestionProvenance)
+        .filter(IngestionProvenance.manifest_id == "sgg-jo/dry-run-provenance")
+        .first()
+        is None
+    )
 
 
 def test_ne_depose_jamais_un_deuxieme_job_pour_la_meme_entree_deja_en_file(db, tmp_path):
@@ -88,17 +134,25 @@ def test_ne_depose_jamais_un_deuxieme_job_pour_la_meme_entree_deja_en_file(db, t
 def test_redepose_apres_un_echec_definitif_du_premier_job(db, tmp_path):
     """Un job déjà `failed` (échec définitif, pas de réessai automatique côté
     worker) ne bloque pas indéfiniment un futur dépôt — seuls `pending`/
-    `running` comptent comme « déjà en file »."""
+    `running` comptent comme « déjà en file ». La provenance, elle, ne doit
+    JAMAIS être réécrite une deuxième fois (contrainte UNIQUE sur
+    manifest_id) : sans le garde d'idempotence, ce second dépôt violerait la
+    contrainte et ferait échouer tout le passage de veille."""
     manifest = Manifest(tmp_path / "sgg-jo.jsonl")
     manifest.upsert(_entry("sgg-jo/reprise-apres-echec"))
 
     try:
+        # Simule ce qu'un premier passage de veille aurait réellement laissé
+        # derrière lui : un job en échec ET sa provenance déjà écrite.
         job_echoue = IngestionJob(
             kind=IngestionJob.KIND_VEILLE,
             manifest_id="sgg-jo/reprise-apres-echec",
             status=IngestionJob.STATUS_FAILED,
         )
         db.add(job_echoue)
+        db.add(IngestionProvenance(
+            manifest_id="sgg-jo/reprise-apres-echec", type_source="journal_officiel", sha256="0" * 64,
+        ))
         db.commit()
 
         rapport = _deposer_jobs_veille(db, manifest, dry_run=False)
@@ -106,6 +160,12 @@ def test_redepose_apres_un_echec_definitif_du_premier_job(db, tmp_path):
         assert rapport["deposes"] == ["sgg-jo/reprise-apres-echec"]
         total = db.query(IngestionJob).filter(IngestionJob.manifest_id == "sgg-jo/reprise-apres-echec").count()
         assert total == 2
+        total_provenance = (
+            db.query(IngestionProvenance)
+            .filter(IngestionProvenance.manifest_id == "sgg-jo/reprise-apres-echec")
+            .count()
+        )
+        assert total_provenance == 1
     finally:
         _cleanup_par_manifest_id("sgg-jo/reprise-apres-echec")
 
