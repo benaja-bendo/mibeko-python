@@ -18,6 +18,7 @@ from src.acquisition.manifest import Manifest, ManifestEntry
 from src.db.database import SessionLocal
 from src.db.models import IngestionJob
 from src.worker.runner import (
+    _classify_structuration_motif,
     backoff_seconds,
     classify_error,
     finalize_job,
@@ -248,6 +249,25 @@ def test_classify_error_autre_est_definitive():
     assert classify_error(ValueError("payload invalide")) == IngestionJob.ERROR_DEFINITIVE
 
 
+def test_classify_structuration_motif_echec_minio_est_transitoire():
+    """Revue technique du 15/09/2026 : un échec de stockage MinIO (réseau,
+    quota, service temporairement indisponible) était classé `definitive` —
+    aucun réessai possible pour l'exemple même d'un incident transitoire."""
+    assert _classify_structuration_motif("échec de stockage MinIO pour le PDF source") == IngestionJob.ERROR_TRANSITOIRE
+    assert (
+        _classify_structuration_motif("échec d'insertion DB : échec de stockage MinIO pour le PDF source")
+        == IngestionJob.ERROR_TRANSITOIRE
+    )
+    assert _classify_structuration_motif("échec de stockage MinIO pour le markdown (JO)") == IngestionJob.ERROR_TRANSITOIRE
+
+
+def test_classify_structuration_motif_echec_db_hors_minio_reste_definitive():
+    assert (
+        _classify_structuration_motif("échec d'insertion DB : contrainte de clé étrangère violée")
+        == IngestionJob.ERROR_DEFINITIVE
+    )
+
+
 def test_backoff_seconds_croit_puis_plafonne():
     assert backoff_seconds(1) == 30.0
     assert backoff_seconds(2) == 60.0
@@ -455,6 +475,13 @@ def test_process_job_echec_validation_llm_classe_information_manquante(db, tmp_p
         relu = db.query(IngestionJob).filter(IngestionJob.id == job.id).first()
         assert relu.status == IngestionJob.STATUS_FAILED
         assert relu.error_class == IngestionJob.ERROR_INFORMATION_MANQUANTE
+
+        # Revue technique du 15/09 : sans la resynchronisation du manifeste
+        # sur l'échec de structuration, cette entrée restait invisible pour
+        # toujours à _deposer_jobs_veille (qui ne redépose que
+        # "telecharge"/"erreur", jamais "parse").
+        manifest_relu = Manifest(tmp_path / "manifests" / "sgg-jo.jsonl")
+        assert manifest_relu.get(entry.id).statut == "erreur"
     finally:
         _cleanup(job.id)
 

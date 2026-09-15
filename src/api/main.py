@@ -1,5 +1,6 @@
 import asyncio
 import datetime
+import fcntl
 import hashlib
 import json
 import logging
@@ -1735,9 +1736,16 @@ async def deposer_document(
         # ne bouge plus jamais — process_entry/structure_document le lisent
         # depuis le disque local, jamais depuis MinIO (qui n'entre en jeu
         # qu'une fois le document créé, dans structure_document lui-même).
-        safe_stem = sanitize_path_component(os.path.splitext(pdf_file.filename or "document")[0])[:80] or "document"
-        final_filename = f"{upload.sha256[:12]}-{safe_stem}.pdf"
-        entry_id = f"depots/{final_filename[:-4]}"
+        #
+        # entry_id dérive UNIQUEMENT du SHA-256, jamais du nom de fichier : le
+        # même contenu déposé sous deux titres différents doit produire le
+        # MÊME manifest_id pour que la contrainte UNIQUE de
+        # ingestion_provenances.manifest_id serve de verrou de course (revue
+        # technique du 15/09 — un id qui mélangeait aussi le nom de fichier
+        # laissait passer deux dépôts concurrents du même PDF sous deux noms,
+        # chacun avec un manifest_id distinct, donc aucun conflit détecté).
+        final_filename = f"{upload.sha256}.pdf"
+        entry_id = f"depots/{upload.sha256}"
         final_path = sources_dir() / "depots" / final_filename
         final_path.parent.mkdir(parents=True, exist_ok=True)
         shutil.move(upload.path, str(final_path))
@@ -1755,11 +1763,30 @@ async def deposer_document(
             jo_date=resolved_jo_date.isoformat() if resolved_jo_date else None,
             titre=titre or None,
         )
-        entry.add_event("depot_web", f"depot:{_user.email}", detail=type_source)
+        entry.add_event(
+            "depot_web", f"depot:{_user.email}",
+            detail=f"{type_source} ({pdf_file.filename or 'sans nom'})",
+        )
 
-        manifest = Manifest(manifests_dir() / "depots.jsonl")
-        manifest.upsert(entry)
-        manifest.save()
+        # data/manifests/depots.jsonl n'a pas de verrou lecture-modification-
+        # écriture au niveau de Manifest (limite connue, IngestionProvenance
+        # § 3.7) : deux dépôts concurrents de fichiers DIFFÉRENTS peuvent
+        # sinon perdre silencieusement l'un des deux, alors que leurs lignes
+        # DB ont bien été commitées — un document « déposé avec succès » qui
+        # ne serait jamais traité. Un verrou fichier dédié à CET endpoint
+        # (seul appelant vraiment concurrent : les commandes batch/veille
+        # restent un daemon séquentiel) referme cette fenêtre sans toucher à
+        # la classe Manifest partagée par tous les autres appelants.
+        depot_lock_path = manifests_dir() / ".depots.lock"
+        depot_lock_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(depot_lock_path, "w") as lock_handle:
+            fcntl.flock(lock_handle, fcntl.LOCK_EX)
+            try:
+                manifest = Manifest(manifests_dir() / "depots.jsonl")
+                manifest.upsert(entry)
+                manifest.save()
+            finally:
+                fcntl.flock(lock_handle, fcntl.LOCK_UN)
 
         if not source_url:
             # Signalement non bloquant (§ 3.2) : visible dans « À vérifier »,

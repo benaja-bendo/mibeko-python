@@ -216,7 +216,15 @@ def split_and_persist_journal_acts(
             db.flush()
         else:
             document.official_journal_id = document.official_journal_id or official_journal_id
-            document.curation_status = curation_status
+            # curation_status n'est JAMAIS réécrit sur un acte déjà persisté
+            # (revue technique du 15/09/2026) : ce code s'exécute à chaque
+            # reprise après coupure, y compris longtemps après le dépôt
+            # initial. L'écraser avec la valeur "draft" figée à l'appel
+            # (structurer.py) repasserait silencieusement en brouillon un
+            # acte qu'un humain aurait depuis fait avancer (review/validated/
+            # published) — exactement l'invariant que le commentaire
+            # ci-dessous protège déjà pour ingest_hierarchy, étendu ici au
+            # statut de curation.
 
         if provenance:
             merge_metadata(document, provenance)

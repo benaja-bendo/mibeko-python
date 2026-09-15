@@ -250,22 +250,26 @@ class _StepFailure(Exception):
 def _classify_structuration_motif(motif: str) -> str:
     """Classe l'échec de `structure_document` à partir de son `motif` — la
     fonction ne renvoie qu'une chaîne, jamais l'exception d'origine (ses
-    blocs `except Exception as exc` la stringifient déjà). Trois familles
-    observées dans le code actuel de `src/structuration/structurer.py` :
+    blocs `except Exception as exc` la stringifient déjà). Familles observées
+    dans le code actuel de `src/structuration/structurer.py` :
 
     - un appel Mistral qui a échoué (réseau/quota, message "appel Mistral en
-      échec") → transitoire, une relance peut réussir sans rien changer
-      d'autre ;
+      échec"), ou un échec de stockage MinIO (message "échec de stockage
+      MinIO...", PDF/markdown/JSON) → transitoire, une relance peut réussir
+      sans rien changer d'autre (revue technique du 15/09 : un échec MinIO
+      était classé definitive à tort, empêchant tout réessai sur ce qui est
+      pourtant l'exemple même d'un incident réseau) ;
     - une réponse Mistral reçue mais invalide pour le schéma (message
       "validation du schéma en échec", ex. nature introuvable), ou une date
       de consolidation introuvable pour un STOCK (message "date de
       consolidation introuvable") → information_manquante — le signalement
       `blocking` est déjà posé par `structure_document` lui-même, jamais un
       troisième appel identique (§ 3.6/L1 du plan « boîte de réception ») ;
-    - tout le reste (markdown introuvable, échec d'insertion DB, parseur en
-      échec) → definitive, une donnée ou un bug, pas un incident réseau.
+    - tout le reste (markdown introuvable, échec d'insertion DB hors MinIO,
+      parseur en échec) → definitive, une donnée ou un bug, pas un incident
+      réseau.
     """
-    if "appel Mistral en échec" in motif:
+    if "appel Mistral en échec" in motif or "MinIO" in motif:
         return IngestionJob.ERROR_TRANSITOIRE
     if "validation du schéma en échec" in motif or "date de consolidation introuvable" in motif:
         return IngestionJob.ERROR_INFORMATION_MANQUANTE
@@ -335,6 +339,15 @@ def _do_structure_step(
     statut = result.get("statut")
     if statut == "erreur":
         motif = result.get("motif") or "échec de structuration (sans motif)"
+        # Resynchronise le manifeste sur l'échec, comme _do_parse_step le
+        # fait déjà pour l'étape parse (revue technique du 15/09 : sans ça,
+        # entry.statut restait à "parse" pour toujours — invisible à
+        # _deposer_jobs_veille, qui ne redépose que "telecharge"/"erreur" —
+        # un JO en échec de structuration ne repassait plus jamais devant la
+        # veille, seul un humain trouvant le job `failed` pouvait le relancer).
+        entry.statut = "erreur"
+        entry.add_event("erreur_structuration", "MibekoBot/worker", detail=motif)
+        manifest.save()
         raise _StepFailure(motif, _classify_structuration_motif(motif))
 
     # `document_ids` (JO scindé en actes) ou `document_id` seul (acte isolé,

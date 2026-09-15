@@ -409,3 +409,35 @@ def test_jo_reprise_apres_coupure_complete_seulement_lacte_manquant(tmp_path: Pa
     # Un seul nouvel appel à ingest_hierarchy : celui de l'acte manquant.
     # L'acte déjà là n'est JAMAIS re-parsé.
     assert len(ingest_calls) == 1
+
+
+def test_jo_reprise_ne_retrograde_jamais_un_acte_deja_avance_en_curation(tmp_path: Path, monkeypatch):
+    """Revue technique du 15/09/2026 : avant ce correctif, la reprise
+    (ci-dessus) réécrivait inconditionnellement curation_status="draft" sur
+    CHAQUE acte déjà persisté, y compris ceux qu'un humain avait depuis fait
+    avancer (review/validated/published) — une dépublication silencieuse à
+    chaque reprise après coupure."""
+    data_dir = tmp_path / "data"
+    entry = _seed_entry(data_dir, "sgg-jo/congo-jo-2026-45", MD_JO_SOMMAIRE_PUIS_DEUX_ACTES)
+    db = RegistryFakeSession()
+    _patch_ingest_hierarchy_noop(monkeypatch)
+    monkeypatch.setattr(structurer, "minio_service", FakeMinioService())
+
+    result1 = structure_document(db, data_dir, entry, mistral_client=ValidMetadataMistralClient())
+    assert result1["statut"] == "structure"
+    documents = [obj for obj in db.added if isinstance(obj, LegalDocument)]
+    assert len(documents) == 2
+
+    # Un humain fait avancer le premier acte bien au-delà de "draft".
+    premier_acte = min(documents, key=lambda d: d.titre_officiel)
+    premier_acte.curation_status = "published"
+
+    # Reprise (ex. /relancer sur un job resté bloqué à l'étape parse malgré
+    # des actes déjà tous persistés) : le second acte est retiré pour forcer
+    # le passage dans la branche "acte déjà existant" pour le premier.
+    db._legal_documents = list(documents)
+
+    result2 = structure_document(db, data_dir, entry, mistral_client=ValidMetadataMistralClient())
+
+    assert result2["statut"] == "structure"
+    assert premier_acte.curation_status == "published"  # jamais repassé à "draft"

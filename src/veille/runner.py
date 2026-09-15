@@ -39,8 +39,35 @@ def _deposer_jobs_veille(db, manifest: Manifest, dry_run: bool = False) -> Dict[
     en file. Sans cette déduplication, deux passages successifs (ou un
     passage relancé) avant que le worker n'ait traité le premier job
     fabriqueraient un doublon — incident (a) du plan « boîte de réception »,
-    § L1. `dry_run` liste ce qui serait déposé sans rien écrire.
+    § L1. `dry_run` liste ce qui serait déposé sans rien écrire (et ne pose
+    donc jamais de verrou : sans écriture, rien à protéger d'une course).
+
+    Verrou consultatif Postgres par entrée, portée TRANSACTION
+    (`pg_advisory_xact_lock`, jamais la variante session
+    `pg_advisory_lock`), autour du SELECT « pas déjà en file » + l'INSERT :
+    les deux ne sont pas atomiques entre eux, et `ingestion_jobs.manifest_id`
+    n'a délibérément pas de contrainte UNIQUE (une reprise légitime redépose
+    sur la même entrée). Sans ce verrou, deux passages de veille qui se
+    chevauchent (relance manuelle `--once` pendant que le conteneur tourne,
+    redémarrage à cheval sur un cycle) peuvent tous deux passer le SELECT
+    avant que l'un des deux ne commite — chacun déposant alors un job pour la
+    même entrée (revue technique du 15/09, même famille que l'incident (a)
+    que `POST /api/v1/depots` referme côté web via une contrainte UNIQUE).
+
+    La variante session (`pg_advisory_lock` + `pg_advisory_unlock` explicite
+    en `finally`) a été essayée puis abandonnée le 15/09 : un processus tué
+    avant d'atteindre son `pg_advisory_unlock` laisse le verrou tenu jusqu'à
+    ce que Postgres remarque la connexion morte — observé en pratique
+    (backend resté `idle` après un `COMMIT`, verrou toujours `granted`,
+    bloquant indéfiniment tout passage suivant sur la même entrée). La
+    variante transaction n'a pas ce risque : elle est relâchée au
+    commit/rollback qui suit dans TOUS les cas, y compris quand la connexion
+    est coupée avant — Postgres nettoie la transaction ouverte (et le verrou
+    avec elle) dès qu'il détecte la coupure, sans dépendre d'un appel
+    explicite qui pourrait ne jamais arriver.
     """
+    from sqlalchemy import text
+
     from src.db.models import IngestionJob
 
     deposes: List[str] = []
@@ -48,6 +75,20 @@ def _deposer_jobs_veille(db, manifest: Manifest, dry_run: bool = False) -> Dict[
     for entry in manifest.iter_entries():
         if entry.statut not in ("telecharge", "erreur"):
             continue
+
+        if dry_run:
+            existant = (
+                db.query(IngestionJob)
+                .filter(
+                    IngestionJob.manifest_id == entry.id,
+                    IngestionJob.status.in_([IngestionJob.STATUS_PENDING, IngestionJob.STATUS_RUNNING]),
+                )
+                .first()
+            )
+            (deja_en_file if existant is not None else deposes).append(entry.id)
+            continue
+
+        db.execute(text("SELECT pg_advisory_xact_lock(hashtext(:cle))"), {"cle": entry.id})
         existant = (
             db.query(IngestionJob)
             .filter(
@@ -58,13 +99,13 @@ def _deposer_jobs_veille(db, manifest: Manifest, dry_run: bool = False) -> Dict[
         )
         if existant is not None:
             deja_en_file.append(entry.id)
-            continue
-        if dry_run:
-            deposes.append(entry.id)
+            # Referme la transaction ouverte par le verrou avant l'entrée
+            # suivante — sinon il resterait tenu jusqu'au prochain dépôt réel.
+            db.commit()
             continue
         job = IngestionJob(kind=IngestionJob.KIND_VEILLE, manifest_id=entry.id, requested_by="veille-corpus")
         db.add(job)
-        db.commit()
+        db.commit()  # relâche aussi le verrou (même transaction)
         deposes.append(entry.id)
 
     return {"deposes": deposes, "deja_en_file": deja_en_file}
