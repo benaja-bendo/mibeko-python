@@ -354,6 +354,48 @@ def test_parse_hierarchy_ignore_le_sommaire_place_avant_lacte():
     assert "physiques et morales 21" not in hierarchy[0]["content"]
 
 
+def test_parse_hierarchy_ignore_la_table_des_matieres_placee_apres_lacte():
+    """mibeko-python#27, 15/09/2026 : un « TABLE DES MATIÈRES » en ANNEXE (après
+    les vrais articles, pas avant) — trouvé en rejouant le Code des Assurances
+    CIMA 2018 en dépôt réel. Tant que le rendu reste un tableau Markdown
+    (« | Article 34 Titre | 46 | »), la ligne ne matche jamais ARTICLE_PATTERN ;
+    mais une fois dégradée en texte brut (« Article 34 Titre ...46 »), chaque
+    entrée fabrique un second « article » — numéro identique au vrai, contenu
+    = un numéro de page, pas du texte de loi. 572 des 1350 articles du document
+    réel (42 %) venaient de cette seule section."""
+    texte = (
+        "ARTICLE 1- Première disposition.\n"
+        "ARTICLE 2- Deuxième disposition.\n"
+        "# TABLE DES MATIÈRES\n"
+        "PRIERE FAIRE LA MISE A JOUR DE LA PAGINATION\n"
+        "| Article 1 Première disposition | 3 |\n"
+        "| --- | --- |\n"
+        "Article 2 Deuxième disposition ...3\n"
+    )
+    hierarchy = LegalDocumentParser(text_content=texte).parse_hierarchy()
+    articles = _articles(hierarchy)
+
+    assert [article["number"] for article in articles] == ["1", "2"]
+    assert "Deuxième disposition ...3" not in (articles[1]["content"] or "")
+
+
+def test_parse_hierarchy_garde_une_table_des_matieres_qui_ne_ressemble_pas_a_une_annexe():
+    """Garde-fou de _TRAILING_TOC_MIN_ENTRY_RATIO : un titre « TABLE DES
+    MATIÈRES » suivi d'un vrai passage (pas d'entrées de sommaire) ne doit
+    jamais faire disparaître du contenu légitime — à défaut de certitude, le
+    texte est rendu intact (même philosophie que le sommaire en tête)."""
+    texte = (
+        "ARTICLE 1- Première disposition.\n"
+        "# TABLE DES MATIÈRES\n"
+        "ARTICLE 2- Ceci est un vrai article, pas une entrée de sommaire, "
+        "avec un contenu substantiel qui ne ressemble à aucune ligne de renvoi.\n"
+    )
+    hierarchy = LegalDocumentParser(text_content=texte).parse_hierarchy()
+    articles = _articles(hierarchy)
+
+    assert [article["number"] for article in articles] == ["1", "2"]
+
+
 def test_parse_hierarchy_repare_un_titre_romain_colle_par_ocr():
     texte = (
         "ARTICLE 72- Disposition précédente.\n"

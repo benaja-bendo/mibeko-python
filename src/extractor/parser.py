@@ -213,6 +213,75 @@ def _strip_leading_table_of_contents(texte: str) -> str:
     return texte
 
 
+# Signature d'une ligne d'entrée de sommaire/index, quelle que soit sa forme
+# de rendu : ligne de tableau Markdown (« | Article 34 Titre | 46 | »), ou
+# ligne dégradée en texte brut se terminant par des points de suite suivis
+# d'un numéro de page (« Article 34 Assurances cumulatives ...46 »). Cette
+# seconde forme est précisément ce qui fait matcher ARTICLE_PATTERN à tort :
+# le tableau Markdown, lui, ne matche jamais (la ligne commence par « | »).
+_TRAILING_TOC_ENTRY_PATTERN = re.compile(r"^\s*\||\.{2,}\s*\d+\s*$")
+# Proportion minimale de lignes de la queue du document qui doivent ressembler
+# à une entrée de sommaire pour que la coupe ait lieu — sous ce seuil, mieux
+# vaut laisser un vrai passage intact que perdre du contenu sur un faux
+# positif (même philosophie que _strip_leading_table_of_contents : à défaut
+# de certitude, le texte est rendu intact).
+_TRAILING_TOC_MIN_ENTRY_RATIO = 0.5
+
+
+def _strip_trailing_table_of_contents(texte: str) -> str:
+    """Retire une table des matières/un sommaire placé en ANNEXE, après tous
+    les vrais articles — pas avant, comme `_strip_leading_table_of_contents`.
+
+    Trouvé en rejouant le Code des Assurances CIMA 2018 en dépôt réel
+    (mibeko-python#27, 15/09/2026, 569 pages) : son « TABLE DES MATIÈRES »
+    n'apparaît qu'à la toute fin du document (page 538/569), après tous les
+    vrais articles. Tant que le rendu markdown reste un tableau, ces lignes
+    ne matchent jamais ARTICLE_PATTERN — mais la mise en page du PDF source y
+    dégénère en texte brut quelques pages plus loin, où chaque entrée du
+    sommaire matche ARTICLE_PATTERN et fabrique un second « article » par
+    entrée (numéro identique au vrai, dédoublonné en `_doublon_N` par
+    `ingest_hierarchy`, mais avec pour contenu la ligne de sommaire — un
+    numéro de page, pas du texte de loi). Mesuré : 572 des 1350 articles du
+    document (42 %) venaient de cette seule section.
+
+    Contrairement à la version « en tête » (bornée des deux côtés par une
+    formule juridique de reprise), une table des matières qui apparaît APRÈS
+    au moins un vrai article n'a normalement aucune suite légitime : coupée
+    jusqu'à la fin du document, en une seule fois — sur la DERNIÈRE occurrence
+    trouvée, pour ignorer un sommaire partiel qui préfacerait un seul livre/titre
+    au milieu d'un recueil. Garde-fou : n'agit que si la portion retirée
+    ressemble bien, dans sa majorité, à des entrées de sommaire (voir
+    `_TRAILING_TOC_MIN_ENTRY_RATIO`) — un vrai passage de fin de document
+    (signature, annexes normatives…) n'est jamais retiré à tort.
+    """
+    if not texte:
+        return texte
+
+    lines = texte.split("\n")
+    article_seen = False
+    last_heading_index: Optional[int] = None
+
+    for index, line in enumerate(lines):
+        match_line = _clean_for_matching(line)
+        if ARTICLE_PATTERN.match(match_line):
+            article_seen = True
+        elif article_seen and _TABLE_OF_CONTENTS_START_PATTERN.match(match_line):
+            last_heading_index = index
+
+    if last_heading_index is None:
+        return texte
+
+    tail = [line for line in lines[last_heading_index + 1:] if line.strip()]
+    if not tail:
+        return texte
+
+    entry_like = sum(1 for line in tail if _TRAILING_TOC_ENTRY_PATTERN.search(line))
+    if entry_like / len(tail) < _TRAILING_TOC_MIN_ENTRY_RATIO:
+        return texte
+
+    return "\n".join(lines[:last_heading_index])
+
+
 def _rejoin_split_article_headings(texte: str) -> str:
     """Recolle un titre d'article que MinerU a rendu un mot par ligne.
 
@@ -422,8 +491,10 @@ class LegalDocumentParser:
 
         if self.text_content:
             return _rejoin_split_article_headings(
-                _strip_leading_table_of_contents(
-                    strip_page_furniture(strip_latex_artifacts(self.text_content))
+                _strip_trailing_table_of_contents(
+                    _strip_leading_table_of_contents(
+                        strip_page_furniture(strip_latex_artifacts(self.text_content))
+                    )
                 )
             )
 
@@ -447,8 +518,10 @@ class LegalDocumentParser:
             full_text.append("\n".join(clean_lines))
 
         return _rejoin_split_article_headings(
-            _strip_leading_table_of_contents(
-                strip_page_furniture(strip_latex_artifacts("\n".join(full_text)))
+            _strip_trailing_table_of_contents(
+                _strip_leading_table_of_contents(
+                    strip_page_furniture(strip_latex_artifacts("\n".join(full_text)))
+                )
             )
         )
 
