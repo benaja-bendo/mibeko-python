@@ -534,6 +534,29 @@ def link_journals(dry_run):
         db.close()
 
 
+@cli.command("export-provenances")
+def export_provenances():
+    """Fusionne ingestion_provenances (Postgres) dans data/manifests/*.jsonl. Idempotent."""
+    import json as _json
+    from src.acquisition.config import manifests_dir
+    from src.db.database import SessionLocal
+    from src.services.provenance_export import export_provenances_to_jsonl
+
+    db = SessionLocal()
+    try:
+        resultat = export_provenances_to_jsonl(db, manifests_dir())
+        click.echo(_json.dumps(resultat, ensure_ascii=False, indent=2))
+        total_exporte = sum(len(ids) for ids in resultat["exportes"].values())
+        total_ignore = sum(len(ids) for ids in resultat["ignores"].values())
+        click.secho(
+            f"{total_exporte} entrée(s) exportée(s) sur {len(resultat['exportes'])} manifeste(s) · "
+            f"{total_ignore} ignorée(s) (fichier/size_bytes absent)",
+            fg="green",
+        )
+    finally:
+        db.close()
+
+
 @cli.command("process-batch")
 @click.option('--source', 'source_key', default=None, help="Limiter à un manifeste (ex. sgg-jo)")
 @click.option('--limit', default=None, type=int, help='Plafond de documents traités pour cette exécution')
