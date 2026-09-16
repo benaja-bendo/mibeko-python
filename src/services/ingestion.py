@@ -567,9 +567,18 @@ def ingest_hierarchy(
                 # Numéro ordinal pour le contrôle de séquence (cf. `ordinal_from_raw_number`).
                 article_sequence.append((ordinal_from_raw_number(raw_number), article.id))
 
+                # `page_end` (plage de pages, mibeko-python#24 § 3.5) : déjà
+                # propagé pour DISPOSITION/NOTE plus bas dans cette même
+                # fonction, jamais pour ARTICLE alors que le parseur le
+                # calcule pourtant déjà (`LegalDocumentParser`, fermeture de
+                # `current_article`) — additif, `page` reste écrit à
+                # l'identique pour ne rien casser côté lecteurs existants
+                # (front, dashboard).
                 article_locator: Dict[str, Any] = (
                     {"page": node_data["page"]} if node_data.get("page") is not None else {}
                 )
+                if node_data.get("page_end") is not None:
+                    article_locator["page_end"] = node_data["page_end"]
                 version = ArticleVersion(
                     article_id=article.id,
                     contenu_texte=leaf_content(node_data, article_locator, article.id),
@@ -830,6 +839,34 @@ def flag_table_anomalies(
             ))
 
 
+def _contenu_par_page(markdown_text: str) -> Dict[int, str]:
+    """Découpe un markdown à marqueurs ``[[MIBEKO_PAGE:N]]`` en {page: contenu}.
+
+    Partagé par les deux mesures de mibeko-python#24 (§ 3.5) : Mesure 1
+    (`flag_page_coverage_gaps`, PDF → extraction) et Mesure 2
+    (`flag_structure_coverage_gaps`, extraction → structure) posent la même
+    question — « cette page a-t-elle du contenu ? » — sur deux objets
+    différents (le markdown lui-même, puis la hiérarchie qui en est tirée) ;
+    un seul découpage évite que les deux mesures divergent sur ce qu'elles
+    considèrent comme une "page".
+    """
+    pages_content: Dict[int, str] = {}
+    current_page: Optional[int] = None
+    buffer: List[str] = []
+    for line in markdown_text.split("\n"):
+        match = PAGE_MARKER_PATTERN.match(line.strip())
+        if match:
+            if current_page is not None:
+                pages_content[current_page] = "\n".join(buffer)
+            current_page = int(match.group(1))
+            buffer = []
+        else:
+            buffer.append(line)
+    if current_page is not None:
+        pages_content[current_page] = "\n".join(buffer)
+    return pages_content
+
+
 def flag_page_coverage_gaps(
     db: Session,
     document_id: uuid.UUID,
@@ -840,7 +877,7 @@ def flag_page_coverage_gaps(
     """Émet un flag de curation NON bloquant quand une page manque — ou n'a
     presque aucun contenu — dans la plage propre à CE document (son premier
     au dernier marqueur ``[[MIBEKO_PAGE:N]]``). Mesure 1 de mibeko-python#24
-    (§ 3.5 du plan « boîte de réception »).
+    (§ 3.5 du plan « boîte de réception ») : PDF → extraction.
 
     Portée à la plage de CE document, JAMAIS au nombre total de pages du PDF
     source : un acte de 2 pages extrait d'un Journal officiel de 50 partage
@@ -866,21 +903,7 @@ def flag_page_coverage_gaps(
         CurationFlag.resolved.is_(False),
     ).delete(synchronize_session=False)
 
-    pages_content: Dict[int, str] = {}
-    current_page: Optional[int] = None
-    buffer: List[str] = []
-    for line in markdown_text.split("\n"):
-        match = PAGE_MARKER_PATTERN.match(line.strip())
-        if match:
-            if current_page is not None:
-                pages_content[current_page] = "\n".join(buffer)
-            current_page = int(match.group(1))
-            buffer = []
-        else:
-            buffer.append(line)
-    if current_page is not None:
-        pages_content[current_page] = "\n".join(buffer)
-
+    pages_content = _contenu_par_page(markdown_text)
     if not pages_content:
         return False
 
@@ -905,6 +928,90 @@ def flag_page_coverage_gaps(
             f"{len(pages_incompletes)} page(s) sans contenu exploitable dans la plage propre "
             f"à ce document (pages {premiere_page} à {derniere_page}) : {liste}{reste}. "
             "Vérifier si du contenu a été perdu à l'extraction."
+        ),
+    ))
+    return True
+
+
+def _plages_de_pages(hierarchy: List[Dict[str, Any]]) -> List[Tuple[int, int]]:
+    """Parcourt récursivement la hiérarchie PARSÉE (avant insertion — mêmes
+    dicts que `LegalDocumentParser.parse_hierarchy()` renvoie) et liste les
+    plages (page, page_fin) des feuilles portant un contenu réel — miroir de
+    ce que `ingest_hierarchy` écrit ensuite dans `source_locator` (`page`/
+    `page_end`), mais lu directement sur la hiérarchie pour ne pas dépendre
+    d'un aller-retour DB juste après l'insertion."""
+    plages: List[Tuple[int, int]] = []
+    for node in hierarchy:
+        page = node.get("page")
+        if page is not None and str(node.get("content", "")).strip():
+            plages.append((page, node.get("page_end") or page))
+        enfants = node.get("children") or []
+        if enfants:
+            plages.extend(_plages_de_pages(enfants))
+    return plages
+
+
+def flag_structure_coverage_gaps(
+    db: Session,
+    document_id: uuid.UUID,
+    markdown_text: str,
+    hierarchy: List[Dict[str, Any]],
+    run_id: Optional[uuid.UUID] = None,
+    min_chars_par_page: int = 20,
+) -> bool:
+    """Émet un flag de curation NON bloquant quand une page porte du contenu
+    markdown réel mais n'est couverte par AUCUN article/nœud de la
+    hiérarchie parsée — texte perdu entre l'extraction et la structuration.
+    Mesure 2 de mibeko-python#24 (§ 3.5 du plan « boîte de réception »),
+    scopée à la plage propre à CE document comme la Mesure 1 (même raison :
+    jamais comparer un acte au nombre total de pages du PDF source).
+
+    Ne classe pas encore les pages non structurées en « annexe conservée »
+    vs « écartée avec une raison » (ambition complète de la Mesure 2, § 3.5) :
+    le parseur ne porte aucune trace des blocs qu'il a délibérément écartés
+    (sommaire, mobilier de page) par opposition à ceux qu'il a simplement
+    manqués — cette distinction resterait à construire dans le parseur
+    lui-même, hors périmètre de ce lot (qui livre le changement de schéma et
+    d'ancrage, § 3.5, sans le découpage physique des PDF par acte, différé à
+    un ticket séparé). Un signalement ici dit seulement « du texte existe à
+    cette page et n'apparaît dans aucun article » — déjà utile pour la revue.
+
+    Idempotent : purge son propre flag non résolu avant de recalculer.
+    """
+    db.query(CurationFlag).filter(
+        CurationFlag.document_id == document_id,
+        CurationFlag.source == "heuristic",
+        CurationFlag.type_probleme == "bloc_non_structure",
+        CurationFlag.resolved.is_(False),
+    ).delete(synchronize_session=False)
+
+    pages_content = _contenu_par_page(markdown_text)
+    if not pages_content:
+        return False
+
+    pages_couvertes: set = set()
+    for debut, fin in _plages_de_pages(hierarchy):
+        pages_couvertes.update(range(debut, fin + 1))
+
+    pages_non_structurees = sorted(
+        page for page, contenu in pages_content.items()
+        if len(contenu.strip()) >= min_chars_par_page and page not in pages_couvertes
+    )
+
+    if not pages_non_structurees:
+        return False
+
+    liste = ", ".join(str(p) for p in pages_non_structurees[:10])
+    reste = f" (+{len(pages_non_structurees) - 10} autre(s))" if len(pages_non_structurees) > 10 else ""
+    db.add(CurationFlag(
+        document_id=document_id,
+        source="heuristic",
+        type_probleme="bloc_non_structure",
+        severity="warning",
+        description=(
+            f"{len(pages_non_structurees)} page(s) portent du contenu qui n'apparaît dans "
+            f"aucun article de ce document : {liste}{reste}. "
+            "Vérifier si un bloc a été perdu entre l'extraction et la structuration."
         ),
     ))
     return True

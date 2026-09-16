@@ -41,7 +41,7 @@ from src.api.main import (
 from src.db.models import CurationFlag, ExtractionRun, LegalDocument
 from src.extractor.parser import LegalDocumentParser
 from src.extractor.text_quality import compute_ocr_quality
-from src.services.ingestion import flag_page_coverage_gaps
+from src.services.ingestion import flag_page_coverage_gaps, flag_structure_coverage_gaps
 from src.services.minio_service import minio_service
 from src.services.pdf_pages import compter_pages_pdf
 from src.services.mistral_service import mistral_service as default_mistral_client
@@ -481,6 +481,7 @@ def structure_document(
         ocr_quality = compute_ocr_quality(markdown_text)
         flag_low_ocr_quality(db, document.id, ocr_quality, run_id=run.id)
         flag_page_coverage_gaps(db, document.id, markdown_text, run_id=run.id)
+        flag_structure_coverage_gaps(db, document.id, markdown_text, hierarchy, run_id=run.id)
 
         db.commit()
     except Exception as exc:

@@ -43,7 +43,7 @@ from src.api.main import (
 from src.db.models import ExtractionRun, LegalDocument, MediaFile, OfficialJournal
 from src.extractor.parser import LegalDocumentParser
 from src.extractor.text_quality import compute_ocr_quality
-from src.services.ingestion import flag_page_coverage_gaps
+from src.services.ingestion import flag_page_coverage_gaps, flag_structure_coverage_gaps
 from src.services.minio_service import minio_service
 
 
@@ -320,6 +320,7 @@ def split_and_persist_journal_acts(
             ocr_quality = compute_ocr_quality(act_content)
             flag_low_ocr_quality(db, document.id, ocr_quality, run_id=run.id)
             flag_page_coverage_gaps(db, document.id, act_content, run_id=run.id)
+            flag_structure_coverage_gaps(db, document.id, act_content, hierarchy, run_id=run.id)
         else:
             # Deux titres d'actes détectés côte à côte (bruit OCR, sommaire mal
             # filtré) laissent un acte sans aucun contenu entre eux : constaté
