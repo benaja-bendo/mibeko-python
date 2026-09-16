@@ -20,14 +20,16 @@ restent à compléter à la main via /editor/journals.
 from __future__ import annotations
 
 import datetime
+import os
 import re
+import tempfile
 import uuid
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from sqlalchemy.orm import Session
 
-from src.acquisition.manifest import Manifest, ManifestEntry
+from src.acquisition.manifest import Manifest, ManifestEntry, sha256_file
 from src.api.main import (
     build_document_key,
     flag_low_ocr_quality,
@@ -43,8 +45,9 @@ from src.api.main import (
 from src.db.models import ExtractionRun, LegalDocument, MediaFile, OfficialJournal
 from src.extractor.parser import LegalDocumentParser
 from src.extractor.text_quality import compute_ocr_quality
-from src.services.ingestion import flag_page_coverage_gaps, flag_structure_coverage_gaps
+from src.services.ingestion import _contenu_par_page, build_object_key, flag_page_coverage_gaps, flag_structure_coverage_gaps
 from src.services.minio_service import minio_service
+from src.services.pdf_pages import decouper_pdf_par_pages
 
 
 def titre_jo_depuis_manifeste(entry: ManifestEntry, basename: str) -> str:
@@ -123,6 +126,66 @@ def ensure_official_journal(
     return journal
 
 
+def _plage_pages_markdown(markdown_text: str) -> Optional[Tuple[int, int]]:
+    """Première et dernière page marquées `[[MIBEKO_PAGE:N]]` dans ce
+    fragment, ou None si aucun marqueur — même découpage que
+    `src.services.ingestion._contenu_par_page`, réutilisé pour ne pas faire
+    diverger ce que les deux considèrent comme une page."""
+    pages_content = _contenu_par_page(markdown_text)
+    if not pages_content:
+        return None
+    return min(pages_content), max(pages_content)
+
+
+def _decouper_et_televerser_pdf_acte(
+    pdf_local_path: Path, document_id: uuid.UUID, document_role: str, page_debut: int, page_fin: int,
+) -> Optional[Dict[str, Any]]:
+    """Découpe le PDF du JO sur la plage de CET acte et le téléverse sous une
+    clé propre à `document_id` (mibeko-python#30). Renvoie None si le
+    découpage ou le téléversement échoue — l'appelant retombe alors sur le
+    PDF partagé du JO entier, jamais d'échec d'ingestion pour ce motif.
+    """
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        chemin_decoupe = os.path.join(tmp_dir, f"{document_id}.pdf")
+        nb_pages = decouper_pdf_par_pages(str(pdf_local_path), page_debut, page_fin, chemin_decoupe)
+        if nb_pages is None:
+            return None
+
+        object_key = build_object_key(document_role, None, document_id, "source/pdf", f"{document_id}.pdf")
+        s3_path = minio_service.upload_file(object_key, chemin_decoupe, "application/pdf")
+        if not s3_path:
+            return None
+
+        return {
+            "object_key": object_key,
+            "file_path": s3_path,
+            "original_filename": f"{document_id}.pdf",
+            "size_bytes": os.path.getsize(chemin_decoupe),
+            "page_count": nb_pages,
+            "checksum_sha256": sha256_file(Path(chemin_decoupe)),
+        }
+
+
+def _rebaser_hierarchie(hierarchy: List[Dict[str, Any]], offset: int) -> List[Dict[str, Any]]:
+    """Copie la hiérarchie avec `page`/`page_end` décalés de `-offset` (jamais
+    sous 1) — pour que `source_locator` réfère à la pagination du PDF
+    découpé par acte (mibeko-python#30), pas à celle du Journal officiel
+    entier. Copie superficielle par nœud : ne mute jamais la hiérarchie
+    d'origine, encore utilisée par les mesures de couverture en pagination
+    absolue juste après."""
+    rebasee: List[Dict[str, Any]] = []
+    for node in hierarchy:
+        nouveau = dict(node)
+        if nouveau.get("page") is not None:
+            nouveau["page"] = max(1, nouveau["page"] - offset)
+        if nouveau.get("page_end") is not None:
+            nouveau["page_end"] = max(1, nouveau["page_end"] - offset)
+        if nouveau.get("children"):
+            nouveau["children"] = _rebaser_hierarchie(nouveau["children"], offset)
+        rebasee.append(nouveau)
+    return rebasee
+
+
 def split_and_persist_journal_acts(
     db: Session,
     *,
@@ -137,6 +200,7 @@ def split_and_persist_journal_acts(
     provenance: Optional[Dict[str, Any]] = None,
     run_source: str = "STRUCTURATION_LLM",
     run_meta: Optional[Dict[str, Any]] = None,
+    pdf_local_path: Optional[Path] = None,
 ) -> List[LegalDocument]:
     """Scinde un markdown de Journal officiel en actes et les persiste en base.
 
@@ -149,9 +213,17 @@ def split_and_persist_journal_acts(
     le document existant restant un document unique légitime).
 
     `pdf_media`/`md_media`/`json_media` décrivent un stockage MinIO DÉJÀ
-    effectué (clé objet, chemin, checksum, nom, taille) — cette fonction ne
-    téléverse rien elle-même : le même triplet d'artefacts est référencé par
-    N `media_files`, un jeu par acte, sans dupliquer le stockage.
+    effectué (clé objet, chemin, checksum, nom, taille) pour le JO ENTIER.
+    `md_media`/`json_media` restent partagés tels quels entre les actes. Pour
+    le PDF, si `pdf_local_path` est fourni (chemin local du PDF complet), un
+    acte dont la plage `[[MIBEKO_PAGE:N]]` est déterminable se voit découper
+    et téléverser SON PROPRE PDF (mibeko-python#30, reliquat #24) — un acte
+    de 2 pages ne référence plus les 48 autres pages d'un JO de 50, et
+    `source_locator` est recalé sur la pagination du fichier découpé, pas
+    celle du JO entier. Sans `pdf_local_path`, ou si le découpage échoue
+    (page manquante, PDF illisible), l'acte retombe sur `pdf_media` partagé —
+    comportement historique, jamais d'échec d'ingestion pour un souci de
+    découpage.
     """
     extracted_texts = split_official_journal_markdown(markdown_text)
     if len(extracted_texts) <= 1:
@@ -169,10 +241,44 @@ def split_and_persist_journal_acts(
     # `unique_article_number`/`_doublon_N` (api/main.py:1022-1034) pour le
     # même problème à l'échelle de l'article.
     seen_document_keys: Dict[str, int] = {}
+    # `split_official_journal_markdown` attache un marqueur `[[MIBEKO_PAGE:N]]`
+    # à la QUEUE de l'acte qui le précède textuellement (la ligne de marqueur
+    # arrive avant le titre du nouvel acte, jamais après), pas à la tête de
+    # l'acte qu'il annonce réellement — un JO découpé en pages où le titre
+    # d'un acte commence toujours en tête de la SIENNE, jamais celle du
+    # précédent. Deux conséquences, pas une seule :
+    #  1. un acte tenant tout entier sur cette page n'a AUCUN marqueur à lui ;
+    #  2. même quand un acte porte bien ses propres marqueurs internes (pages
+    #     suivantes), sa page de DÉBUT reste fausse si on la lit dans son
+    #     propre contenu — elle est partie avec la fin de l'acte précédent.
+    # D'où : le début de CET acte se lit dans `derniere_page_connue` (ce que
+    # l'acte précédent a vu en dernier), la fin dans les marqueurs propres de
+    # cet acte s'il en a — jamais un mélange où le début viendrait aussi du
+    # contenu propre.
+    derniere_page_connue: Optional[int] = None
 
     for extracted in extracted_texts:
         title = extracted["titre"].strip()
         detected_type = extracted["type"]
+        act_content = extracted["contenu"]
+        # Calculé pour CHAQUE acte, même déjà persisté (`continue` plus bas) :
+        # la suite doit rester correcte pour l'acte suivant lors d'une
+        # reprise partielle. Début = dernière page vue avant cet acte (jamais
+        # lue dans son propre contenu, cf. commentaire plus haut) ; fin = son
+        # propre dernier marqueur s'il en a, sinon la même page que le début.
+        # `derniere_page_connue` n'avance que sur un marqueur RÉEL de CET
+        # acte, jamais sur un report : un acte sans marqueur du tout laisse
+        # le curseur immobile pour le suivant, pas une extrapolation.
+        plage_propre = _plage_pages_markdown(act_content)
+        if plage_propre is not None:
+            page_debut = derniere_page_connue if derniere_page_connue is not None else plage_propre[0]
+            page_fin = plage_propre[1]
+            plage_effective: Optional[Tuple[int, int]] = (min(page_debut, page_fin), page_fin)
+            derniere_page_connue = plage_propre[1]
+        elif derniere_page_connue is not None:
+            plage_effective = (derniere_page_connue, derniere_page_connue)
+        else:
+            plage_effective = None
         # NE PAS écrire dans `legal_documents.reference_nor` (colonne UNIQUE,
         # `uq_legal_documents_reference_nor`) : constaté à l'exécution réelle
         # de la phase 1 — un même numéro d'arrêté/décret (« 3705 ») se
@@ -246,14 +352,29 @@ def split_and_persist_journal_acts(
             created.append(document)
             continue
 
+        acte_pdf = pdf_media
+        page_offset = 0
+        if pdf_local_path is not None and plage_effective is not None:
+            page_debut, page_fin = plage_effective
+            acte_pdf_decoupe = _decouper_et_televerser_pdf_acte(
+                pdf_local_path, document.id, document.document_role, page_debut, page_fin,
+            )
+            if acte_pdf_decoupe is not None:
+                acte_pdf = acte_pdf_decoupe
+                page_offset = page_debut - 1
+
         pdf_row = MediaFile(
             document_id=document.id, storage_provider="MINIO", bucket_name=minio_service.bucket_name,
-            object_key=pdf_media["object_key"], file_path=pdf_media["file_path"],
-            original_filename=pdf_media["original_filename"], mime_type="application/pdf",
-            file_category="SOURCE_PDF", file_size=pdf_media["size_bytes"],
-            page_count=pdf_media.get("page_count"),
-            checksum_sha256=pdf_media["checksum_sha256"],
-            description="PDF source acquis par l'usine à textes (JO, acte détaché du routage corrigé)",
+            object_key=acte_pdf["object_key"], file_path=acte_pdf["file_path"],
+            original_filename=acte_pdf["original_filename"], mime_type="application/pdf",
+            file_category="SOURCE_PDF", file_size=acte_pdf["size_bytes"],
+            page_count=acte_pdf.get("page_count"),
+            checksum_sha256=acte_pdf["checksum_sha256"],
+            description=(
+                "PDF découpé sur les pages propres à cet acte (usine à textes)"
+                if page_offset
+                else "PDF source acquis par l'usine à textes (JO, acte détaché du routage corrigé)"
+            ),
         )
         db.add(pdf_row)
         md_row = MediaFile(
@@ -291,7 +412,6 @@ def split_and_persist_journal_acts(
         db.add(run)
         db.flush()
 
-        act_content = extracted["contenu"]
         hierarchy = LegalDocumentParser(text_content=act_content).parse_hierarchy()
         if not hierarchy and act_content.strip():
             first_marker = re.search(r"\[\[MIBEKO_PAGE:(\d+)\]\]", act_content)
@@ -304,7 +424,13 @@ def split_and_persist_journal_acts(
                 "children": [],
             }]
         if hierarchy:
-            ingest_hierarchy(db, document, hierarchy, run_id=run.id, media_id=md_row.id, validation_status="pending")
+            # `source_locator` doit référer à la pagination du PDF réellement
+            # attaché à CET acte (celui découpé ci-dessus, s'il a réussi) —
+            # jamais à celle du JO entier. Les mesures de couverture plus bas
+            # continuent, elles, de lire `hierarchy` en pagination ABSOLUE :
+            # elles comparent aux marqueurs du markdown, qui ne changent pas.
+            hierarchy_a_inserer = _rebaser_hierarchie(hierarchy, page_offset) if page_offset else hierarchy
+            ingest_hierarchy(db, document, hierarchy_a_inserer, run_id=run.id, media_id=md_row.id, validation_status="pending")
             # `ingest_hierarchy` a déjà écrit les `article_versions` via son
             # propre appel interne (run_id/media_id passés directement) — pas
             # de backfill séparé nécessaire ici, contrairement au chemin

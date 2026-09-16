@@ -604,6 +604,7 @@ def _structure_official_journal_entry(
             },
             json_media=json_media_ref,
             provenance=provenance,
+            pdf_local_path=pdf_local_path,
         )
         if not journal_acts:
             db.rollback()

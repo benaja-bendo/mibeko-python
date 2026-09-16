@@ -128,6 +128,14 @@ class RegistryFakeSession:
 
 
 class FakeMinioService:
+    # Lu par `journals.split_and_persist_journal_acts` pour construire chaque
+    # `MediaFile` (`bucket_name=minio_service.bucket_name`) — nécessaire dès
+    # que ce module est patché (mibeko-python#30 : `_decouper_et_televerser_
+    # pdf_acte` y appelle désormais `upload_file` lui-même, ce qui n'était
+    # pas le cas quand seul `structurer.minio_service` avait besoin d'être
+    # patché).
+    bucket_name = "fake-bucket"
+
     def __init__(self, fail_on=None):
         self.fail_on = fail_on or set()
         self.uploads = []
@@ -447,3 +455,134 @@ def test_jo_reprise_ne_retrograde_jamais_un_acte_deja_avance_en_curation(tmp_pat
 
     assert result2["statut"] == "structure"
     assert premier_acte.curation_status == "published"  # jamais repassé à "draft"
+
+
+# ---------------------------------------------------------------------------
+# Découpage du PDF par acte (mibeko-python#30, reliquat #24)
+# ---------------------------------------------------------------------------
+
+def _creer_pdf_synthetique(chemin: Path, nb_pages: int) -> None:
+    """PDF minimal réel (pas un mock) : le découpage passe par PyMuPDF, un
+    faux chemin ne suffirait pas à exercer le code testé."""
+    import fitz  # PyMuPDF
+
+    chemin.parent.mkdir(parents=True, exist_ok=True)
+    doc = fitz.open()
+    for i in range(nb_pages):
+        page = doc.new_page()
+        page.insert_text((72, 72), f"Page {i + 1}")
+    doc.save(str(chemin))
+    doc.close()
+
+
+def _seed_entry_avec_pdf(data_dir: Path, entry_id: str, markdown: str, nb_pages_pdf: int) -> ManifestEntry:
+    entry = _seed_entry(data_dir, entry_id, markdown)
+    _creer_pdf_synthetique(data_dir / entry.fichier, nb_pages_pdf)
+    return entry
+
+
+def test_chaque_acte_recoit_son_propre_pdf_decoupe_quand_le_pdf_local_existe(tmp_path: Path, monkeypatch):
+    """Le cœur de #30 : un PDF local réellement présent fait sortir du
+    partage — chaque acte doit référencer SON PROPRE objet MinIO, distinct
+    des autres actes du même JO (jusqu'ici tous les trois pointaient le même
+    `object_key`, cf. test_jo_multi_actes_televerse_une_seule_fois_pour_n_documents,
+    dont le titre décrit désormais le repli, pas le cas nominal)."""
+    data_dir = tmp_path / "data"
+    entry = _seed_entry_avec_pdf(data_dir, "sgg-jo/congo-jo-2026-50", MD_JO_SOMMAIRE_PUIS_DEUX_ACTES, nb_pages_pdf=10)
+    db = RegistryFakeSession()
+    fake_minio = FakeMinioService()
+    _patch_ingest_hierarchy_noop(monkeypatch)
+    monkeypatch.setattr(structurer, "minio_service", fake_minio)
+    monkeypatch.setattr(journals_module, "minio_service", fake_minio)
+
+    result = structure_document(db, data_dir, entry, mistral_client=ValidMetadataMistralClient())
+
+    assert result["statut"] == "structure"
+    pdf_rows = [obj for obj in db.added if isinstance(obj, MediaFile) and obj.file_category == "SOURCE_PDF"]
+    assert len(pdf_rows) == 2
+    object_keys = {row.object_key for row in pdf_rows}
+    assert len(object_keys) == 2  # un objet MinIO distinct par acte, plus de partage
+    # Chaque clé est bien enracinée sur l'id du DOCUMENT (l'acte), pas sur un
+    # id partagé du JO.
+    document_ids = {row.document_id for row in pdf_rows}
+    assert all(any(str(doc_id) in key for key in object_keys) for doc_id in document_ids)
+    # Découpage à 1 page chacun (un seul marqueur par acte dans ce fixture) :
+    # le page_count reflète l'acte, jamais les 10 pages du JO entier.
+    assert {row.page_count for row in pdf_rows} == {1}
+
+
+MD_JO_ACTES_AVEC_MARQUEURS_INTERNES = (
+    "[[MIBEKO_PAGE:1]]\n"
+    "SOMMAIRE\n"
+    "Loi n° 12-2026 du 3 janvier 2026 portant code du travail (page 5).\n"
+    "Décret n° 45-2026 du 5 janvier 2026 portant nomination (page 9).\n"
+    "[[MIBEKO_PAGE:5]]\n"
+    "LOI N° 12-2026 DU 3 JANVIER 2026 PORTANT CODE DU TRAVAIL\n"
+    "ARTICLE PREMIER : La presente loi regit les relations de travail.\n"
+    "[[MIBEKO_PAGE:6]]\n"
+    "Article 2 : Elle entre en vigueur des sa promulgation.\n"
+    "[[MIBEKO_PAGE:9]]\n"
+    "DECRET N° 45-2026 DU 5 JANVIER 2026 PORTANT NOMINATION\n"
+    "Article 1 : Est nomme M. X au poste de Y.\n"
+    "[[MIBEKO_PAGE:10]]\n"
+    "Article 2 : Le present decret sera publie.\n"
+)
+
+
+def test_source_locator_recale_sur_la_pagination_du_pdf_decoupe(tmp_path: Path, monkeypatch):
+    """Un article dont le PDF a été découpé doit citer une page RELATIVE au
+    fichier découpé (proche de 1), jamais la page absolue du JO entier — sans
+    quoi le viewer demanderait une page qui n'existe pas dans le PDF réduit.
+    Marqueurs placés DANS le contenu de chaque acte (pas seulement à sa
+    frontière) pour que `LegalDocumentParser` ait de quoi attribuer une page
+    à ses articles, indépendamment du report `derniere_page_connue`."""
+    data_dir = tmp_path / "data"
+    entry = _seed_entry_avec_pdf(data_dir, "sgg-jo/congo-jo-2026-51", MD_JO_ACTES_AVEC_MARQUEURS_INTERNES, nb_pages_pdf=12)
+    db = RegistryFakeSession()
+    fake_minio = FakeMinioService()
+    appels_ingest_hierarchy = []
+
+    def _capter_ingest_hierarchy(db_arg, document_arg, hierarchy_arg, **kwargs):
+        appels_ingest_hierarchy.append((document_arg, hierarchy_arg))
+
+    monkeypatch.setattr(structurer, "ingest_hierarchy", _capter_ingest_hierarchy)
+    monkeypatch.setattr(journals_module, "ingest_hierarchy", _capter_ingest_hierarchy)
+    monkeypatch.setattr(structurer, "minio_service", fake_minio)
+    monkeypatch.setattr(journals_module, "minio_service", fake_minio)
+
+    result = structure_document(db, data_dir, entry, mistral_client=ValidMetadataMistralClient())
+
+    assert result["statut"] == "structure"
+    # L'acte DECRET est découpé sur [9-10] (son propre marqueur interne 10,
+    # plus le report du 9 hérité de la fin du LOI) : sa page absolue 10
+    # devient la page 2 du PDF découpé (offset = 9-1 = 8).
+    decret_appel = next(
+        (doc, h) for doc, h in appels_ingest_hierarchy if "DECRET" in doc.titre_officiel
+    )
+    _, hierarchie_decret = decret_appel
+    pages = [n["page"] for n in hierarchie_decret if n.get("page") is not None]
+    assert pages, "aucune page trouvée dans la hiérarchie capturée"
+    assert all(p == 2 for p in pages)
+    assert all(p < 10 for p in pages)  # jamais la pagination absolue du JO
+
+
+def test_pdf_local_absent_retombe_sur_le_pdf_partage_du_jo(tmp_path: Path, monkeypatch):
+    """Sans PDF local lisible (fichier absent, ou lecture impossible),
+    `_decouper_et_televerser_pdf_acte` échoue proprement et chaque acte
+    retombe sur le PDF du JO entier — jamais d'échec d'ingestion pour ce
+    motif. C'est aussi le comportement de tous les tests de ce fichier qui ne
+    seedent pas de PDF réel (`_seed_entry` seule)."""
+    data_dir = tmp_path / "data"
+    entry = _seed_entry(data_dir, "sgg-jo/congo-jo-2026-52", MD_JO_SOMMAIRE_PUIS_DEUX_ACTES)
+    db = RegistryFakeSession()
+    fake_minio = FakeMinioService()
+    _patch_ingest_hierarchy_noop(monkeypatch)
+    monkeypatch.setattr(structurer, "minio_service", fake_minio)
+    monkeypatch.setattr(journals_module, "minio_service", fake_minio)
+
+    result = structure_document(db, data_dir, entry, mistral_client=ValidMetadataMistralClient())
+
+    assert result["statut"] == "structure"
+    pdf_rows = [obj for obj in db.added if isinstance(obj, MediaFile) and obj.file_category == "SOURCE_PDF"]
+    assert len(pdf_rows) == 2
+    assert len({row.object_key for row in pdf_rows}) == 1  # repli : un seul objet partagé

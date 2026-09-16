@@ -33,3 +33,33 @@ def compter_pages_pdf(chemin: str) -> Optional[int]:
         logger.warning("Nombre de pages illisible pour %s : %s", chemin, exc)
 
         return None
+
+
+def decouper_pdf_par_pages(chemin_source: str, page_debut: int, page_fin: int, chemin_sortie: str) -> Optional[int]:
+    """Découpe `chemin_source` sur la plage [page_debut, page_fin] (1-based,
+    incluses) et écrit le résultat dans `chemin_sortie`. Renvoie le nombre de
+    pages du fichier produit, ou None si le découpage échoue — l'appelant
+    retombe alors sur le PDF source entier plutôt que d'échouer une ingestion
+    qui, par ailleurs, réussit (mibeko-python#30, même logique que
+    `compter_pages_pdf` : un PDF corrompu ne bloque jamais le pipeline).
+    """
+    try:
+        import fitz  # PyMuPDF
+
+        with fitz.open(chemin_source) as doc:
+            total = doc.page_count
+            debut = max(0, page_debut - 1)
+            fin = min(total - 1, page_fin - 1)
+            if debut > fin:
+                logger.warning(
+                    "Plage de pages vide pour %s [%d-%d] (document de %d pages)",
+                    chemin_source, page_debut, page_fin, total,
+                )
+                return None
+            doc.select(list(range(debut, fin + 1)))
+            doc.save(chemin_sortie)
+            return fin - debut + 1
+    except Exception as exc:  # noqa: BLE001 — voir docstring
+        logger.warning("Découpage PDF impossible pour %s [%d-%d] : %s", chemin_source, page_debut, page_fin, exc)
+
+        return None
