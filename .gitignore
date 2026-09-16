@@ -136,3 +136,4 @@ data/**
 !data/**/.keep
 
 backups/
+/data/manifests/depots.jsonl
