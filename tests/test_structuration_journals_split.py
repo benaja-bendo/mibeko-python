@@ -75,6 +75,12 @@ class FakeQuery:
                 return doc
         return None
 
+    def delete(self, synchronize_session=False):
+        # `flag_low_ocr_quality`/`flag_page_coverage_gaps` (mibeko-python#24)
+        # purgent leur propre flag non résolu avant de recalculer — cette
+        # fausse session ne modélise aucun CurationFlag, rien à purger.
+        return 0
+
 
 class FakeTypeCodesResult:
     """Simule le résultat de `db.execute(text("SELECT code FROM document_types"))`

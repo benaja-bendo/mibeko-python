@@ -30,6 +30,7 @@ from sqlalchemy.orm import Session
 from src.acquisition.manifest import Manifest, ManifestEntry
 from src.api.main import (
     build_document_key,
+    flag_low_ocr_quality,
     ingest_hierarchy,
     map_detected_type_to_type_code,
     merge_metadata,
@@ -41,6 +42,8 @@ from src.api.main import (
 )
 from src.db.models import ExtractionRun, LegalDocument, MediaFile, OfficialJournal
 from src.extractor.parser import LegalDocumentParser
+from src.extractor.text_quality import compute_ocr_quality
+from src.services.ingestion import flag_page_coverage_gaps
 from src.services.minio_service import minio_service
 
 
@@ -308,6 +311,15 @@ def split_and_persist_journal_acts(
             # d'upload manuel historique qui n'avait jamais câblé cette
             # provenance (constat audit phase 1).
             document.extraction_status = "completed"
+            # Garde-fous non bloquants (mibeko-python#24, § 3.5 du plan
+            # « boîte de réception »), scopés au fragment PROPRE à CET acte
+            # (act_content), jamais au markdown entier du JO — comparer un
+            # acte de 2 pages aux dizaines de pages des autres actes du même
+            # journal produirait une fausse alerte de couverture sur presque
+            # tous les actes (revue technique du 14/09/2026).
+            ocr_quality = compute_ocr_quality(act_content)
+            flag_low_ocr_quality(db, document.id, ocr_quality, run_id=run.id)
+            flag_page_coverage_gaps(db, document.id, act_content, run_id=run.id)
         else:
             # Deux titres d'actes détectés côte à côte (bruit OCR, sommaire mal
             # filtré) laissent un acte sans aucun contenu entre eux : constaté

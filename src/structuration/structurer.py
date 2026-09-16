@@ -31,6 +31,7 @@ from src.api.main import (
     build_document_key,
     build_media_record,
     build_object_key,
+    flag_low_ocr_quality,
     ingest_hierarchy,
     merge_metadata,
     resolve_legal_scope,
@@ -39,6 +40,8 @@ from src.api.main import (
 )
 from src.db.models import CurationFlag, ExtractionRun, LegalDocument
 from src.extractor.parser import LegalDocumentParser
+from src.extractor.text_quality import compute_ocr_quality
+from src.services.ingestion import flag_page_coverage_gaps
 from src.services.minio_service import minio_service
 from src.services.pdf_pages import compter_pages_pdf
 from src.services.mistral_service import mistral_service as default_mistral_client
@@ -468,6 +471,16 @@ def structure_document(
             }]
 
         ingest_hierarchy(db, document, hierarchy, run_id=run.id, media_id=markdown_media.id, validation_status="pending")
+
+        # Garde-fous non bloquants (mibeko-python#24, § 3.5 du plan « boîte
+        # de réception ») : jamais câblés sur ce chemin unifié depuis la
+        # bascule de #23 (seuls les anciennes routes reprocess/promote de
+        # src/api/main.py appelaient encore flag_low_ocr_quality) — reconnecté
+        # ici plutôt que laissé mort, puisque le sujet de ce ticket est
+        # justement la qualité/couverture de l'extraction.
+        ocr_quality = compute_ocr_quality(markdown_text)
+        flag_low_ocr_quality(db, document.id, ocr_quality, run_id=run.id)
+        flag_page_coverage_gaps(db, document.id, markdown_text, run_id=run.id)
 
         db.commit()
     except Exception as exc:

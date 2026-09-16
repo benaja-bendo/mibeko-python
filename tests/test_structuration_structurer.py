@@ -33,6 +33,12 @@ class FakeQuery:
     def first(self):
         return self._result
 
+    def delete(self, synchronize_session=False):
+        # `flag_low_ocr_quality`/`flag_page_coverage_gaps` (mibeko-python#24)
+        # purgent leur propre flag non résolu avant de recalculer — cette
+        # fausse session ne modélise aucun CurationFlag, rien à purger.
+        return 0
+
 
 class FakeSession:
     def __init__(self, existing_document=None):
@@ -690,3 +696,34 @@ def test_titre_jo_depuis_manifeste_couvre_la_grammaire_sgg():
     t1 = titre_jo_depuis_manifeste(entry(5, 2025), "congo-jo-2025-5-volume-i")
     t2 = titre_jo_depuis_manifeste(entry(5, 2025), "congo-jo-2025-5-volume-ii")
     assert t1 != t2
+
+
+MD_AVEC_UN_TROU_DE_PAGE = (
+    "[[MIBEKO_PAGE:1]]\n"
+    "ARTICLE PREMIER : Premiere disposition, largement suffisante en substance.\n"
+    "[[MIBEKO_PAGE:2]]\n"
+    "\n"
+    "[[MIBEKO_PAGE:3]]\n"
+    "Article 2 : Deuxieme disposition, largement suffisante en substance.\n"
+)
+
+
+def test_structure_document_signale_une_couverture_de_pages_incomplete(tmp_path: Path, monkeypatch):
+    """Mesure 1 de mibeko-python#24 (§ 3.5) : reconnectée sur le chemin
+    unifié — flag_page_coverage_gaps doit s'exécuter à chaque structuration
+    réussie, pas seulement sur l'ancien chemin reprocess/promote."""
+    data_dir = tmp_path / "data"
+    entry = _seed_entry(data_dir, "sgg-jo/congo-jo-2026-troue")
+    md_path = data_dir / "pipeline" / "md" / f"{entry.id}.md"
+    md_path.write_text(MD_AVEC_UN_TROU_DE_PAGE, encoding="utf-8")
+    db = FakeSession()
+    monkeypatch.setattr(structurer, "minio_service", FakeMinioService())
+    monkeypatch.setattr(structurer, "ingest_hierarchy", lambda *args, **kwargs: None)
+
+    result = structure_document(db, data_dir, entry, mistral_client=ValidMetadataMistralClient())
+
+    assert result["statut"] == "structure"
+    flags = [obj for obj in db.added if isinstance(obj, CurationFlag) and obj.type_probleme == "couverture_pages_incomplete"]
+    assert len(flags) == 1
+    assert "2" in flags[0].description
+    assert flags[0].severity == "warning"

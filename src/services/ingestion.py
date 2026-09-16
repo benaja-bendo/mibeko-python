@@ -29,6 +29,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy_utils import Ltree
 
 from src.db.models import Article, ArticleVersion, CurationFlag, LegalDocument, StructureNode
+from src.extractor.parser import PAGE_MARKER_PATTERN
 from src.extractor.tables import (
     LegalTable,
     TableAnomaly,
@@ -827,6 +828,86 @@ def flag_table_anomalies(
                     "`php artisan mibeko:retirer-articles-masthead`."
                 ),
             ))
+
+
+def flag_page_coverage_gaps(
+    db: Session,
+    document_id: uuid.UUID,
+    markdown_text: str,
+    run_id: Optional[uuid.UUID] = None,
+    min_chars_par_page: int = 20,
+) -> bool:
+    """Émet un flag de curation NON bloquant quand une page manque — ou n'a
+    presque aucun contenu — dans la plage propre à CE document (son premier
+    au dernier marqueur ``[[MIBEKO_PAGE:N]]``). Mesure 1 de mibeko-python#24
+    (§ 3.5 du plan « boîte de réception »).
+
+    Portée à la plage de CE document, JAMAIS au nombre total de pages du PDF
+    source : un acte de 2 pages extrait d'un Journal officiel de 50 partage
+    le même PDF source que les 48 autres pages, qui appartiennent à d'autres
+    actes — les comparer aurait produit une fausse alerte de couverture sur
+    la quasi-totalité des actes d'un JO. C'est précisément le défaut trouvé
+    par la revue technique du 14/09/2026 dans le plan initial (couverture de
+    pages mesurée contre le mauvais objet), qui a fait scinder ce lot en deux
+    mesures séparées.
+
+    Idempotent : purge son propre flag non résolu avant de recalculer, comme
+    `flag_low_ocr_quality`/`flag_article_sequence_anomalies`.
+
+    Renvoie True si un flag a été émis (au moins une page incomplète dans la
+    plage propre au document), False sinon — y compris quand le markdown ne
+    porte aucun marqueur de page (hors périmètre de cette mesure : rien à
+    comparer).
+    """
+    db.query(CurationFlag).filter(
+        CurationFlag.document_id == document_id,
+        CurationFlag.source == "heuristic",
+        CurationFlag.type_probleme == "couverture_pages_incomplete",
+        CurationFlag.resolved.is_(False),
+    ).delete(synchronize_session=False)
+
+    pages_content: Dict[int, str] = {}
+    current_page: Optional[int] = None
+    buffer: List[str] = []
+    for line in markdown_text.split("\n"):
+        match = PAGE_MARKER_PATTERN.match(line.strip())
+        if match:
+            if current_page is not None:
+                pages_content[current_page] = "\n".join(buffer)
+            current_page = int(match.group(1))
+            buffer = []
+        else:
+            buffer.append(line)
+    if current_page is not None:
+        pages_content[current_page] = "\n".join(buffer)
+
+    if not pages_content:
+        return False
+
+    premiere_page = min(pages_content)
+    derniere_page = max(pages_content)
+    pages_incompletes = [
+        page for page in range(premiere_page, derniere_page + 1)
+        if len(pages_content.get(page, "").strip()) < min_chars_par_page
+    ]
+
+    if not pages_incompletes:
+        return False
+
+    liste = ", ".join(str(p) for p in pages_incompletes[:10])
+    reste = f" (+{len(pages_incompletes) - 10} autre(s))" if len(pages_incompletes) > 10 else ""
+    db.add(CurationFlag(
+        document_id=document_id,
+        source="heuristic",
+        type_probleme="couverture_pages_incomplete",
+        severity="warning",
+        description=(
+            f"{len(pages_incompletes)} page(s) sans contenu exploitable dans la plage propre "
+            f"à ce document (pages {premiere_page} à {derniere_page}) : {liste}{reste}. "
+            "Vérifier si du contenu a été perdu à l'extraction."
+        ),
+    ))
+    return True
 
 
 def merge_metadata(document: LegalDocument, extra: dict) -> None:
