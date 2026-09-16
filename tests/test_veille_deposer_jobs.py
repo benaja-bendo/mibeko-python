@@ -79,6 +79,10 @@ def test_depose_aussi_la_provenance_postgres(db, tmp_path):
         source_url="https://sgg.cg/jo/2026-13",
         fetched_at="2026-09-16T08:00:00+00:00",
         sha256="a" * 64,
+        jo_numero="13",
+        jo_date="2026-04-01",
+        jo_annee=2026,
+        titre="Journal officiel n° 13 du 1er avril 2026",
     ))
 
     try:
@@ -94,6 +98,17 @@ def test_depose_aussi_la_provenance_postgres(db, tmp_path):
         assert provenance.source_url == "https://sgg.cg/jo/2026-13"
         assert provenance.sha256 == "a" * 64
         assert provenance.fetched_at is not None
+        # mibeko-python#28 : les 9 champs de ManifestEntry manquants à la
+        # création de la table (dashboard#140) sont désormais aussi écrits.
+        assert provenance.fichier == "sources/sgg/test.pdf"
+        assert provenance.statut == "telecharge"
+        assert provenance.size_bytes == 10
+        assert provenance.jo_numero == "13"
+        assert provenance.jo_date.isoformat() == "2026-04-01"
+        assert provenance.jo_annee == 2026
+        assert provenance.titre == "Journal officiel n° 13 du 1er avril 2026"
+        assert provenance.retroactif is False
+        assert provenance.variantes_multiples is None
     finally:
         _cleanup_par_manifest_id("sgg-jo/avec-provenance")
 

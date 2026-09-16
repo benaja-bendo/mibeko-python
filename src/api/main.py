@@ -1667,9 +1667,18 @@ async def deposer_document(
         db.add(IngestionProvenance(
             manifest_id=entry.id,
             type_source=type_source,
+            fichier=entry.fichier,
+            statut=entry.statut,
+            size_bytes=entry.size_bytes,
             source_url=source_url or None,
+            jo_numero=entry.jo_numero,
+            jo_date=resolved_jo_date,
+            jo_annee=entry.jo_annee,
+            titre=entry.titre,
             sha256=upload.sha256,
             fetched_at=datetime.datetime.utcnow(),
+            retroactif=entry.retroactif,
+            variantes_multiples=entry.variantes_multiples,
             evenements=[{"quand": utc_now_iso(), "quoi": "depot_web", "par": _user.email}],
         ))
 

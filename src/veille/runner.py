@@ -126,12 +126,27 @@ def _deposer_jobs_veille(db, manifest: Manifest, dry_run: bool = False) -> Dict[
                     fetched_at = _dt.datetime.fromisoformat(entry.fetched_at)
                 except ValueError:
                     fetched_at = None
+            jo_date = None
+            if entry.jo_date:
+                try:
+                    jo_date = _dt.date.fromisoformat(entry.jo_date)
+                except ValueError:
+                    jo_date = None
             db.add(IngestionProvenance(
                 manifest_id=entry.id,
                 type_source=entry.type_source,
+                fichier=entry.fichier,
+                statut=entry.statut,
+                size_bytes=entry.size_bytes,
                 source_url=entry.source_url,
+                jo_numero=entry.jo_numero,
+                jo_date=jo_date,
+                jo_annee=entry.jo_annee,
+                titre=entry.titre,
                 sha256=entry.sha256,
                 fetched_at=fetched_at,
+                retroactif=entry.retroactif,
+                variantes_multiples=entry.variantes_multiples,
                 evenements=[{"quand": entry.fetched_at, "quoi": "veille", "par": "veille-corpus"}],
             ))
 
