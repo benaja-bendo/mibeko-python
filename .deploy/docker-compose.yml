@@ -31,6 +31,9 @@ services:
       # Attachement du middleware SSE au routeur principal
       - "traefik.http.routers.mibeko-python.middlewares=mibeko-python-sse@docker"
       - "traefik.http.middlewares.mibeko-python-sse.headers.customResponseHeaders.X-Accel-Buffering=no"
+
+      - "dev.dozzle.group=mibeko"
+      - "dev.dozzle.icon=fastapi"
     healthcheck:
       test:
         [
@@ -58,6 +61,9 @@ services:
       - mibeko_python_data:/app/data
     networks: [proxy, db_internal, mineru_internal]
     depends_on: [api]
+    labels:
+      - "dev.dozzle.group=mibeko"
+      - "dev.dozzle.icon=fastapi"
 
   # Worker de la file `ingestion_jobs` (mibeko-python#23, § L1) : traite tout
   # travail déposé, par le web (`POST /api/v1/depots`) comme par la veille
@@ -77,6 +83,9 @@ services:
       - mibeko_python_data:/app/data
     networks: [proxy, db_internal, mineru_internal]
     depends_on: [api]
+    labels:
+      - "dev.dozzle.group=mibeko"
+      - "dev.dozzle.icon=fastapi"
 
 volumes:
   mibeko_python_data:
