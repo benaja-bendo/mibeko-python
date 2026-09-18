@@ -1,5 +1,9 @@
 # Architecture technique du fonctionnement de Mibeko Python
 
+> Statut : à jour au 18 septembre 2026 · Guide d’onboarding : parcours de lecture, composants et pièges opérationnels du service.
+
+Ce document complète [l’architecture du service](../architecture.md) : `architecture.md` décrit le quoi et le pourquoi du pipeline; cette page indique par où commencer et quels points surveiller en travaillant dans le dépôt.
+
 `mibeko-python` est un **service interne d’ingestion de textes juridiques** pour le Congo-Brazzaville et l’OHADA. Ce n’est pas le site public Mibeko.
 
 Il reçoit des PDF, extrait leur contenu, reconstruit leur structure juridique, puis écrit le résultat dans PostgreSQL pour qu’il soit relu et publié depuis Laravel.
@@ -23,13 +27,11 @@ flowchart LR
     M --> N[Front éditeur]
 ```
 
-![Architecture du pipeline](diagram.png)
-
 ## 1. Les composants
 
 ### Point d’entrée CLI
 
-Le fichier `main.py` contient une CLI Click.
+Le fichier racine `main.py` contient une CLI Click.
 
 Elle permet notamment de :
 
@@ -51,7 +53,7 @@ python main.py serve --port 8001
 
 ### API FastAPI
 
-Le fichier `main.py` est l’orchestrateur HTTP.
+Le fichier `src/api/main.py` est l’orchestrateur HTTP.
 
 Il gère :
 
@@ -64,7 +66,7 @@ Il gère :
 - le staging et la promotion des propositions ;
 - le health check.
 
-Le routeur `documents.py` expose la consultation des documents, articles, fichiers, statistiques, ainsi que le soft-delete et la restauration.
+Le routeur `src/api/routers/documents.py` expose la consultation des documents, articles, fichiers, statistiques, ainsi que le soft-delete et la restauration.
 
 Endpoints principaux :
 
@@ -82,7 +84,7 @@ POST /api/v1/documents/{id}/runs/{run}/discard
 
 ### Authentification
 
-`auth.py` ne possède pas son propre système d’utilisateurs.
+`src/api/auth.py` ne possède pas son propre système d’utilisateurs.
 
 Il lit directement les tables Laravel :
 
@@ -117,7 +119,7 @@ data/
 
 ### Triage et parsing des PDF
 
-`triage.py` décide comment traiter un PDF.
+`src/parsing/triage.py` décide comment traiter un PDF.
 
 Il utilise PyMuPDF pour mesurer :
 
@@ -133,7 +135,7 @@ Deux chemins sont possibles :
 2. **PDF scanné ou texte de mauvaise qualité**  
    Passage par MinerU pour OCR et extraction structurée.
 
-L’orchestration batch se trouve dans `batch.py`. Elle est :
+L’orchestration batch se trouve dans `src/parsing/batch.py`. Elle est :
 
 - séquentielle ;
 - idempotente ;
@@ -142,7 +144,7 @@ L’orchestration batch se trouve dans `batch.py`. Elle est :
 
 ### MinerU
 
-`mineru_service.py` fournit une interface commune à deux modes :
+`src/services/mineru_service.py` fournit une interface commune à deux modes :
 
 - `cloud` : API SaaS MinerU ;
 - `local` : serveur MinerU local dans `mineru-local`.
@@ -156,7 +158,7 @@ Le Markdown est le format de référence pour reconstruire les actes et les docu
 
 ### Parseur juridique
 
-`parser.py` contient `LegalDocumentParser`.
+`src/extractor/parser.py` contient `LegalDocumentParser`.
 
 C’est un parseur heuristique basé sur des expressions régulières et des règles métier. Il reconnaît notamment :
 
@@ -199,7 +201,7 @@ Ces anomalies deviennent des `CurationFlag`.
 
 Le dossier `structuration` coordonne le parsing final.
 
-`structurer.py` :
+`src/structuration/structurer.py` :
 
 1. lit le Markdown ;
 2. appelle `LegalDocumentParser` ;
@@ -218,20 +220,20 @@ Mistral ne doit pas produire le contenu juridique principal. Il sert uniquement 
 - autorité ;
 - informations d’en-tête.
 
-`batch.py` applique cette logique à tous les documents d’un manifeste.
+`src/structuration/batch.py` applique cette logique à tous les documents d’un manifeste.
 
 ### Découpage et fusion
 
 Deux composants traitent les gros documents :
 
-- `chunk_merger.py` fusionne plusieurs morceaux MinerU ;
-- `compilation_splitter.py` découpe une compilation en actes distincts.
+- `src/extractor/chunk_merger.py` fusionne plusieurs morceaux MinerU ;
+- `src/extractor/compilation_splitter.py` découpe une compilation en actes distincts.
 
 C’est particulièrement important pour les Journaux Officiels, qui contiennent souvent plusieurs textes indépendants.
 
 ### Stockage MinIO
 
-`minio_service.py` stocke les fichiers physiques dans MinIO, compatible S3 :
+`src/services/minio_service.py` stocke les fichiers physiques dans MinIO, compatible S3 :
 
 - PDF source ;
 - Markdown ;
@@ -242,7 +244,7 @@ PostgreSQL ne stocke donc pas directement les gros fichiers. Il stocke leurs ré
 
 ### Base PostgreSQL
 
-Les modèles SQLAlchemy sont dans `models.py`.
+Les modèles SQLAlchemy sont dans `src/db/models.py`.
 
 Les principales relations sont :
 
@@ -254,7 +256,7 @@ erDiagram
     LEGAL_DOCUMENT ||--o{ ARTICLE : contient
     STRUCTURE_NODE ||--o{ ARTICLE : parent
     ARTICLE ||--o{ ARTICLE_VERSION : possede
-    LEGAL_DOCUMENT }o--|| OFFICIAL_JOURNAL : appartient
+    LEGAL_DOCUMENT }o--o| OFFICIAL_JOURNAL : appartient
     LEGAL_DOCUMENT }o--o| INSTITUTION : emet
     LEGAL_DOCUMENT ||--o{ CURATION_FLAG : signale
 ```
@@ -270,7 +272,7 @@ Les entités principales :
 - `ArticleVersion` : contenu textuel daté ;
 - `CurationFlag` : anomalie à vérifier.
 
-Le schéma est **piloté par Laravel**. La fonction `init_db()` de `database.py` ne crée volontairement aucune table.
+Le schéma est **piloté par Laravel**. La fonction `init_db()` de `src/db/database.py` ne crée volontairement aucune table.
 
 ## 2. Déroulement complet d’une ingestion
 
@@ -346,7 +348,7 @@ Le pipeline Python ne publie pas directement.
 Il produit généralement un document en état :
 
 ```text
-draft -> review -> published
+draft -> review -> validated -> published
 ```
 
 Lorsqu’un document déjà curé est retraité, le contenu existant n’est pas écrasé automatiquement. La nouvelle proposition est stockée dans :
@@ -419,15 +421,15 @@ Ordre recommandé :
 1. `README.md` : rôle général et installation.
 2. `architecture.md` : architecture métier.
 3. `main.py` : commandes disponibles.
-4. `api/main.py` : orchestration HTTP.
-5. `parsing/triage.py` : choix natif/MinerU.
-6. `parsing/batch.py` et `structuration/batch.py` : traitement des lots.
-7. `extractor/parser.py` : grammaire juridique.
-8. `structuration/structurer.py` : insertion métier.
-9. `db/models.py` : modèle de données.
+4. `src/api/main.py` : orchestration HTTP.
+5. `src/parsing/triage.py` : choix natif/MinerU.
+6. `src/parsing/batch.py` et `src/structuration/batch.py` : traitement des lots.
+7. `src/extractor/parser.py` : grammaire juridique.
+8. `src/structuration/structurer.py` : insertion métier.
+9. `src/db/models.py` : modèle de données.
 10. `tests` : comportements réellement verrouillés.
 
 Deux points de documentation sont à garder en tête :
 
 - le port local de développement recommandé est `8001` pour éviter les conflits avec Laravel, même si le port par défaut du code et de Docker est `8000` ;
-- la documentation décrit parfois une chaîne `PDF → JSON → Markdown`, mais le code peut utiliser directement l’extraction native PyMuPDF et s’appuie prioritairement sur le Markdown pour la structuration.
+- le triage choisit entre l’extraction native PyMuPDF et MinerU/OCR ; dans les deux cas, le Markdown est le format de référence pour la structuration.
