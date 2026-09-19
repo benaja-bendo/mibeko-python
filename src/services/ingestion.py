@@ -477,7 +477,28 @@ def ingest_hierarchy(
     media_id: Optional[uuid.UUID] = None,
     validation_status: str = "pending",
 ) -> None:
-    """Insère une hiérarchie parsée dans `structure_nodes`, `articles` et `article_versions`."""
+    """Insère une hiérarchie parsée dans `structure_nodes`, `articles` et `article_versions`.
+
+    GARDE-FOU (dashboard#166, 19/09/2026) — vérifié en production le même
+    jour : `article_versions.validity_period` doit rester une date de DROIT
+    (un amendement légal réel, tracé par `modifie_par_document_id` côté
+    Laravel), jamais une date de PIPELINE. `clear_document_structure()`
+    ci-dessous supprime tout, et chaque article reçoit un `node_id` (donc un
+    id) fraîchement tiré au sort : une réingestion ne peut PAS forker une
+    version sur un article existant, elle en pose une neuve, datée
+    honnêtement de cette ingestion (déjà documenté par `getValidityStartAttribute()`
+    côté Laravel : cette date reflète l'enregistrement, pas une entrée en
+    vigueur garantie). C'est la seule raison pour laquelle ce mécanisme n'a
+    jamais produit les 2 486 fausses versions mesurées ce jour-là — leur
+    origine réelle était `FusionnerFragmentsCommand` (mibeko-tableau-de-bord),
+    corrigée dans la même passe.
+
+    N'AJOUTEZ JAMAIS ici (ni ailleurs dans ce fichier) de chemin qui
+    retrouverait un `Article` déjà existant pour lui insérer une DEUXIÈME
+    ligne `article_versions` sans passer par une décision humaine explicite
+    d'amendement (texte modificateur + date d'effet obligatoires, doctrine
+    posée côté Laravel) — ce serait exactement reproduire le défaut corrigé.
+    """
 
     clear_document_structure(db, document.id)
     seen_article_numbers: Dict[str, int] = {}
