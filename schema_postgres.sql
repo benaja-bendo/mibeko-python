@@ -441,6 +441,10 @@ CREATE TABLE article_versions (
     reviewed_at TIMESTAMP(0) WITHOUT TIME ZONE,
     created_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    -- SoftDeletes (dashboard#166, migration Laravel 2026_09_19_230955) : retire
+    -- une version fermée qui n'est pas un vrai amendement sans jamais la
+    -- supprimer physiquement. Toute lecture Python doit filtrer deleted_at IS NULL.
+    deleted_at TIMESTAMP(0) WITHOUT TIME ZONE,
     CONSTRAINT chk_article_versions_validity_not_empty CHECK (NOT isempty(validity_period)),
     EXCLUDE USING GIST (
         article_id WITH =,
