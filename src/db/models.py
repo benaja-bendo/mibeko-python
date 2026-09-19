@@ -66,6 +66,11 @@ class LegalDocument(Base):
     # synchronisation des modeles avec les migrations Laravel.
     libelle_descriptif = Column(Text, nullable=True)
     libelle_descriptif_source = Column(String(20), nullable=True)
+    # Numéro d'acte normalisé + provenance (`titre` / `manuel`), écrits côté
+    # Laravel (décision du 19/09/2026, schéma d'URL par citation). Le pipeline
+    # ne les renseigne pas ; déclarés ici pour que le contrôle de drift les voie.
+    numero_acte = Column(String(60), nullable=True)
+    numero_acte_source = Column(String(20), nullable=True)
     reference_nor = Column(String(50), nullable=True)
     date_signature = Column(Date, nullable=True)
     date_publication = Column(Date, nullable=True)
