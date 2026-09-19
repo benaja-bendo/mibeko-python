@@ -250,6 +250,12 @@ CREATE TABLE legal_documents (
     -- (mibeko:proposer-libelles) ; le pipeline Python ne le renseigne pas.
     libelle_descriptif TEXT,
     libelle_descriptif_source VARCHAR(20),
+    -- Numéro de l'acte en forme normalisée (« 2025-240 », « 3497 »), la pièce
+    -- de la CITATION dont dérive l'URL canonique (décision du 19/09/2026).
+    -- Écrit côté Laravel après relecture humaine (mibeko:proposer-numeros) ou
+    -- à la main par un éditeur ; le pipeline Python ne le renseigne pas.
+    numero_acte VARCHAR(60),
+    numero_acte_source VARCHAR(20),
     -- Slug public (site/app) généré côté Laravel ; NULL tant que non backfillé.
     slug VARCHAR(255),
     reference_nor VARCHAR(50),
@@ -279,6 +285,19 @@ CREATE TABLE legal_documents (
 ALTER TABLE legal_documents ADD CONSTRAINT legal_documents_libelle_descriptif_source_check
 CHECK ((libelle_descriptif IS NULL AND libelle_descriptif_source IS NULL)
     OR (libelle_descriptif IS NOT NULL AND libelle_descriptif_source IN ('article', 'manuel')));
+
+-- Même garde-fou pour le numéro d'acte : pas de provenance sans numéro, pas de
+-- numéro sans provenance (`titre` = extrait du titre puis relu, `manuel`).
+ALTER TABLE legal_documents ADD CONSTRAINT legal_documents_numero_acte_source_check
+CHECK ((numero_acte IS NULL AND numero_acte_source IS NULL)
+    OR (numero_acte IS NOT NULL AND numero_acte_source IN ('titre', 'manuel')));
+
+-- Citation (type, numéro, date de signature) : clé d'identité du schéma d'URL,
+-- index partiel non unique — les doublons publiés se fusionnent par revue
+-- humaine, et une citation partagée peut être légitime (acte + annexe).
+CREATE INDEX IF NOT EXISTS idx_legal_documents_citation
+ON legal_documents (type_code, numero_acte, date_signature)
+WHERE numero_acte IS NOT NULL AND deleted_at IS NULL;
 
 CREATE INDEX idx_legal_docs_metadata ON legal_documents USING GIN (metadata);
 CREATE INDEX IF NOT EXISTS legal_documents_legal_scope_index ON legal_documents(legal_scope);
