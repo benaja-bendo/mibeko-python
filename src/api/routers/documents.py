@@ -307,7 +307,11 @@ def get_document_articles(
 
     items = []
     for art in articles:
-        versions = db.query(ArticleVersion).filter(ArticleVersion.article_id == art.id).all()
+        versions = (
+            db.query(ArticleVersion)
+            .filter(ArticleVersion.article_id == art.id, ArticleVersion.deleted_at.is_(None))
+            .all()
+        )
         items.append(
             ArticleOut(
                 id=art.id,

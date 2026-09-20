@@ -218,6 +218,10 @@ class ArticleVersion(Base):
     source_media_file_id = Column(UUID(as_uuid=True), ForeignKey("media_files.id", ondelete="SET NULL"), nullable=True)
     source_locator = Column(JSONB, default=dict)
     validation_status = Column(String(255), default="pending")
+    # SoftDeletes côté Laravel (dashboard#166) : retire une version fermée qui
+    # n'est pas un vrai amendement, sans jamais la supprimer physiquement. Les
+    # lectures Python doivent filtrer deleted_at IS NULL.
+    deleted_at = Column(DateTime, nullable=True)
 
     article = relationship("Article", back_populates="versions")
 
