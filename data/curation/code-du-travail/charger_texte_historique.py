@@ -87,6 +87,8 @@ def main() -> int:
     p.add_argument("--journal", help="fichier de reprise (défaut : journal-<hôte>-<document>.json à côté du plan)")
     p.add_argument("--rythme", type=int, default=40, help="appels par minute (quota API : 60)")
     p.add_argument("--execute", action="store_true", help="écrit réellement ; sinon simulation")
+    p.add_argument("--limit", type=int, help="lot pilote : s'arrête après N articles créés (étapes 1 à 4 complètes) ; "
+                                             "relancer sans --limit reprend là où il s'est arrêté")
     args = p.parse_args()
 
     plan = json.loads(Path(args.plan).read_text(encoding="utf-8"))
@@ -151,9 +153,14 @@ def main() -> int:
     print(f"  arborescence : {len(plan['noeuds'])} nœuds")
 
     # 5. Articles, à la date d'effet de leur première version
+    crees_ce_passage = 0
     for rang, article in enumerate(plan["articles"], 1):
         if journal.get(article["cle"]):
             continue
+        if args.limit is not None and crees_ce_passage >= args.limit:
+            print(f"Lot pilote : arrêt après {args.limit} article(s). Vérifier, puis relancer sans --limit pour reprendre.")
+            return 0
+        crees_ce_passage += 1
         premiere = article["versions"][0]
         corps = {"document_id": args.document, "parent_node_id": journal.get(article["noeud"]),
                  "numero_article": article["numero"], "content": premiere["texte"],
