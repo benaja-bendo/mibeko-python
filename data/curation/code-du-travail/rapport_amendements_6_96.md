@@ -3,235 +3,38 @@
 - Dispositions insérées dans le Code : 150 — modifie : 42, cree : 108
 - Abrogations (art. 264 nouveau) : articles ['172'], alinéas {'55': [4, 5, 6, 7]}
 - Date d'effet : 1996-03-06 (article 3 : « La présente loi qui prend effet à compter de la date de signature »)
-- Accord avec la consolidation ≥ 97 % : 96
+- Accord avec la consolidation ≥ 97 % : 100
+- Écarts mot à mot avec la consolidation : 264, tranchés : sur l'image pour tout écart qui touche au sens (27 pages lues sur 35) ; sur les pages 2, 6, 8, 10, 12, 15, 26 et 35, non relues, les écarts ne portent que sur la forme (pluriels, accents, montants) et la lecture OCR est retenue
 
 ## Écarts avec la consolidation
 
-- Marqués « 6-96 » par la consolidation mais absents du texte officiel lu : ['55', '252-2']
-- Présents dans le texte officiel mais non marqués par la consolidation : ['249-4']
+- Marqués « 6-96 » par la consolidation mais absents de la loi : ['55', '252-2']
+  - 55 : pas d'« Article 55 nouveau » : la loi abroge seulement ses alinéas 4 à 7 (art. 264 nouveau)
+  - 252-2 : doublon mal numéroté de l'art. 259-2 nouveau (même texte) ; aucun « Article 252-2 » dans la loi (p. 29-30)
+- Présents dans la loi mais non marqués par la consolidation : ['249-4']
 
-## À relire (accord < 97 %, absent de la consolidation, ou lecture OCR incertaine)
+## Erreurs de l'OCR corrigées sur l'image
 
-- art. 32-6 (cree) : accord 0.947
-  - loi (OCR) « au » / consolidation « aux »
-  - loi (OCR) « 1 3 » / consolidation «  »
-- art. 37-2 (cree) : accord 0.867
-  - loi (OCR) « par » / consolidation « pour »
-  - loi (OCR) « parties » / consolidation « partie »
-- art. 37-4 (cree) : accord 0.957
-  - loi (OCR) « anticipée » / consolidation « anticipé »
-  - loi (OCR) « par » / consolidation « pour »
-- art. 37-5 (cree) : accord 0.918
-  - loi (OCR) «  » / consolidation « du »
-  - loi (OCR) « dommages » / consolidation « hommages et »
-  - loi (OCR) « de travail » / consolidation «  »
-  - loi (OCR) « pourvoir » / consolidation « pouvoir »
-- art. 39-3 (cree) : accord 0.914
-  - loi (OCR) « les » / consolidation « le »
-  - loi (OCR) « prévus » / consolidation « prévu »
-  - loi (OCR) « 2 » / consolidation « 3 »
-  - loi (OCR) « licenciements » / consolidation « licenciement »
-  - loi (OCR) « notification » / consolidation « modification »
-- art. 47-5 (cree) : accord 0.941 ; OCR incertain
-  - loi (OCR) « fins » / consolidation « faits »
-- art. 47-6 (cree) : accord 0.96 ; OCR incertain
-  - loi (OCR) « sont réservés » / consolidation « sous réserve »
-- art. 47-16 (cree) : accord 0.468
-  - loi (OCR) «  » / consolidation « art 48 et 49 voir sous article 47 ci dessus nb suite à l'insertion des articles 47 1 à 47  »
-- art. 73 (modifie) : accord 0.964
-  - loi (OCR) « à » / consolidation « a »
-  - loi (OCR) « alinéas » / consolidation « alinéa »
-  - loi (OCR) « 3 » / consolidation « 2 »
-- art. 73-2 (cree) : accord 0.865
-  - loi (OCR) « les personnes autorisées devront remplir certaines conditions fixées par décret » / consolidation «  »
-- art. 73-13 (cree) : accord 0.579
-  - loi (OCR) « 15 » / consolidation «  »
-  - loi (OCR) « l'entrée en activité » / consolidation « un arrêté du ministre »
-  - loi (OCR) « l'entreprise » / consolidation « travail précise la nature des éléments d'information se rapportant aux contrats que doit c »
-  - loi (OCR) « la succursale » / consolidation « présentation »
-  - loi (OCR) « l'agence ou du bureau annexe ne peut précéder la réception du document mentionné à l'aliné » / consolidation « celui ci »
-- art. 92 (modifie) : accord 0.924
-  - loi (OCR) «  » / consolidation « le privilège s'exerce sur les biens meubles et immeubles de l'employeur »
-- art. 131-2 (cree) : accord 0.96
-  - loi (OCR) « créé » / consolidation « crée »
-- art. 141-2 (cree) : accord 0.957
-  - loi (OCR) « régistres » / consolidation « registres »
-  - loi (OCR) « régistres » / consolidation « registres »
-- art. 141-3 (cree) : accord 0.939
-  - loi (OCR) « de sécurité en matière » / consolidation «  »
-- art. 143 (modifie) : accord 0.63
-  - loi (OCR) «  » / consolidation « cette décision prise après avis de l'inspecteur du travail et des lois sociales et consult »
-- art. 154-1 (cree) : accord 0.962
-  - loi (OCR) « du » / consolidation « de »
-  - loi (OCR) « ledit » / consolidation « le dit »
-- art. 154-3 (cree) : accord 0.953
-  - loi (OCR) « recidive » / consolidation « récidive »
-  - loi (OCR) « produit » / consolidation « produits »
-  - loi (OCR) « recidive » / consolidation « récidive »
-- art. 156-2 (cree) : accord 0.962
-  - loi (OCR) « 157 » / consolidation « 1577 »
-  - loi (OCR) « paragraphes » / consolidation « paragraphe »
-- art. 173 (modifie) : accord 0.967
-  - loi (OCR) « est » / consolidation «  »
-  - loi (OCR) « du travail » / consolidation «  »
-  - loi (OCR) « collèges » / consolidation « collège »
-  - loi (OCR) « disposent » / consolidation « dispose »
-  - loi (OCR) « leurs » / consolidation « leur »
-- art. 173-2 (cree) : accord 0.827
-  - loi (OCR) « ingénieurs les chefs de service techniciens agents de maîtrise et assimilés lorsque l'impo » / consolidation «  »
-  - loi (OCR) « entre les » / consolidation « entres »
-- art. 173-4 (cree) : accord 0.842
-  - loi (OCR) « mois » / consolidation « moins »
-  - loi (OCR) « le mandat » / consolidation « les mandats »
-- art. 173-6 (cree) : accord 0.9
-  - loi (OCR) « légale » / consolidation « légal »
-  - loi (OCR) « présentés » / consolidation « représentés »
-- art. 173-14 (cree) : accord 0.97
-  - loi (OCR) « l'inspecteur » / consolidation « l'inspection »
-- art. 174 (modifie) : accord 0.968
-  - loi (OCR) « l'entreprise » / consolidation « les entreprises »
-  - loi (OCR) « mois » / consolidation « moins »
-  - loi (OCR) « contestation » / consolidation « consultation »
-  - loi (OCR) « qui suivent » / consolidation « suivant »
-- art. 179 (modifie) : accord 0.848
-  - loi (OCR) « rémunérées » / consolidation « rémunérés »
-  - loi (OCR) « en outre les délégués du personnel tant titulaires que suppléants bénéficient chaque année » / consolidation «  »
-- art. 180 (modifie) : accord 0.932
-  - loi (OCR) « 4e » / consolidation « 4ème »
-  - loi (OCR) « délégué » / consolidation « délégués »
-  - loi (OCR) « le » / consolidation « les »
-- art. 184 (modifie) : accord 0.863
-  - loi (OCR) « des » / consolidation « les »
-  - loi (OCR) « qu' individuels » / consolidation « qu'individuels »
-  - loi (OCR) « leurs » / consolidation « leur »
-- art. 210-4 (cree) : accord 0.926
-  - loi (OCR) « missions essentielles » / consolidation « mission essentielle »
-  - loi (OCR) « 11 » / consolidation «  »
-  - loi (OCR) « l'intérieur » / consolidation « l 'intérieur »
-- art. 210-6 (cree) : accord 0.955
-  - loi (OCR) « syndicale » / consolidation « syndicales »
-- art. 232 (modifie) : accord 0.959
-  - loi (OCR) « les » / consolidation « ses »
-  - loi (OCR) « des dates » / consolidation « de sa date »
-- art. 245 (modifie) : accord 0.962
-  - loi (OCR) « concernés » / consolidation « concernées »
-  - loi (OCR) « des » / consolidation « ses »
-  - loi (OCR) « elles » / consolidation « elle »
-  - loi (OCR) « experts comptables » / consolidation « expertscomptables »
-  - loi (OCR) « commission » / consolidation « commissions »
-- art. 248-6 (cree) : accord 0.96
-  - loi (OCR) « concerné » / consolidation « conservé »
-  - loi (OCR) « été » / consolidation « té »
-- art. 248-7 (cree) : accord 0.941
-  - loi (OCR) « congé annuel » / consolidation « congés annuels »
-  - loi (OCR) « supprimer » / consolidation « superviser »
-- art. 248-9 (cree) : accord 0.941
-  - loi (OCR) « grève » / consolidation « grèves »
-- art. 248-12 (cree) : accord 0.944
-  - loi (OCR) « incidence » / consolidation « indice »
-- art. 249-4 (cree) : accord 0.939
-  - loi (OCR) « caractère licite ou » / consolidation « caractères »
-- art. 251 (modifie) : accord 0.927
-  - loi (OCR) « francs » / consolidation « fcfa »
-  - loi (OCR) « francs » / consolidation « fcfa »
-  - loi (OCR) « francs » / consolidation « fcfa »
-  - loi (OCR) « francs cfa » / consolidation « fcfa »
-  - loi (OCR) « 1er » / consolidation « 1et »
-  - loi (OCR) « yaura d'inscriptions » / consolidation « y aura d'inscription »
-- art. 252 (modifie) : accord 0.935
-  - loi (OCR) « francs » / consolidation « fcfa »
-  - loi (OCR) « francs cfa » / consolidation « fcfa »
-  - loi (OCR) « francs » / consolidation « fcfa »
-  - loi (OCR) « francs cfa » / consolidation « fcfa »
-  - loi (OCR) « articles » / consolidation « article »
-- art. 253 (modifie) : accord 0.947
-  - loi (OCR) « poursuivies » / consolidation « poursuivie »
-  - loi (OCR) « punies » / consolidation « punis »
-  - loi (OCR) « francs cfa » / consolidation « fcfa »
-  - loi (OCR) « francs cfa » / consolidation « fcfa »
-- art. 254 (modifie) : accord 0.927
-  - loi (OCR) « francs » / consolidation « fcfa »
-  - loi (OCR) « francs cfa » / consolidation « fcfa »
-  - loi (OCR) « francs » / consolidation « fcfa »
-  - loi (OCR) « francs cfa » / consolidation « fcfa »
-  - loi (OCR) « dispositions des » / consolidation « décrets et arrêtés prévus aux »
-  - loi (OCR) « articles » / consolidation « article »
-  - loi (OCR) « national » / consolidation « nationale »
-  - loi (OCR) « la » / consolidation «  »
-- art. 255-2 (cree) : accord 0.875
-  - loi (OCR) « d'une » / consolidation « 'une »
-  - loi (OCR) « francs » / consolidation « fcfa »
-  - loi (OCR) « francs cfa » / consolidation « fcfa »
-  - loi (OCR) « francs » / consolidation « fcfa »
-  - loi (OCR) « francs cfa » / consolidation « fcfa »
-  - loi (OCR) « 73 » / consolidation « 7 »
-- art. 255-3 (cree) : accord 0.881
-  - loi (OCR) « les » / consolidation « es »
-  - loi (OCR) « francs » / consolidation « fcfa »
-  - loi (OCR) « francs cfa » / consolidation « fcfa »
-  - loi (OCR) « francs » / consolidation « fcfa »
-  - loi (OCR) « francs cfa » / consolidation « fcfa »
-  - loi (OCR) « ya » / consolidation « y ait »
-  - loi (OCR) « des » / consolidation « les »
-  - loi (OCR) « de 15 » / consolidation « de15 »
-- art. 256 (modifie) : accord 0.922
-  - loi (OCR) « francs » / consolidation « fcfa »
-  - loi (OCR) « francs cfa » / consolidation « fcfa »
-  - loi (OCR) « francs » / consolidation « fcfa »
-  - loi (OCR) « francs cfa » / consolidation « fcfa »
-- art. 256-2 (cree) : accord 0.895
-  - loi (OCR) « francs » / consolidation « fcfa »
-  - loi (OCR) « francs cfa » / consolidation « fcfa »
-  - loi (OCR) « francs » / consolidation « fcfa »
-  - loi (OCR) « francs cfa » / consolidation « fcfa »
-  - loi (OCR) « avantages » / consolidation « avantage »
-- art. 257 (modifie) : accord 0.966
-  - loi (OCR) « francs » / consolidation « fcfa »
-  - loi (OCR) « francs cfa » / consolidation « fcfa »
-  - loi (OCR) « francs » / consolidation «  »
-  - loi (OCR) « francs cfa » / consolidation « fcfa »
-  - loi (OCR) « alcoolisée » / consolidation « alcoolisées »
-  - loi (OCR) « et » / consolidation « e »
-  - loi (OCR) « de s'embaucher » / consolidation «  »
-  - loi (OCR) «  » / consolidation « ne »
-- art. 257-2 (cree) : accord 0.965
-  - loi (OCR) « francs » / consolidation « fcfa »
-  - loi (OCR) « francs cfa » / consolidation « fcfa »
-  - loi (OCR) « francs » / consolidation « fcfa »
-  - loi (OCR) « 500 » / consolidation «  »
-  - loi (OCR) « francs cfa » / consolidation « 000 fcfa »
-- art. 257-3 (cree) : accord 0.933
-  - loi (OCR) « francs » / consolidation « fcfa »
-  - loi (OCR) « francs cfa » / consolidation « fcfa »
-  - loi (OCR) « francs » / consolidation « fcfa »
-  - loi (OCR) « francs cfa toute » / consolidation « fcfa tout »
-  - loi (OCR) « lui » / consolidation «  »
-  - loi (OCR) « un » / consolidation « de »
-  - loi (OCR) « disposition » / consolidation « dispositions »
-  - loi (OCR) « obstention » / consolidation « obtention »
-- art. 257-5 (cree) : accord 0.887
-  - loi (OCR) « 000frs » / consolidation « 000 fcfa »
-  - loi (OCR) « 000frs cfa » / consolidation « 000 fcfa »
-  - loi (OCR) « 000frs » / consolidation « 000 »
-  - loi (OCR) « 000frs cfa » / consolidation « 000 fcfa »
-  - loi (OCR) « d'infractions » / consolidation « infractions »
-  - loi (OCR) « h » / consolidation «  »
-- art. 258 (modifie) : accord 0.939
-  - loi (OCR) « francs à » / consolidation « fcfa et »
-  - loi (OCR) « francs cfa » / consolidation « fcfa »
-  - loi (OCR) « francs » / consolidation « fcfa »
-  - loi (OCR) « francs cfa » / consolidation « fcfa »
-  - loi (OCR) « de s'opposer » / consolidation « d'opposer »
-  - loi (OCR) « est » / consolidation « et »
-- art. 259-3 (cree) : accord 0.87
-  - loi (OCR) « acquitée » / consolidation « acquittée »
-  - loi (OCR) «  » / consolidation « requis des amendes fixes aux présent titre »
-- art. 260 (modifie) : accord 0.881
-  - loi (OCR) « employés » / consolidation « employé »
-  - loi (OCR) « ya » / consolidation « y a »
-  - loi (OCR) « antérieurs au fait poursuivi le contrevenant a déjà subi une condamnation pour un fait ide » / consolidation «  »
-- art. 262-2 (cree) : accord 0.963
-  - loi (OCR) « à » / consolidation « de »
-- art. 263-2 (cree) : accord 0.962
-  - loi (OCR) « contraires » / consolidation « contraire »
-  - loi (OCR) « demeurera » / consolidation « demeura »
+- art. 47-5 : « des fins invoqués » → « des faits invoqués » (mot surimprimé sur le scan (p. 7) ; lu « faits » d'après le contexte et la consolidation)
+- art. 47-6 : « que sont réservés de » → « que sous réserve de » (passage surimprimé (p. 7) ; « sous réserve » d'après le contexte et la consolidation)
+- art. 73-7 : « qui permet le contrat » → « qui rompt le contrat » (lu sur l'image (p. 11))
+- art. 73-7 : « proposer au qui-ci » → « proposer à celui-ci » (lu sur l'image (p. 11))
+- art. 73-8 : « Le transporteur de travail temporaire est tenu » → « Tout entrepreneur de travail temporaire est tenu » (début de l'article effacé sur le scan officiel (p. 11) ; repris de la consolidation)
+- art. 73-8 : « de sa part, le paiement: » → « de sa part, le payement: » (lettre de la loi (p. 11))
+- art. 73-8 : « sont issues de fournir » → « sont tenues de fournir » (lu sur l'image (p. 11))
+- art. 176 : « En cas de licitement irrégulier » → « En cas de liciement irrégulier » (lettre de la loi, coquille comprise (p. 21))
+- art. 232 : « Mention de cette délivrance, des dates et de son heure » → « Mention de cette délivrance, de sa date et de son heure » (lu sur l'image (p. 25 : « desa date »))
+- art. 248-6 : « intégralement concerné » → « intégralement concervé » (lettre de la loi, coquille comprise (p. 27))
+- art. 257 : « quel conque » → « quelconque » (mot coupé en fin de ligne (p. 32))
+
+## Divergences notées, lettre de la loi conservée
+
+- art. 73 : la loi renvoie à « l'article 32-3 » (la liste des cas de recours est à l'article 32-2) ; lettre de la loi conservée
+- art. 143 : « Article 143 nouveau » remplace l'article entier ; la seconde phrase que garde la consolidation n'est pas dans la loi
+- art. 47-16 : la consolidation ajoute une note d'éditeur (« NB suite à l'insertion… ») absente de la loi
+
+## Ailleurs, la lecture OCR était conforme à l'image : ce que la consolidation avait de différent
+
+Omissions de phrases entières : 73-2, 73-13, 141-3, 173-2, 179, 260 ; mots déformés (« hommages », « moins » pour « mois », « 1577 », « consultation » pour « contestation », « modification » pour « notification ») ; montants modernisés (« francs CFA » → « FCFA ») ; phrases ajoutées (92, 143) ; note d'éditeur (47-16).
+
+Scores d'accord < 97 % (pour mémoire) : 32-6 (0.947), 37-2 (0.867), 37-4 (0.957), 37-5 (0.918), 39-3 (0.914), 47-16 (0.468), 73 (0.964), 73-2 (0.865), 73-13 (0.579), 92 (0.924), 131-2 (0.96), 141-2 (0.957), 141-3 (0.939), 143 (0.63), 154-1 (0.962), 154-3 (0.953), 156-2 (0.962), 173 (0.967), 173-2 (0.827), 173-4 (0.842), 173-6 (0.9), 173-14 (0.97), 174 (0.968), 179 (0.848), 180 (0.932), 184 (0.863), 210-4 (0.935), 210-6 (0.955), 245 (0.962), 248-6 (0.96), 248-7 (0.941), 248-9 (0.941), 248-12 (0.944), 249-4 (0.939), 251 (0.927), 252 (0.935), 253 (0.947), 254 (0.927), 255-2 (0.875), 255-3 (0.881), 256 (0.922), 256-2 (0.895), 257-2 (0.965), 257-3 (0.933), 257-5 (0.887), 258 (0.939), 259-3 (0.87), 260 (0.881), 262-2 (0.963), 263-2 (0.962)
