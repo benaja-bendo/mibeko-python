@@ -89,11 +89,21 @@ def marque(texte: str):
 
 def nettoyer_ocr(texte: str) -> str:
     t = texte.replace("**", "")
-    t = re.sub(r"^\s*\.\./?\s*$", "", t, flags=re.M)
+    t = re.sub(r"^\s*\.{2,}\s*/+\s*\.*\s*$", "", t, flags=re.M)  # marques de suite de page « ../ », « .../ »
     t = re.sub(r"^\s*\d{1,2}\s*$", "", t, flags=re.M)
     t = re.sub(r"-\s*\n\s*(?=[a-zà-ÿ])", "", t)
     paras = [re.sub(r"\s*\n\s*", " ", p).strip() for p in re.split(r"\n\s*\n", t)]
-    return "\n\n".join(p for p in paras if p)
+    paras = [p for p in paras if p]
+    # Un saut de page coupe parfois une phrase en deux alinéas (« une visite des travailleurs se » /
+    # « déclarant malades… ») : on recolle quand l'alinéa ne finit pas une phrase et que le suivant
+    # commence en minuscule.
+    recolles = []
+    for p in paras:
+        if recolles and not re.search(r"[.:;!?»)]$", recolles[-1]) and re.match(r"[a-zà-ÿ]", p):
+            recolles[-1] = f"{recolles[-1]} {p}"
+        else:
+            recolles.append(p)
+    return "\n\n".join(recolles)
 
 
 def mots(texte: str) -> list:

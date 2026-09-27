@@ -139,6 +139,9 @@ data/**
 !data/curation/**/*.py
 !data/curation/**/*.json
 !data/curation/**/*.md
+# …sauf les journaux de reprise du chargeur : identifiants propres à une base, jamais partagés.
+data/curation/**/journal-*.json
+data/curation/**/provenance-*.json
 
 backups/
 /data/manifests/depots.jsonl
