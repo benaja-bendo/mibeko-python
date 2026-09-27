@@ -64,6 +64,45 @@ class Api:
         raise RuntimeError(f"{methode} {chemin} : échec après {TENTATIVES_MAX} tentatives")
 
 
+def sonder_api(api: "Api") -> None:
+    """Vérifie, sans rien écrire, que le jeton passe et que l'API sait dater une création.
+
+    Une API antérieure à dashboard#209 ignore `start_date` sans erreur (Laravel écarte les
+    champs qu'il ne valide pas) et date la version du jour : incident du 27/09/2026 en
+    production, 373 articles datés du jour et aucun amendement possible ensuite. La sonde
+    envoie un `POST /articles` invalide à dessein (ni document, ni texte) : la validation
+    le rejette avant toute écriture, et seule une API qui connaît `start_date` se plaint
+    aussi de la date non conforme.
+    """
+    reponse = api.client.post("/articles", json={"start_date": "sonde-sans-date"})
+    if reponse.status_code in (401, 403):
+        raise RuntimeError(f"sonde : jeton refusé ({reponse.status_code}). Rôle éditeur ou admin requis.")
+    if reponse.status_code != 422:
+        raise RuntimeError(f"sonde : réponse inattendue {reponse.status_code} : {reponse.text[:300]}")
+    if "start_date" not in (reponse.json().get("errors") or {}):
+        raise RuntimeError("sonde : l'API ignore `start_date` — la PR dashboard#209 n'est pas déployée sur cette cible. "
+                           "Aucune écriture n'a été faite.")
+
+
+def creer_article(api: "Api", corps: dict) -> str:
+    """Crée un article et vérifie que l'API a bien daté sa première version.
+
+    Filet derrière `sonder_api` : la réponse porte `validity_start` ; au moindre écart,
+    l'article tout juste créé est retiré (suppression douce), pour qu'une relance ne bute
+    pas sur « Cet article existe déjà » — ce qui est arrivé le 27/09 à 21:46 UTC, quand ce
+    contrôle s'arrêtait sans défaire sa propre écriture.
+    """
+    donnees = api.appel("POST", "/articles", corps)["data"]
+    attendue, obtenue = corps.get("start_date"), donnees.get("validity_start")
+    if attendue and obtenue != attendue:
+        api.appel("DELETE", f"/articles/{donnees['id']}")
+        raise RuntimeError(
+            f"article {corps['numero_article']} : date d'effet demandée {attendue}, enregistrée {obtenue} ; "
+            "article retiré aussitôt. Arrêt avant d'aller plus loin."
+        )
+    return donnees["id"]
+
+
 class Journal:
     """Correspondance clé du plan → identifiant créé, écrite après CHAQUE appel réussi."""
 
@@ -109,6 +148,8 @@ def main() -> int:
     hote = urlparse(args.base_url).netloc.replace(":", "_")
     journal = Journal(Path(args.journal) if args.journal else ICI / f"journal-{hote}-{args.document[:8]}.json")
     api = Api(args.base_url, jeton, args.rythme)
+    sonder_api(api)
+    print("  sonde : jeton accepté, l'API date les créations")
 
     # 1. Lois modificatives
     lois = {}
@@ -124,7 +165,7 @@ def main() -> int:
             if not journal.get(cle_art):
                 corps = {"document_id": lois[code_loi], "numero_article": article["numero"], "content": article["texte"],
                          "ordre_affichage": rang, "start_date": loi["date_signature"]}
-                journal.poser(cle_art, api.appel("POST", "/articles", corps)["data"]["id"])
+                journal.poser(cle_art, creer_article(api, corps))
 
     # 2. Métadonnées du document cible
     if not journal.get("code:patch"):
@@ -167,7 +208,7 @@ def main() -> int:
                  "ordre_affichage": article["ordre"], "start_date": premiere["debut"]}
         if premiere["loi"]:
             corps["modifie_par_document_id"] = lois[premiere["loi"]]
-        journal.poser(article["cle"], api.appel("POST", "/articles", corps)["data"]["id"])
+        journal.poser(article["cle"], creer_article(api, corps))
         if rang % 50 == 0:
             print(f"  articles : {rang}/{len(plan['articles'])}", flush=True)
     print(f"  articles : {len(plan['articles'])} créés")
