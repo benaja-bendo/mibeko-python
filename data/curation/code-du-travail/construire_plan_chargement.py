@@ -107,7 +107,9 @@ def main() -> None:
         # La loi 45-75 dit seulement « sera exécutée comme loi de l'État » : sa date d'entrée en
         # vigueur n'est pas connue. On le déclare, plutôt que d'en inventer une.
         "code": {"patch": {"titre_officiel": "Code du travail", "date_signature": DEBUT_1975, "statut": "vigueur",
-                           "date_entree_vigueur_inconnue": True},
+                           "date_entree_vigueur_inconnue": True,
+                           # « Consolidée au » : la date du dernier texte intégré (loi 6-96), pas celle de l'import.
+                           "consolidation_as_of": DATE_6_96},
                  "sources": base["document"]["sources"],
                  "provenance": {"source_url": base["document"]["sources"]["original"]["url"],
                                 "fetched_at": "2025-10-25T00:00:00+00:00",

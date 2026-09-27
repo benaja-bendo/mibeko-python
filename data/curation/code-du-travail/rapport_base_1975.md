@@ -62,6 +62,31 @@
 - art. 243 : consolidation « 2 » / scan officiel « deux »
 - art. 244 : consolidation « 2 » / scan officiel « deux »
 
+## Erreurs de l'OCR corrigées sur l'image (versions de 1975 tirées du scan)
+
+Les 50 articles tirés du scan ont été arbitrés mot à mot entre Mistral et MinerU (116 écarts, 28/09/2026) ; Mistral avait raison partout ailleurs.
+
+- art. 33 : « qu'en sortie » → « ou sa sortie » (lu sur l'image (p. 9))
+- art. 33 : « l'installat » → « l'installation » (mot coupé (p. 9))
+- art. 33 : « 5t » → «  » (caractère parasite de l'OCR (p. 9))
+- art. 33 : « sur le conformité » → « sur la conformité » (lu sur l'image (p. 9))
+- art. 39 : « arrêté du Centre du Travail et de la Prévoyance Social, qui a préavis de la » → « arrêté du Ministre du Travail et de la Prévoyance Sociale pris après avis de la » (lu sur l'image (p. 11))
+- art. 41 : « sans préavis au sens que » → « sans préavis ou sans que » (lu sur l'image (p. 12))
+- art. 42 : « l'inégociution » → « l'inexécution » (lu sur l'image (p. 13))
+- art. 47 : « maladie professionnel e) » → « maladie professionnelle ; e) » (fin d'alinéa mal lue (p. 15))
+- art. 131 : « près la Ministère » → « près le Ministère » (lu sur l'image (p. 37))
+- art. 143 : « Ne compte pas l'application » → « Ne compte pour l'application » (lu sur l'image (p. 40))
+- art. 165 : « En concertée du travail » → « [En cas de cessat]ion concertée du travail » (début blanchi sur le scan officiel (p. 46) ; restitué entre crochets d'après la suite (« cette cessation »))
+- art. 172 : « Unarrêté du Ministre » → « Un arrêté du Ministre » (mots collés (p. 50))
+- art. 172 : « Prévoyance Sociale présente avis » → « Prévoyance Sociale pris après avis » (lu sur l'image (p. 50))
+- art. 173 : « réexpansion » → « révocation » (lu sur l'image (p. 50))
+- art. 186 : « . 54 » → «  » (numéro de page (p. 53))
+- art. 249 : « # T I T R E IX
+
+# P E N A L I T E S » → «  » (intitulé du Titre IX collé à l'article (p. 66))
+- art. 257 : « dole ou » → « dols ou » (lettre de la loi (p. 69))
+- art. 257 : « ./ 70. » → «  » (numéro de page (p. 69))
+
 ## À relire sur l'image
 
 - art. 9 (score 0.963)
@@ -74,7 +99,6 @@
 - art. 43 (score 0.956)
 - art. 44 (score 0.968)
 - art. 69 (score 0.968)
-- art. 73 (score 0.853)
 - art. 74 (score 0.955)
 - art. 77 (score 0.968)
 - art. 78 (score 0.923)
@@ -86,10 +110,6 @@
 - art. 118 (score 0.963)
 - art. 124 (score 0.964)
 - art. 136 (score 0.962)
-- art. 143 (score 0.937)
-- art. 164 (score 0.902)
-- art. 165 (score 0.886)
-- art. 174 (score 0.949)
 - art. 178 (score 0.95)
 - art. 183 (score 0.944)
 - art. 185 (score 0.939)

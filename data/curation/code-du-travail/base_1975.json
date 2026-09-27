@@ -610,7 +610,8 @@
    "desaccords": [],
    "texte": "Est considéré comme travailleur au sens du présent Code, quels que soient son sexe et sa nationalité, toute personne qui s'est engagée à mettre son activité professionnelle, moyennant rémunération, sous la direction et l'autorité d'une autre personne, physique ou morale, publique ou privée. Pour la détermination de la qualité de travailleur, il ne sera tenu compte ni du statut juridique de l'employeur ni de celui de l'employé.\n\nLes personnes nommées dans un emploi permanent d'un cadre d'une administration publique ne sont pas soumises aux dispositions du présent Code.\n\nLes travailleurs continuent à bénéficier des avantages qui leur ont été consentis, lorsque ceux-ci sont supérieurs à ceux que leur reconnaît le présent Code dont les dispositions ne s'opposent pas, par ailleurs, aux dispositions plus favorables qui peuvent être consenties par des conventions ou accords collectifs ou par des contrats particuliers.",
    "source": "sgg-scan-ocr-mistral",
-   "controle": "deux OCR indépendants (Mistral, MinerU) concordants à 99%"
+   "corrections": [],
+   "controle": "deux OCR (Mistral, MinerU) arbitrés mot à mot, Mistral retenu partout"
   },
   {
    "numero": "3",
@@ -632,7 +633,8 @@
    "desaccords": [],
    "texte": "Le travail forcé ou obligatoire est interdit de façon absolue.\n\nLe terme \"travail forcé ou obligatoire\" désigne tout travail ou service exigé d'un individu sous la menace d'une peine quelconque ou pour lequel ledit individu ne s'est pas offert de plein gré.\n\nLe terme \"travail forcé\" ne s'applique pas aux obligations résultant du service civique de la jeunesse ainsi qu'au travail ou service exigé en cas de guerre, de sinistre, de menace de sinistre, de désastre naturel ou d'épidémie et, de façon générale, dans toutes circonstances susceptibles de mettre en danger ou mettant en danger la vie d'autrui ou les conditions normales d'existence de l'ensemble ou d'une partie de la population.\n\nLe terme \"travail obligatoire\" ne s'applique pas à tout travail décidé et exécuté de plein gré par une collectivité et visant à des tâches d'intérêt direct pour cette collectivité tels que l'établissement ou l'entretien de voies de communication, l'assainissement et la propreté des lieux d'habitation, le ravitaillement en eau, l'aménagement du sol, les constructions à des fins sociales, culturelles ou économiques.",
    "source": "sgg-scan-ocr-mistral",
-   "controle": "deux OCR indépendants (Mistral, MinerU) concordants à 98%"
+   "corrections": [],
+   "controle": "deux OCR (Mistral, MinerU) arbitrés mot à mot, Mistral retenu partout"
   },
   {
    "numero": "5",
@@ -908,7 +910,8 @@
    "desaccords": [],
    "texte": "On ne peut engager ses services qu'à temps ou pour un ouvrage déterminé.\n\nLorsque le contrat est conclu pour une durée déterminée, celle-ci ne peut excéder deux ans pour les travailleurs recrutés sur le Territoire de la République Populaire du Congo et trois ans pour ceux recrutés à l'extérieur.\n\nSi le contrat arrivé à terme se poursuit par la volonté même tacite des parties, cette prolongation lui confère la caractère de contrat à durée indéterminée nonobstant toute clause prohibant la tacite reconduction.",
    "source": "sgg-scan-ocr-mistral",
-   "controle": "deux OCR indépendants (Mistral, MinerU) concordants à 98%"
+   "corrections": [],
+   "controle": "deux OCR (Mistral, MinerU) arbitrés mot à mot, Mistral retenu partout"
   },
   {
    "numero": "33",
@@ -919,9 +922,31 @@
     "texte_apres": "Tout contrat de travail passé avec un Congolais et impliquant sa sortie du territoire de la République [Populaire] du Congo est soumis au visa de la direction générale de l’ONEMO. Le visa n’est accordé qu’après avoir : constaté l’identité du travailleur et son libre consentement ; donné lecture aux parties et éventuellement traduction du contrat ; vérifié en cas de contrat conclu pour une durée déterminée que celle-ci est stipulée sans ambiguïté ; vérifié qu’un titre de transport aller et retour est prévu au contrat. Si le visa prévu au présent article est refusé, le contrat est nul de plein droit."
    },
    "desaccords": [],
-   "texte": "Tout contrat de travail stipulant une durée déterminée supérieure à trois mois ou nécessitant l'installation des travailleurs hors de leur lieu de recrutement doit être, après visite médicale de ceux-ci, constaté par écrit devant le Bureau de Placement du lieu d'embauche et assorti d'un visa. Tout contrat de travail nécessitant l'entrée d'un travailleur en République Populaire du Congo ou sa sortie doit être constaté par écrit et soumis obligatoirement au visa de la Direction Générale du Travail.\n\nL'Autorité compétente vise le contrat après notamment :\n\n1. avoir recueilli le visa d'accord préalable de l'inspecteur du Travail du lieu de l'emploi sur les conditions de travail consenties et sur le conformité du contrat aux dispositions applicables en matière de travail ;\n\n2. avoir recueilli l'avis de la Direction Centrale de la Main-d'œuvre dans les cas visés par le paragraphe 2 du présent article ;\n\n5t\n\n3. s'être assuré que le Bureau de Placement du lieu de l'emploi est favorable à l'embauchage ; 4. avoir constaté l'identité du travailleur et son libre consentement ; 5. avoir vérifié que le travailleur est libre de tout engagement antérieur ; 6. avoir donné aux parties lecture et éventuellement traduction du contrat ; 7. avoir vérifié en cas de contrat conclu pour une durée déterminée que celle-ci est stipulée sans ambiguïté.\n\nLa demande de visa incombe à l'employeur.\n\nSi le visa prévu au présent article est refusé, le contrat est nul de plein droit.\n\nSi l'omission du visa est due au fait de l'employeur, le travailleur aura droit de faire constater la nullité du contrat et pourra, en cas de préjudice dûment établi, réclamer des dommages-intérêts.\n\nLe voyage du travailleur du lieu d'emploi au lieu de recrutement est, dans ces deux cas, supporté par l'employeur.",
+   "texte": "Tout contrat de travail stipulant une durée déterminée supérieure à trois mois ou nécessitant l'installation des travailleurs hors de leur lieu de recrutement doit être, après visite médicale de ceux-ci, constaté par écrit devant le Bureau de Placement du lieu d'embauche et assorti d'un visa. Tout contrat de travail nécessitant l'entrée d'un travailleur en République Populaire du Congo ou sa sortie doit être constaté par écrit et soumis obligatoirement au visa de la Direction Générale du Travail.\n\nL'Autorité compétente vise le contrat après notamment :\n\n1. avoir recueilli le visa d'accord préalable de l'inspecteur du Travail du lieu de l'emploi sur les conditions de travail consenties et sur la conformité du contrat aux dispositions applicables en matière de travail ;\n\n2. avoir recueilli l'avis de la Direction Centrale de la Main-d'œuvre dans les cas visés par le paragraphe 2 du présent article ;\n\n3. s'être assuré que le Bureau de Placement du lieu de l'emploi est favorable à l'embauchage ; 4. avoir constaté l'identité du travailleur et son libre consentement ; 5. avoir vérifié que le travailleur est libre de tout engagement antérieur ; 6. avoir donné aux parties lecture et éventuellement traduction du contrat ; 7. avoir vérifié en cas de contrat conclu pour une durée déterminée que celle-ci est stipulée sans ambiguïté.\n\nLa demande de visa incombe à l'employeur.\n\nSi le visa prévu au présent article est refusé, le contrat est nul de plein droit.\n\nSi l'omission du visa est due au fait de l'employeur, le travailleur aura droit de faire constater la nullité du contrat et pourra, en cas de préjudice dûment établi, réclamer des dommages-intérêts.\n\nLe voyage du travailleur du lieu d'emploi au lieu de recrutement est, dans ces deux cas, supporté par l'employeur.",
    "source": "sgg-scan-ocr-mistral",
-   "controle": "relu sur l'image"
+   "corrections": [
+    {
+     "avant": "qu'en sortie",
+     "apres": "ou sa sortie",
+     "motif": "lu sur l'image (p. 9)"
+    },
+    {
+     "avant": "l'installat",
+     "apres": "l'installation",
+     "motif": "mot coupé (p. 9)"
+    },
+    {
+     "avant": "5t",
+     "apres": "",
+     "motif": "caractère parasite de l'OCR (p. 9)"
+    },
+    {
+     "avant": "sur le conformité",
+     "apres": "sur la conformité",
+     "motif": "lu sur l'image (p. 9)"
+    }
+   ],
+   "controle": "deux OCR (Mistral, MinerU) arbitrés mot à mot, écarts tranchés sur l'image"
   },
   {
    "numero": "34",
@@ -961,7 +986,8 @@
    "desaccords": [],
    "texte": "Le contrat de travail à durée déterminée ne peut cesser avant terme par la volonté d'une seule des parties que dans les cas prévus au contrat ou dans celui de faute lourde laissé à l'appréciation de la juridiction compétente.\n\nS'il n'y a aucune faute lourde imputable au travailleur, que, néanmoins, l'employeur, par sa seule volonté, prononce la rupture anticipée du contrat, le travailleur percevra, sous réserve de l'appréciation de la juridiction compétente, à titre d'indemnité, les rémunérations et les avantages de toute nature qu'il aurait recueillis si le contrat avait été exécuté jusqu'à la date prévue par les parties.",
    "source": "sgg-scan-ocr-mistral",
-   "controle": "deux OCR indépendants (Mistral, MinerU) concordants à 98%"
+   "corrections": [],
+   "controle": "deux OCR (Mistral, MinerU) arbitrés mot à mot, Mistral retenu partout"
   },
   {
    "numero": "38",
@@ -981,9 +1007,16 @@
     "texte_apres": "Le contrat de travail à durée indéterminée peut toujours cesser par la volonté de l’une des parties Cette résiliation est subordonnée à un préavis donné par la partie qui prend l’initiative de la rupture, le préavis ne devant en aucun cas se confondre avec la période de congé. En l’absence de convention collective, un arrêté du Ministre chargé du travail pris après avis de la commission nationale consultative du travail, détermine les conditions et la durée du préavis, compte tenu notamment de la durée du contrat et des catégories professionnelles. Toute rupture doit être notifiée par écrit, la lettre de notification indique expressément le motif. En cas de licenciement individuel ou collectif motivé par une diminution de l’activité de l’établissement ou une réorganisation intérieure, l’employeur doit saisir par écrit les délégués du personnel en vue de recueillir leurs suggestions sur les mesures de licenciement qu’il a l’intention de prendre. Pour ce faire il doit mettre tous les documents et renseignements nécessaires pour l’analyse de la situation de l’entreprise. L’ordre des licenciements est établi en tenant compte prioritairement de la qualification professionnelle, de l’ancienneté des travailleurs ensuite et enfin de leur charge de famille. Seront licenciés en premiers après autorisation de la commission des litiges présidée par l’inspecteur du travail, les salarié présentant les moindres aptitudes professionnelles pour les emplois maintenus, et en cas d’égalité d’aptitudes professionnelles, les salarié moins anciens dans l’établissement, l’ancienneté étant majorée d’un an pour le salarié marié et d’un an pour chaque enfant à charge, aux terme de la réglementation sur les prestations familiales.\n\nLe salarié ainsi licencié conserve pendant un an la priorité d’embauche dans la même catégorie d’emploi, il est tenu de communiquer à son employeur tout changement d’adresse survenu après son départ de l’établissement. Les décisions de la commission des litiges sont susceptibles de recours, soit devant le Ministre du travail, soit devant la juridiction compétente. En cas de rupture par consentement mutuel seul le consentement licite du salarié est requis. Celui-ci doit être exprimé par écrit ou par d’autres moyens. Dans ce cas le salarié bénéficie d’une prime de départ dont le montant est laissé à la discrétion des parties et déterminé en tenant compte des us et coutumes en la matière, en sus des indemnités légales ou conventionnelles consécutives à la rupture du contrat. Des arrêtés du Ministres du travail fixeront les attributions et la composition de la commission des litiges ainsi que les modalités et délais de traitement des dossiers de licenciement individuel ou collectif pour cause économique ou structurelle et de rupture par consentement mutuel."
    },
    "desaccords": [],
-   "texte": "Le contrat de travail à durée indéterminée peut toujours cesser par la volonté de l'une des parties.\n\nCette résiliation est subordonnée à un préavis donné par la partie qui prend l'initiative de la rupture, ce préavis ne devant en aucun cas se confondre avec la période de congé.\n\nEn l'absence de convention collective, un arrêté du Centre du Travail et de la Prévoyance Social, qui a préavis de la Commission Nationale Consultative du Travail, détermine les conditions et la durée du préavis compte tenu, notamment, de la durée du contrat et des catégories professionnelles.\n\nToute rupture doit être notifiée par écrit, la lettre de notification indique expressément le motif.\n\nEn vue de recueillir leurs suggestions, l'employeur doit informer par écrit les membres du bureau syndical des mesures de licenciement qu'il a l'intention de prendre.\n\nEn cas de licenciement collectif, ou individuel motivé par une diminution de l'activité de l'établissement ou une réorganisation intérieure, l'employeur doit établir l'ordre des licenciements en tenant compte de la qualification professionnelle, de l'ancienneté des travailleurs et de leurs charges de famille.\n\nSeront licenciés en premier, par la Commission de litiges présidée par l'Inspecteur du Travail, les travailleurs présentant les moindres aptitudes professionnelles pour les emplois maintenus et, en cas d'égalité d'aptitudes professionnelles, les travailleurs moins anciens dans l'entreprise, l'ancienneté étant majorée d'un an pour le salarié marié et d'un an pour chaque enfant à charge aux termes de la réglementation des prestations familiales.\n\nUn arrêté du Ministre du Travail et de la Prévoyance Sociale fixera la composition de la Commission des litiges.\n\nLe travailleur ainsi congédié conserve pendant un an la priorité d'embauchage dans la même catégorie d'emploi. Il est tenu de communiquer à son employeur tout changement d'adresse survenant après son départ de l'entreprise. En cas de vacance, l'employeur transmet au Bureau de Placement une offre nominative d'emploi avec indication de la dernière adresse connue et de la date de licenciement du travailleur.",
+   "texte": "Le contrat de travail à durée indéterminée peut toujours cesser par la volonté de l'une des parties.\n\nCette résiliation est subordonnée à un préavis donné par la partie qui prend l'initiative de la rupture, ce préavis ne devant en aucun cas se confondre avec la période de congé.\n\nEn l'absence de convention collective, un arrêté du Ministre du Travail et de la Prévoyance Sociale pris après avis de la Commission Nationale Consultative du Travail, détermine les conditions et la durée du préavis compte tenu, notamment, de la durée du contrat et des catégories professionnelles.\n\nToute rupture doit être notifiée par écrit, la lettre de notification indique expressément le motif.\n\nEn vue de recueillir leurs suggestions, l'employeur doit informer par écrit les membres du bureau syndical des mesures de licenciement qu'il a l'intention de prendre.\n\nEn cas de licenciement collectif, ou individuel motivé par une diminution de l'activité de l'établissement ou une réorganisation intérieure, l'employeur doit établir l'ordre des licenciements en tenant compte de la qualification professionnelle, de l'ancienneté des travailleurs et de leurs charges de famille.\n\nSeront licenciés en premier, par la Commission de litiges présidée par l'Inspecteur du Travail, les travailleurs présentant les moindres aptitudes professionnelles pour les emplois maintenus et, en cas d'égalité d'aptitudes professionnelles, les travailleurs moins anciens dans l'entreprise, l'ancienneté étant majorée d'un an pour le salarié marié et d'un an pour chaque enfant à charge aux termes de la réglementation des prestations familiales.\n\nUn arrêté du Ministre du Travail et de la Prévoyance Sociale fixera la composition de la Commission des litiges.\n\nLe travailleur ainsi congédié conserve pendant un an la priorité d'embauchage dans la même catégorie d'emploi. Il est tenu de communiquer à son employeur tout changement d'adresse survenant après son départ de l'entreprise. En cas de vacance, l'employeur transmet au Bureau de Placement une offre nominative d'emploi avec indication de la dernière adresse connue et de la date de licenciement du travailleur.",
    "source": "sgg-scan-ocr-mistral",
-   "controle": "deux OCR indépendants (Mistral, MinerU) concordants à 96%"
+   "corrections": [
+    {
+     "avant": "arrêté du Centre du Travail et de la Prévoyance Social, qui a préavis de la",
+     "apres": "arrêté du Ministre du Travail et de la Prévoyance Sociale pris après avis de la",
+     "motif": "lu sur l'image (p. 11)"
+    }
+   ],
+   "controle": "deux OCR (Mistral, MinerU) arbitrés mot à mot, écarts tranchés sur l'image"
   },
   {
    "numero": "40",
@@ -1003,9 +1036,16 @@
     "texte_apres": "Toute rupture du contrat à durée indéterminée sans préavis ou sans que le délai de préavis ait été intégralement observé emporte obligation pour la partie responsable de verser à l’entreprise une indemnité dite indemnité compensatrice de préavis dont le montant correspond à la rémunération et aux avantages de toute nature dont aurait bénéficié le travailleur durant le délai de préavis qui n’aura pas été effectivement respecté. Toutefois, le travailleur congédié qui trouve un autre emploi durant la période de préavis peut quitter son dernier employeur sans lui être redevable d’une quelconque indemnité, sous la seule réserve de le prévenir de son départ définitif 2 jours ouvrables auparavant. Cependant la rupture de contrat peut intervenir sans préavis en cas de faute lourde. Dans ce cas, le licenciement ne prend effet qu’après que le travailleur ait présenté sa défense auprès de l’employeur avec la faculté de se faire assister par une personne de son choix. Pendant le délai nécessaire au travailleur pour présenter sa défense, délai ne pouvant excéder 30 jours, les relations de travail sont suspendues."
    },
    "desaccords": [],
-   "texte": "Toute rupture du contrat à durée indéterminée sans préavis au sens que le délai de préavis ait été intégralement observé emporte obligation pour la partie responsable de verser à l'autre partie une indemnité dite \"indemnité de préavis\" dont le montant correspond à la rémunération et aux avantages de toute nature dont aurait bénéficié le travailleur durant le délai de préavis qui n'aura pas été effectivement respecté.\n\nToutefois, le travailleur congédié qui trouve un autre emploi durant la période de préavis peut quitter son dernier employeur sans lui être redevable d'une quelconque indemnité; sous la seule réserve de le prévenir de son départ définitif deux jours ouvrables auparavant.\n\nCependant la rupture de contrat peut intervenir sans préavis en cas de faute lourde, sous réserve de l'appréciation des services du Ministère du Travail et de la juridiction compétente en ce qui concerne la gravité de la faute.\n\nLe licenciement pour faute lourde ne prend effet qu'après que le travailleur ait présenté sa défense auprès de l'employeur avec la faculté de se faire assister par une personne de son choix. Pendant le délai nécessaire au travailleur pour présenter sa défense, délai ne pouvant excéder trente (30) jours, les relations de travail sont suspendues.",
+   "texte": "Toute rupture du contrat à durée indéterminée sans préavis ou sans que le délai de préavis ait été intégralement observé emporte obligation pour la partie responsable de verser à l'autre partie une indemnité dite \"indemnité de préavis\" dont le montant correspond à la rémunération et aux avantages de toute nature dont aurait bénéficié le travailleur durant le délai de préavis qui n'aura pas été effectivement respecté.\n\nToutefois, le travailleur congédié qui trouve un autre emploi durant la période de préavis peut quitter son dernier employeur sans lui être redevable d'une quelconque indemnité; sous la seule réserve de le prévenir de son départ définitif deux jours ouvrables auparavant.\n\nCependant la rupture de contrat peut intervenir sans préavis en cas de faute lourde, sous réserve de l'appréciation des services du Ministère du Travail et de la juridiction compétente en ce qui concerne la gravité de la faute.\n\nLe licenciement pour faute lourde ne prend effet qu'après que le travailleur ait présenté sa défense auprès de l'employeur avec la faculté de se faire assister par une personne de son choix. Pendant le délai nécessaire au travailleur pour présenter sa défense, délai ne pouvant excéder trente (30) jours, les relations de travail sont suspendues.",
    "source": "sgg-scan-ocr-mistral",
-   "controle": "deux OCR indépendants (Mistral, MinerU) concordants à 96%"
+   "corrections": [
+    {
+     "avant": "sans préavis au sens que",
+     "apres": "sans préavis ou sans que",
+     "motif": "lu sur l'image (p. 12)"
+    }
+   ],
+   "controle": "deux OCR (Mistral, MinerU) arbitrés mot à mot, écarts tranchés sur l'image"
   },
   {
    "numero": "42",
@@ -1016,9 +1056,16 @@
     "texte_apres": "Toute rupture abusive du contrat de travail donne lieu à la réintégration. La juridiction compétente constate l’abus par une enquête sur les cause et les circonstances de la résiliation du contrat. Sont réputés abusifs les licenciements effectués sans motif légitime ainsi que les licenciements motivés par les opinions du travailleur, son activité syndicale, son appartenance ou sa non appartenance à un groupe politique, religieux ou philosophique, à un syndicat déterminé. De tels licenciements donnent lieu à la réintégration. En cas de contestation la preuve de l’existence d’un motif légitime de licenciement incombe à l’employeur. La décision de juridiction compétente indique expressément le motif allégué par la partie qui aura rompu le contrat. En cas de refus de réintégration, le montant des dommages et intérêts est fixé en tenant compte de tous les éléments qui peuvent justifier l’existence et déterminer l’étendue du préjudice causé et notamment : a) lorsque la responsabilité incombe au travailleur du préjudice subi par l’employeur en raison de l’inexécution du contrat. b) lorsque la responsabilité incombe à l’employeur des usages, de la nature des services engagés, de l’ancienneté des services, de l’âge du travailleur et des droits acquis à quelque titre que ce soit. Ces dommages intérêts ne se confondent ni avec l’indemnité pour inobservation de préavis, ni avec l’indemnité de licenciement éventuellement prévue par le contrat ou la convention collective. Sont réputés irréguliers, tous licenciements fondés sur un motif légitime autre que le motif économique ou structurel et exécuté en dehors des procédures légales en vigueur, notamment celles prescrites aux articles 41 et 176 du présent Code du Travail. Dans ce cas, la juridiction compétente constate l’irrégularité de la procédure et décide soit de la reprise de celle-ci, soit du paiement en faveur du salarié des dommages intérêts."
    },
    "desaccords": [],
-   "texte": "Toute rupture abusive du contrat de travail donne lieu à la réintégration.\n\nL'Administration du Travail et la juridiction compétente constatent l'abus par une enquête sur les causes et les circonstances de la résiliation du contrat.\n\nLes licenciements effectués sans motifs légitimes tels que les licenciements motivés par les opinions du travailleur, son activité syndicale, son appartenance ou sa non-appartenance à un syndicat déterminé, son affiliation à un groupe politique ou philosophique en particulier, sont abusifs et donnent lieu à la réintégration.\n\nEn cas de contestation, la preuve de l'existence d'un motif légitime de licenciement incombe à l'employeur.\n\nLa décision ou le jugement devra mentionner expressément le motif allégué par la partie qui aura rompu le contrat.\n\nEn cas de refus de réintégration le montant des dommages-intérêts est fixé compte tenu de tous les éléments qui peuvent justifier l'existence et déterminer l'étendue du préjudice causé et notamment.\n\na) - Lorsque la responsabilité incombe au travailleur, du préjudice subi par l'employeur en raison de l'inégociution du contrat;\n\nb) - Lorsque la responsabilité incombe à l'employeur, des usages, de la nature des services engagés, de l'ancienneté des services, de l'âge du travailleur et des droits acquis à quelque titre que ce soit.\n\nCes dommages-intérêts ne se confondent ni avec l'indemnité pour inobservation de préavis, ni avec l'indemnité de licenciement éventuellement prévue par le contrat ou la convention collective",
+   "texte": "Toute rupture abusive du contrat de travail donne lieu à la réintégration.\n\nL'Administration du Travail et la juridiction compétente constatent l'abus par une enquête sur les causes et les circonstances de la résiliation du contrat.\n\nLes licenciements effectués sans motifs légitimes tels que les licenciements motivés par les opinions du travailleur, son activité syndicale, son appartenance ou sa non-appartenance à un syndicat déterminé, son affiliation à un groupe politique ou philosophique en particulier, sont abusifs et donnent lieu à la réintégration.\n\nEn cas de contestation, la preuve de l'existence d'un motif légitime de licenciement incombe à l'employeur.\n\nLa décision ou le jugement devra mentionner expressément le motif allégué par la partie qui aura rompu le contrat.\n\nEn cas de refus de réintégration le montant des dommages-intérêts est fixé compte tenu de tous les éléments qui peuvent justifier l'existence et déterminer l'étendue du préjudice causé et notamment.\n\na) - Lorsque la responsabilité incombe au travailleur, du préjudice subi par l'employeur en raison de l'inexécution du contrat;\n\nb) - Lorsque la responsabilité incombe à l'employeur, des usages, de la nature des services engagés, de l'ancienneté des services, de l'âge du travailleur et des droits acquis à quelque titre que ce soit.\n\nCes dommages-intérêts ne se confondent ni avec l'indemnité pour inobservation de préavis, ni avec l'indemnité de licenciement éventuellement prévue par le contrat ou la convention collective",
    "source": "sgg-scan-ocr-mistral",
-   "controle": "deux OCR indépendants (Mistral, MinerU) concordants à 99%"
+   "corrections": [
+    {
+     "avant": "l'inégociution",
+     "apres": "l'inexécution",
+     "motif": "lu sur l'image (p. 13)"
+    }
+   ],
+   "controle": "deux OCR (Mistral, MinerU) arbitrés mot à mot, écarts tranchés sur l'image"
   },
   {
    "numero": "43",
@@ -1080,9 +1127,16 @@
     "texte_apres": "Le contrat de travail est suspendu a) en cas de fermeture de l’établissement par suite du départ de l’employeur sous les drapeaux ou pour une période obligatoire d’instruction militaire b) Pendant la durée du service militaire du travailleur et pendant les périodes obligatoires d’instruction militaire auxquelles il est astreint. c) Pendant la durée de l’absence du travailleur, en cas de maladie dûment constatée par un médecin agrée, durée limitée à six (6) mois. Ce délai est prorogé jusqu’au remplacement du travailleur ; d) Pendant la période d’indisponibilité résultant d’un accident de travail ou d’une maladie professionnelle ; e) Pendant la durée de la détention prévention du travailleur, durée limitée à six (6) mois ; f) Pendant les périodes de repos des femmes en couches (article 113 du présent code de travail) ; g) Pendant la grève ou le lock-out déclenché dans le respect des lois et règlements en vigueur ; h) Pendant l’exercice des fonctions syndicales ou sélectives impliquant une occupation à temps plein ; i) En cas de réquisition d’intérêt national ; 1. En cas de mise en chômage économique ou technique ; j) En cas de mise en disponibilité du travailleur ; k) En cas de mise à pied du travailleur pour raison disciplinaire ou du salarié protégé comme mesure conservatoire (article 176 du présent code de travail)."
    },
    "desaccords": [],
-   "texte": "Le contrat de travail est suspendu :\n\na)- en cas de fermeture de l'établissement par suite du départ de l'employeur sous les drapeaux ou pour une période obligatoire d'instruction militaire ; b)- pendant la durée du service militaire ou para-militaire (service civique de la jeunesse) du travailleur et pendant les périodes obligatoires d'instruction militaire auxquels il est astreint ; c)- pendant la durée de l'absence du travailleur, en cas de maladie dûment constatée par un médecin agréé, durée limitée à 6 mois. Ce délai est prorogé jusqu'au remplacement du travail; d)- pendant la période d'indisponibilité résultant d'un accident du travail ou d'une maladie professionnel e)- pendant la durée de la détention préventive du travailleur, durée limitée à 6 mois ; f)- pendant les périodes de repos des femmes salariées en couches (article 113); g)- pendant la grève ou le lock-out déclenché dans le respect de la procédure de règlements des conflits collectifs ; h)- pendant l'exercice des fonctions syndicales ou électives impliquant une occupation à temps plein ; i)- en cas de réquisition d'intérêt national.\n\nNe sont pas considérés comme temps de service pour la détermination de l'ancienneté du travailleur dans l'entreprise, les périodes de suspension visées aux alinéas a) et e) ci-dessus.\n\nLes droits du travailleur mobilisé sont garantis en tout état de cause par la législation en vigueur.",
+   "texte": "Le contrat de travail est suspendu :\n\na)- en cas de fermeture de l'établissement par suite du départ de l'employeur sous les drapeaux ou pour une période obligatoire d'instruction militaire ; b)- pendant la durée du service militaire ou para-militaire (service civique de la jeunesse) du travailleur et pendant les périodes obligatoires d'instruction militaire auxquels il est astreint ; c)- pendant la durée de l'absence du travailleur, en cas de maladie dûment constatée par un médecin agréé, durée limitée à 6 mois. Ce délai est prorogé jusqu'au remplacement du travail; d)- pendant la période d'indisponibilité résultant d'un accident du travail ou d'une maladie professionnelle ; e)- pendant la durée de la détention préventive du travailleur, durée limitée à 6 mois ; f)- pendant les périodes de repos des femmes salariées en couches (article 113); g)- pendant la grève ou le lock-out déclenché dans le respect de la procédure de règlements des conflits collectifs ; h)- pendant l'exercice des fonctions syndicales ou électives impliquant une occupation à temps plein ; i)- en cas de réquisition d'intérêt national.\n\nNe sont pas considérés comme temps de service pour la détermination de l'ancienneté du travailleur dans l'entreprise, les périodes de suspension visées aux alinéas a) et e) ci-dessus.\n\nLes droits du travailleur mobilisé sont garantis en tout état de cause par la législation en vigueur.",
    "source": "sgg-scan-ocr-mistral",
-   "controle": "deux OCR indépendants (Mistral, MinerU) concordants à 99%"
+   "corrections": [
+    {
+     "avant": "maladie professionnel e)",
+     "apres": "maladie professionnelle ; e)",
+     "motif": "fin d'alinéa mal lue (p. 15)"
+    }
+   ],
+   "controle": "deux OCR (Mistral, MinerU) arbitrés mot à mot, écarts tranchés sur l'image"
   },
   {
    "numero": "48",
@@ -1163,7 +1217,8 @@
    "desaccords": [],
    "texte": "A la demande de l'une des organisations syndicales d'employeurs ou de travailleurs intéressés, considérées comme les plus représentatives ou de sa propre initiative, le Ministre du Travail et de la Prévoyance Sociale provoque la réunion d'une commission mixte en vue de la conclusion d'une convention collective de travail ayant pour objet de régler les rapports entre employeurs et travailleurs d'une branche d'activité déterminée sur le plan national.\n\nUn arrêté du Ministre du Travail et de la Prévoyance Sociale détermine la composition de cette commission mixte qui comprendra en nombre égal, d'une part, des représentants des organisations syndicales les plus représentatives des travailleurs, d'autre part, des représentants des organisations syndicales les plus représentatives d'employeurs, ou à défaut de celles-ci, des employeurs.\n\nDes conventions annexes pourront être conclues pour chacune des principales catégories professionnelles ; elles contiendront les conditions particulières du travail à ces catégories et seront discutées par les représentants des organisations syndicales les plus représentatives des catégories intéressées.\n\nLe caractère représentatif d'un syndicat ou d'un groupement professionnel est déterminé par le Ministre du Travail et de la Prévoyance Sociale qui réunira tous les éléments d'appréciation et prendra l'avis de l'Inspecteur du Travail et des Lois Sociales.\n\nLes éléments d'appréciation comprendront notamment :\n\n- le résultat des élections des membres du bureau syndical ; - les effectifs ; - les cotisations ; - l'expérience du syndicat, l'étendue et la nature de son activité.\n\nLa décision du Ministre du Travail et de la Prévoyance Sociale est susceptible, le cas échéant, de recours dans un délai de trente (30) jours. Dans tous les cas cette décision peut être déférée devant les tribunaux judiciaires statuant en matière de contentieux administratif.\n\nLes dispositions qui précèdent ne pourront être interprétées comme autorisant l'administration à prendre connaissance des registres d'inscription des adhérents et des livres de trésorerie du syndicat.\n\nSi une commission mixte n'arrive pas à se mettre d'accord sur une ou plusieurs des dispositions à introduire dans la Convention, l'Inspecteur du Travail doit, à la demande de l'une des parties, intervenir pour faciliter la réalisation de cet accord.",
    "source": "sgg-scan-ocr-mistral",
-   "controle": "deux OCR indépendants (Mistral, MinerU) concordants à 98%"
+   "corrections": [],
+   "controle": "deux OCR (Mistral, MinerU) arbitrés mot à mot, Mistral retenu partout"
   },
   {
    "numero": "56",
@@ -1339,7 +1394,8 @@
    "desaccords": [],
    "texte": "Le \"marchandage\", c'est-à-dire la sous-entreprise qui a pour objet exclusif de procurer de la main d'œuvre à l'entrepreneur maître de l'ouvrage, est interdit en tant qu'il constitue une exploitation des ouvriers.",
    "source": "sgg-scan-ocr-mistral",
-   "controle": "deux OCR indépendants (Mistral, MinerU) concordants à 85%"
+   "corrections": [],
+   "controle": "deux OCR (Mistral, MinerU) arbitrés mot à mot, Mistral retenu partout"
   },
   {
    "numero": "74",
@@ -1515,7 +1571,8 @@
    "desaccords": [],
    "texte": "Au sens des dispositions du présent titre, le salaire s'entend, du salaire proprement dit quelle que soit son appellation, de l'allocation de congé, des primes, des indemnités de toute nature et des dommages-intérêts pour rupture abusive du contrat de travail.",
    "source": "sgg-scan-ocr-mistral",
-   "controle": "deux OCR indépendants (Mistral, MinerU) concordants à 99%"
+   "corrections": [],
+   "controle": "deux OCR (Mistral, MinerU) arbitrés mot à mot, Mistral retenu partout"
   },
   {
    "numero": "92",
@@ -1528,7 +1585,8 @@
    "desaccords": [],
    "texte": "A due concurrence de la fraction insaisissable du salaire, telle qu'elle résulte des dispositions de l'article 101 ci-après, les créances du salaire du travailleur bénéficient d'un privilège préférable à tous les autres privilèges généraux ou spéciaux.\n\nLe privilège s'exerce sur les biens, meubles et immeubles de l'employeur.",
    "source": "sgg-scan-ocr-mistral",
-   "controle": "deux OCR indépendants (Mistral, MinerU) concordants à 100%"
+   "corrections": [],
+   "controle": "deux OCR (Mistral, MinerU) arbitrés mot à mot, Mistral retenu partout"
   },
   {
    "numero": "93",
@@ -1957,9 +2015,16 @@
     "texte_apres": "Il est institué auprès du Ministère chargé du travail une commission nationale technique d’hygiène, de sécurité et de prévention des risques professionnels pour l’étude des questions intéressant l’hygiène, la sécurité des travailleurs et la prévention des risques professionnels. Cette commission comprendra un nombre égal des représentants des employeurs et des travailleurs à côté des fonctionnaires et experts qualifiés. Un décret fixe la composition et le fonctionnement de la commission."
    },
    "desaccords": [],
-   "texte": "Il est institué près la Ministère du Travail et de la Prévoyance Sociale un comité technique consultatif pour l'étude des questions intéressant l'hygiène, la sécurité des travailleurs et la prévention des risques professionnels.\n\nCe comité comprendra un nombre égal de représentants des employeurs et des représentants des travailleurs, à côté de fonctionnaires et experts qualifiés.\n\nUn arrêté du Ministre du Travail et de la Prévoyance Sociale règle la composition et le fonctionnement de ce comité.",
+   "texte": "Il est institué près le Ministère du Travail et de la Prévoyance Sociale un comité technique consultatif pour l'étude des questions intéressant l'hygiène, la sécurité des travailleurs et la prévention des risques professionnels.\n\nCe comité comprendra un nombre égal de représentants des employeurs et des représentants des travailleurs, à côté de fonctionnaires et experts qualifiés.\n\nUn arrêté du Ministre du Travail et de la Prévoyance Sociale règle la composition et le fonctionnement de ce comité.",
    "source": "sgg-scan-ocr-mistral",
-   "controle": "deux OCR indépendants (Mistral, MinerU) concordants à 97%"
+   "corrections": [
+    {
+     "avant": "près la Ministère",
+     "apres": "près le Ministère",
+     "motif": "lu sur l'image (p. 37)"
+    }
+   ],
+   "controle": "deux OCR (Mistral, MinerU) arbitrés mot à mot, écarts tranchés sur l'image"
   },
   {
    "numero": "132",
@@ -2079,9 +2144,16 @@
     "texte_apres": "Ne compte pour l’application des prescriptions de l’article 142 que le personnel médical ayant fait l’objet d’une décision d’agrément du Ministre du Travail. Cette décision prise après avis de l’Inspecteur du Travail et des Lois Sociales et consultation du Ministre de la Santé, peut être annulée dans les mêmes formes."
    },
    "desaccords": [],
-   "texte": "Ne compte pas l'application des prescriptions de l'article précédent que le personnel médical ayant fait l'objet d'une décision d'agrément du Ministre du Travail et de la Prévoyance Sociale.\n\nCette décision prise après avis de l'Inspecteur du Travail et des Lois Sociales et consultation du Ministre de la Santé, peut être annulée dans les mêmes formes.",
+   "texte": "Ne compte pour l'application des prescriptions de l'article précédent que le personnel médical ayant fait l'objet d'une décision d'agrément du Ministre du Travail et de la Prévoyance Sociale.\n\nCette décision prise après avis de l'Inspecteur du Travail et des Lois Sociales et consultation du Ministre de la Santé, peut être annulée dans les mêmes formes.",
    "source": "sgg-scan-ocr-mistral",
-   "controle": "deux OCR indépendants (Mistral, MinerU) concordants à 94%"
+   "corrections": [
+    {
+     "avant": "Ne compte pas l'application",
+     "apres": "Ne compte pour l'application",
+     "motif": "lu sur l'image (p. 40)"
+    }
+   ],
+   "controle": "deux OCR (Mistral, MinerU) arbitrés mot à mot, écarts tranchés sur l'image"
   },
   {
    "numero": "144",
@@ -2103,7 +2175,8 @@
    "desaccords": [],
    "texte": "Dans chaque exploitation dont l'effectif moyen dépasse cent personnes, une visite des travailleurs se déclarant malades est passée chaque matin après l'appel. Les femmes légitimes et les enfants s'ils le demandent, peuvent se présenter à cette visite pour y être examinés, et, le cas échéant, recevoir les soins et les traitements nécessaires.\n\nLes résultats de cette visite sont consignés sur un registre spécial dont le modèle est fixé par arrêté du Ministre du Travail et de la Prévoyance Sociale, après avis du Comité Technique Consultatif d'Hygiène et de Sécurité.",
    "source": "sgg-scan-ocr-mistral",
-   "controle": "deux OCR indépendants (Mistral, MinerU) concordants à 99%"
+   "corrections": [],
+   "controle": "deux OCR (Mistral, MinerU) arbitrés mot à mot, Mistral retenu partout"
   },
   {
    "numero": "146",
@@ -2279,7 +2352,8 @@
    "desaccords": [],
    "texte": "Sur toute l'étendue du territoire national, il est créé des bureaux de placements rattachés à la Direction Générale du Travail et de la Prévoyance Sociales avec laquelle ils correspondent directement.\n\nLes Bureaux de Placement reçoivent les offres et demandes d'emploi et procèdent au placement : ils rassemblent et tiennent une documentation permanente sur l'état du marché du travail dans leur ressort. Ils établissent pour chaque travailleur, un dossier d'après les indications fixées par arrêté du Ministre du Travail et de la Prévoyance Sociale, et délivrent des cartes de travail, ils donnent leur avis au contrat de travail après approbation des services de l'Inspection du Travail et des Lois Sociales et dans le cadre de l'africanisation de postes de travail.",
    "source": "sgg-scan-ocr-mistral",
-   "controle": "deux OCR indépendants (Mistral, MinerU) concordants à 98%"
+   "corrections": [],
+   "controle": "deux OCR (Mistral, MinerU) arbitrés mot à mot, Mistral retenu partout"
   },
   {
    "numero": "163",
@@ -2292,7 +2366,8 @@
    "desaccords": [],
    "texte": "Tout travailleur recherchant un emploi est tenu de requérir son inscription au Bureau de Placement de son domicile.\n\nTout chef d'entreprise ou d'établissement est tenu de s'adresser au Bureau de Placement du ressort pour le recrutement du personnel.\n\nTout chef d'entreprise ou d'établissement est tenu de notifier au Bureau de Placement du ressort tout emploi vacant dans son entreprise ou établissement.\n\nDes arrêtés du Ministre du Travail et de la Prévoyance Sociale pris après avis de la Commission Nationale Consultative du Travail détermineront les cas dans lesquels des dérogations à la règle de recours obligatoire au Bureau du Placement pourront être admises.\n\nNul employeur n'est tenu d'agréer le salarié qui lui est présenté par le Bureau de Placement, nul travailleur n'est tenu également d'accepter l'emploi qui lui est proposé par le même service ; toutefois, le motif du refus doit être donné dans les 48 heures au Bureau de Placement ; s'il quitte l'entreprise, notification devra être faite par l'employeur dans les mêmes délais.",
    "source": "sgg-scan-ocr-mistral",
-   "controle": "deux OCR indépendants (Mistral, MinerU) concordants à 98%"
+   "corrections": [],
+   "controle": "deux OCR (Mistral, MinerU) arbitrés mot à mot, Mistral retenu partout"
   },
   {
    "numero": "164",
@@ -2305,7 +2380,8 @@
    "desaccords": [],
    "texte": "Les opérations des Bureaux de Placement sont gratuites.\n\nIl est interdit sous peine de sanctions d'offrir et de remettre à toute personne faisant partie de ces services et à celle-ci de l'accepter une rétribution sous quelque forme que ce soit.",
    "source": "sgg-scan-ocr-mistral",
-   "controle": "deux OCR indépendants (Mistral, MinerU) concordants à 90%"
+   "corrections": [],
+   "controle": "deux OCR (Mistral, MinerU) arbitrés mot à mot, Mistral retenu partout"
   },
   {
    "numero": "165",
@@ -2316,9 +2392,16 @@
     "texte_apres": null
    },
    "desaccords": [],
-   "texte": "En concertée du travail, les opérations des Bureaux de Placement concernant les entreprises touchées par cette cessation sont immédiatement interrompues.\n\nLa liste desdites entreprises est en outre affichée dans la salle réservée aux demandeurs et aux offreurs d'emploi.",
+   "texte": "[En cas de cessat]ion concertée du travail, les opérations des Bureaux de Placement concernant les entreprises touchées par cette cessation sont immédiatement interrompues.\n\nLa liste desdites entreprises est en outre affichée dans la salle réservée aux demandeurs et aux offreurs d'emploi.",
    "source": "sgg-scan-ocr-mistral",
-   "controle": "deux OCR indépendants (Mistral, MinerU) concordants à 89%"
+   "corrections": [
+    {
+     "avant": "En concertée du travail",
+     "apres": "[En cas de cessat]ion concertée du travail",
+     "motif": "début blanchi sur le scan officiel (p. 46) ; restitué entre crochets d'après la suite (« cette cessation »)"
+    }
+   ],
+   "controle": "deux OCR (Mistral, MinerU) arbitrés mot à mot, écarts tranchés sur l'image"
   },
   {
    "numero": "166",
@@ -2331,7 +2414,8 @@
    "desaccords": [],
    "texte": "Il est interdit de maintenir ou d'ouvrir un Bureau de Placement privé sur toute l'étendue du Territoire de la République Populaire du Congo, sauf dérogation accordée par arrêté du Ministre du Travail et de la Prévoyance Sociale pris après avis de la Commission Nationale Consultative du Travail.\n\nIl est interdit de diffuser de quelque manière que ce soit, notamment par la presse, la radio, le cinéma, etc... une offre ou une demande d'emploi qui n'aurait pas été préalablement enregistrée par un Bureau de Placement ou sans indiquer le numéro de l'enregistrement par ce service.",
    "source": "sgg-scan-ocr-mistral",
-   "controle": "deux OCR indépendants (Mistral, MinerU) concordants à 99%"
+   "corrections": [],
+   "controle": "deux OCR (Mistral, MinerU) arbitrés mot à mot, Mistral retenu partout"
   },
   {
    "numero": "167",
@@ -2344,7 +2428,8 @@
    "desaccords": [],
    "texte": "Des décrets pourront créer\n\n- auprès du Ministre du Travail et de la Prévoyance Sociale un comité de l'emploi chargé de l'étude du planning du marché de la main-d'oeuvre ; - des centres de formation professionnelle des adultes.",
    "source": "sgg-scan-ocr-mistral",
-   "controle": "deux OCR indépendants (Mistral, MinerU) concordants à 97%"
+   "corrections": [],
+   "controle": "deux OCR (Mistral, MinerU) arbitrés mot à mot, Mistral retenu partout"
   },
   {
    "numero": "168",
@@ -2380,7 +2465,8 @@
    "desaccords": [],
    "texte": "La Commission Nationale Consultative du Travail présidée par le Ministre du Travail et de la Prévoyance Sociale, est composée :\n\n- en nombre égal d'employeurs et de travailleurs respectivement désignés par les organisations professionnelles les plus représentatives ;\n\n- pour un sixième de membres représentant la Commission Nationale du Plan.\n\nLa Commission peut, à la demande de son Président ou de la majorité de ses membres s'adjoindre à titre consultatif des fonctionnaires ou personnalités qualifiées en matière économique, médicale, sociale et ethnographique.\n\nLe Secrétariat de la Commission est assuré par un fonctionnaire de la Direction Générale du Travail et de la Prévoyance Sociale.\n\nUn décret fixe les conditions d'organisation et de fonctionnement de la Commission Nationale Consultative du Travail, ainsi que le nombre des membres la composant.",
    "source": "sgg-scan-ocr-mistral",
-   "controle": "deux OCR indépendants (Mistral, MinerU) concordants à 98%"
+   "corrections": [],
+   "controle": "deux OCR (Mistral, MinerU) arbitrés mot à mot, Mistral retenu partout"
   },
   {
    "numero": "171",
@@ -2400,9 +2486,21 @@
     "texte_apres": null
    },
    "desaccords": [],
-   "texte": "Dans les entreprises et établissements qui ne seront pas régis par le principe de la trilogie déterminante, instituée par l'ordonnance n°12/73 du 18 mai 1973, il sera institué un Comité d'entreprise. Le Comité d'entreprise ne supplée pas le bureau syndical.\n\nUnarrêté du Ministre du Travail et de la Prévoyance Sociale présente avis de la Commission Nationale Consultative du Travail déterminera sa composition, ses attributions et son fonctionnement.",
+   "texte": "Dans les entreprises et établissements qui ne seront pas régis par le principe de la trilogie déterminante, instituée par l'ordonnance n°12/73 du 18 mai 1973, il sera institué un Comité d'entreprise. Le Comité d'entreprise ne supplée pas le bureau syndical.\n\nUn arrêté du Ministre du Travail et de la Prévoyance Sociale pris après avis de la Commission Nationale Consultative du Travail déterminera sa composition, ses attributions et son fonctionnement.",
    "source": "sgg-scan-ocr-mistral",
-   "controle": "deux OCR indépendants (Mistral, MinerU) concordants à 96%"
+   "corrections": [
+    {
+     "avant": "Unarrêté du Ministre",
+     "apres": "Un arrêté du Ministre",
+     "motif": "mots collés (p. 50)"
+    },
+    {
+     "avant": "Prévoyance Sociale présente avis",
+     "apres": "Prévoyance Sociale pris après avis",
+     "motif": "lu sur l'image (p. 50)"
+    }
+   ],
+   "controle": "deux OCR (Mistral, MinerU) arbitrés mot à mot, écarts tranchés sur l'image"
   },
   {
    "numero": "173",
@@ -2413,9 +2511,16 @@
     "texte_apres": "Des délégués du personnel sont obligatoirement élus dans les entreprises ou établissements installés en République du Congo où sont groupés au moins sept (7) travailleurs reconnus comme tels au sens de l’article 2 du code de travail. La représentation des travailleurs au sein de l’entreprise ou de l’établissement assurée par les délégués du personnel. Un arrêté du ministre, pris après avis de la commission nationale consultative du travail fixe : 1° le nombre de délégués à élire et leur répartition en collège 2° la durée considérée comme temps de travail dont dispose les délégués du personnel pour l’accomplissement de leur fonctions, ainsi que les moyens mis à leur disposition. 3° les conditions dans lesquelles ils seront reçus par l’employeur ou son représentant 4° les conditions de révocation du délégué par le collège des travailleurs qui l’a élu."
    },
    "desaccords": [],
-   "texte": "Dans les entreprises et établissements, les travailleurs sont groupés au sein d'un syndicat de base et d'entreprise dans les conditions prévues par les statuts de l'organisation syndicale.\n\nLa représentation des travailleurs auprès de l'entreprise ou de l'établissement est assuré par le bureau syndical d'entreprise et de base.\n\nLes membres du bureau syndical d'entreprise et de base sont élus par les travailleurs de l'entreprise dans les conditions fixées par les statuts de l'organisation syndicale.\n\nLes conditions d'éligibilité du bureau syndical de base d'entreprise, la durée du mandat des membres du bureau syndical, les conditions de réexpansion d'un membre du bureau syndical d'entreprise et de base sont déterminées par les statuts de l'organisation syndicale.",
+   "texte": "Dans les entreprises et établissements, les travailleurs sont groupés au sein d'un syndicat de base et d'entreprise dans les conditions prévues par les statuts de l'organisation syndicale.\n\nLa représentation des travailleurs auprès de l'entreprise ou de l'établissement est assuré par le bureau syndical d'entreprise et de base.\n\nLes membres du bureau syndical d'entreprise et de base sont élus par les travailleurs de l'entreprise dans les conditions fixées par les statuts de l'organisation syndicale.\n\nLes conditions d'éligibilité du bureau syndical de base d'entreprise, la durée du mandat des membres du bureau syndical, les conditions de révocation d'un membre du bureau syndical d'entreprise et de base sont déterminées par les statuts de l'organisation syndicale.",
    "source": "sgg-scan-ocr-mistral",
-   "controle": "deux OCR indépendants (Mistral, MinerU) concordants à 98%"
+   "corrections": [
+    {
+     "avant": "réexpansion",
+     "apres": "révocation",
+     "motif": "lu sur l'image (p. 50)"
+    }
+   ],
+   "controle": "deux OCR (Mistral, MinerU) arbitrés mot à mot, écarts tranchés sur l'image"
   },
   {
    "numero": "174",
@@ -2428,7 +2533,8 @@
    "desaccords": [],
    "texte": "Les contestations relatives à l'élection et à l'éligibilité des membres du bureau syndical de base et d'entreprise ainsi qu'à la régularité des opérations sont examinées par la direction syndicale.",
    "source": "sgg-scan-ocr-mistral",
-   "controle": "deux OCR indépendants (Mistral, MinerU) concordants à 95%"
+   "corrections": [],
+   "controle": "deux OCR (Mistral, MinerU) arbitrés mot à mot, Mistral retenu partout"
   },
   {
    "numero": "175",
@@ -2467,7 +2573,8 @@
    "desaccords": [],
    "texte": "Outre les attributions prévues par le statut de l'organisation syndicale, les membres du bureau syndical de base et d'entreprise ont pour mission :\n\n- de présenter aux employeurs toutes les réclamations individuelles ou collectives qui n'auraient pas été directement satisfaites concernant les conditions de travail et la protection des travailleurs, l'application des conventions collectives des classifications professionnelles et des salaires ; - de donner leur préalables avis pour tout licenciement collectif ou individuel motivé par une diminution d'activité de l'établissement ou par une organisation intérieure et selon la procédure fixée par l'article 39 du présent code ; - de saisir l'inspecteur du Travail et des Lois Sociales de toute plainte ou réclamation concernant l'application des prescriptions légales ou réglementaires dont il est chargé d'assurer le contrôle ; - de veiller à l'application des prescriptions relatives à l'hygiène et la sécurité des travailleurs et à la prévoyance sociale et de proposer toutes mesures utiles à ce sujet ; - de communiquer à l'employeur toutes suggestions utiles tendant à l'amélioration de l'organisation et du rendement de l'entreprise.",
    "source": "sgg-scan-ocr-mistral",
-   "controle": "deux OCR indépendants (Mistral, MinerU) concordants à 97%"
+   "corrections": [],
+   "controle": "deux OCR (Mistral, MinerU) arbitrés mot à mot, Mistral retenu partout"
   },
   {
    "numero": "178",
@@ -2489,7 +2596,8 @@
    "desaccords": [],
    "texte": "Pour l'accomplissement de leur mission, les membres du bureau syndical d'entreprise disposent de 20 heures par mois considérées et rémunérées comme temps de travail. Un arrêté du Ministre du Travail et de la Prévoyance Sociale pris après avis de la Commission Nationale Consultative du Travail pourra, dans les entreprises à faibles effectifs, limiter le nombre de membres du bureau syndical d'entreprise pouvant bénéficier des dispositions qui précèdent.\n\nEn outre, les membres du bureau syndical d'entreprise ont droit chaque année à un congé payé d'éducation ouvrière de dix (10) jours ouvrables dont les conditions d'attribution sont fixées par arrêté du Ministre du Travail et de la Prévoyance Sociale pris après avis de la Commission Nationale Consultative du Travail. Toutefois, cet arrêté pourra, dans les entreprises à faibles effectifs, fixer le nombre de membres du bureau syndical d'entreprise ayant droit au congé payé d'éducation ouvrière.",
    "source": "sgg-scan-ocr-mistral",
-   "controle": "deux OCR indépendants (Mistral, MinerU) concordants à 99%"
+   "corrections": [],
+   "controle": "deux OCR (Mistral, MinerU) arbitrés mot à mot, Mistral retenu partout"
   },
   {
    "numero": "180",
@@ -2502,7 +2610,8 @@
    "desaccords": [],
    "texte": "Hormis les dispositions de l'article 176, 4ème paragraphe sur la conservation du salaire du membre du bureau syndical pendant la procédure judiciaire et celles de l'article 179 alinéa 2, portant congé d'éducation ouvrière, toutes les autres dispositions concernant la protection du membre du bureau syndical d'entreprise s'appliquent également aux membres du bureau syndical de base et des membres de la Fédération.",
    "source": "sgg-scan-ocr-mistral",
-   "controle": "deux OCR indépendants (Mistral, MinerU) concordants à 100%"
+   "corrections": [],
+   "controle": "deux OCR (Mistral, MinerU) arbitrés mot à mot, Mistral retenu partout"
   },
   {
    "numero": "181",
@@ -2552,7 +2661,8 @@
    "desaccords": [],
    "texte": "Les syndicats professionnels ont exclusivement pour objet l'étude et la défense des intérêts économiques industriels, commerciaux et agricoles.",
    "source": "sgg-scan-ocr-mistral",
-   "controle": "deux OCR indépendants (Mistral, MinerU) concordants à 100%"
+   "corrections": [],
+   "controle": "deux OCR (Mistral, MinerU) arbitrés mot à mot, Mistral retenu partout"
   },
   {
    "numero": "185",
@@ -2577,9 +2687,16 @@
     "texte_apres": "Les fondateurs de tout syndicat professionnel doivent déposer les statuts et la liste des personnes qui , à un titre quelconque sont chargées de son administration ou de sa direction. Le dépôt a lieu, contre simple accusé de réception à l’inspection du travail du ressort Les statuts de tout syndicat doivent notamment indiquer ou prévoir les informations suivantes : la dénomination du syndicat et l’adresse de son siège l’objet en vue duquel le syndicat est crée le mode selon lequel les statuts sont établis et modifiés le mode de désignation et de destitution des membres dirigeants. Dans le délai de quinze (15) jour suivant ce dépôt, un rapport d’enquête de l’inspecteur de travail précisant les circonstances et conditions de constitution du syndicat, notamment la date, le lieu du congrès constitutif et des origines professionnelles des membres est transmis par voie hiérarchique au ministère de travail. Au vu du rapport de l’inspecteur du travail et dans un délai de trente (30) jours, le ministère du travail délivre ou non le récépissé valant reconnaissance de l’existence du syndicat. Notification en est faite aux intéressés et au ministère de l’intérieur. Si le ministre du travail refuse de délivrer le récépissé de reconnaissance du syndicat, il doit en aviser les demandeurs dans les 20 jours suivants par écrit, en motivant son refus La décision de refus du ministre du travail est susceptible de recours, conformément à la procédure du code de procédure civile, administrative et financière. Les modifications apportées aux statuts et les changements survenus dans la composition de la direction ou de l’administration du syndicat doivent être portés dans les mêmes conditions, à la connaissance des mêmes autorités et vérifiés dans les mêmes conditions. Dans le premier trimestre suivant la fin de chaque exercice, les dirigeants statutairement compétents de tout syndicat doivent communiquer au Ministre du travail un rapport annuel faisant apparaître notamment les statistiques de ses effectifs et le montant des cotisations encaissées."
    },
    "desaccords": [],
-   "texte": "Les fondateurs de tout syndicat professionnel doivent déposer les statuts et les noms de ceux qui, à un titre quelconque, sont chargés de son administration ou de sa direction.\n\nCe dépôt a lieu à la Mairie ou au siège de la circonscription administrative où le syndicat est établi, et copie des statuts est adressée à l'Inspecteur du Travail et des Lois Sociales, au Procureur de la République du ressort et au Ministre du Travail et de la Prévoyance Sociale.\n\nLes modifications apportées aux statuts et les changements survenus dans la composition de la direction ou de l'administration du syndicat doivent être portés, dans les mêmes conditions, à la connaissance des mêmes autorités.\n\n. 54",
+   "texte": "Les fondateurs de tout syndicat professionnel doivent déposer les statuts et les noms de ceux qui, à un titre quelconque, sont chargés de son administration ou de sa direction.\n\nCe dépôt a lieu à la Mairie ou au siège de la circonscription administrative où le syndicat est établi, et copie des statuts est adressée à l'Inspecteur du Travail et des Lois Sociales, au Procureur de la République du ressort et au Ministre du Travail et de la Prévoyance Sociale.\n\nLes modifications apportées aux statuts et les changements survenus dans la composition de la direction ou de l'administration du syndicat doivent être portés, dans les mêmes conditions, à la connaissance des mêmes autorités.",
    "source": "sgg-scan-ocr-mistral",
-   "controle": "deux OCR indépendants (Mistral, MinerU) concordants à 100%"
+   "corrections": [
+    {
+     "avant": ". 54",
+     "apres": "",
+     "motif": "numéro de page (p. 53)"
+    }
+   ],
+   "controle": "deux OCR (Mistral, MinerU) arbitrés mot à mot, écarts tranchés sur l'image"
   },
   {
    "numero": "187",
@@ -2629,7 +2746,8 @@
    "desaccords": [],
    "texte": "Peuvent continuer à faire partie d'un syndicat professionnel les personnes qui ont quitté l'exercice de leur fonction ou de leur profession, sous réserve d'avoir exercé celle-ci au moins un an.",
    "source": "sgg-scan-ocr-mistral",
-   "controle": "deux OCR indépendants (Mistral, MinerU) concordants à 100%"
+   "corrections": [],
+   "controle": "deux OCR (Mistral, MinerU) arbitrés mot à mot, Mistral retenu partout"
   },
   {
    "numero": "191",
@@ -3045,7 +3163,8 @@
    "desaccords": [],
    "texte": "Le jugement peut ordonner l'exécution immédiate, nonobstant opposition ou appel et par provision avec dispense de caution, jusqu'à une somme qui sera fixée par décret. Pour le surplus, l'exécution provisoire peut être ordonnée à charge de fournir caution. Copie du jugement, signée par le Président et le Greffier, doit être remise aux parties sur demande. Mention de cette délivrance, de sa date et de son heure est faite par le Greffier en marge du jugement.",
    "source": "sgg-scan-ocr-mistral",
-   "controle": "deux OCR indépendants (Mistral, MinerU) concordants à 99%"
+   "corrections": [],
+   "controle": "deux OCR (Mistral, MinerU) arbitrés mot à mot, Mistral retenu partout"
   },
   {
    "numero": "233",
@@ -3140,7 +3259,8 @@
    "desaccords": [],
    "texte": "Tout travailleur ou tout employeur pourra demander aux services de l'Inspection du Travail et des Lois Sociales de régler le différend à l'amiable.\n\nCette demande interrompt à sa date de réception par les services susvisés, le délai de prescription prévu à l'article 99. Cette interruption court jusqu'à la date du procès-verbal qui clôt la tentative de conciliation.\n\nL'Inspecteur du Travail et des Lois Sociales ou le Contrôleur du Travail vérifie si les parties sont disposées à se concilier immédiatement sur la base des normes fixées par la loi, la réglementation ou les conventions collectives et le contrat individuel.\n\nEn cas de conciliation, la formule exécutoire est apposée par ordonnance du Président du Tribunal du Travail prise à la requête de la partie la plus diligente sur le procès-verbal de conciliation établi par l'Inspecteur du Travail et des Lois Sociales ou par le Contrôleur du Travail.\n\nL'exécution est poursuivie comme pour un jugement du Tribunal du Travail.\n\nLe Président du Tribunal du Travail compétent est celui dans le ressort duquel le procès-verbal de conciliation a été signé.",
    "source": "sgg-scan-ocr-mistral",
-   "controle": "deux OCR indépendants (Mistral, MinerU) concordants à 99%"
+   "corrections": [],
+   "controle": "deux OCR (Mistral, MinerU) arbitrés mot à mot, Mistral retenu partout"
   },
   {
    "numero": "241",
@@ -3162,7 +3282,8 @@
    "desaccords": [],
    "texte": "Tout différend collectif qui n'a pu être réglé dans le cadre de la procédure de conciliation et d'arbitrage prévue par les conventions collectives est immédiatement notifié par écrit par la ou les parties intéressées à l'Inspecteur du Travail et des Lois Sociales ou au fonctionnaire responsable du bureau de contrôle du Travail du ressort.\n\nLes parties sont convoquées par l'Inspecteur du Travail et des Lois Sociales ou par le fonctionnaire responsable du bureau de contrôle du travail du ressort qui procède à la conciliation. Elles peuvent se substituer un représentant ayant qualité pour se concilier.\n\nSi l'une des parties ne comparaît pas ou ne se fait pas valablement représenter, l'Inspecteur du Travail et des Lois Sociales ou le fonctionnaire responsable du bureau de contrôle du travail du ressort la convoque à nouveau dans un délai qui ne peut excéder deux jours francs sans préjudice de sa condamnation à une sanction prononcée par la juridiction pénale sur procès-verbal dressé par l'autorité compétente ci-dessus désignée.\n\nLes accords de conciliation sont consignés dans un procès-verbal établi séance tenante et signé par les parties qui en reçoivent ampliation. Ils sont obligatoires et deviennent exécutoires au jour du dépôt prévu à l'article 247.",
    "source": "sgg-scan-ocr-mistral",
-   "controle": "deux OCR indépendants (Mistral, MinerU) concordants à 99%"
+   "corrections": [],
+   "controle": "deux OCR (Mistral, MinerU) arbitrés mot à mot, Mistral retenu partout"
   },
   {
    "numero": "243",
@@ -3203,7 +3324,8 @@
    "desaccords": [],
    "texte": "La Commission de Recommandation a les plus larges pouvoirs pour s'informer de la situation économique des entreprises et de la situation sociale des travailleurs intéressés par le conflit.\n\nDans ce but elle peut, notamment, enquêter auprès des entreprises et des syndicats, réclamer aux parties tous documents ou renseignements d'ordre comptable et financier susceptibles de lui être utiles. Elle peut recourir aux offices de toute personne qualifiée susceptible de l'éclairer, tels les experts comptables agréés.\n\nLes experts sont tenus au secret professionnel quant aux documents à eux communiqués.\n\nSur leur demande les parties sont entendues par la Commission de Recommandation. Elles peuvent déposer tous mémoires qu'elles estiment de nature à éclairer la Commission.\n\nDans un délai de 10 jours, la Commission dresse un rapport motivé de ses investigations. Les conclusions de ce rapport établissent, sous forme de recommandation, un projet de règlement des points en litige.",
    "source": "sgg-scan-ocr-mistral",
-   "controle": "deux OCR indépendants (Mistral, MinerU) concordants à 98%"
+   "corrections": [],
+   "controle": "deux OCR (Mistral, MinerU) arbitrés mot à mot, Mistral retenu partout"
   },
   {
    "numero": "246",
@@ -3234,7 +3356,8 @@
    "desaccords": [],
    "texte": "Les recommandations qui ont acquis force exécutoire peuvent faire l'objet d'un recours devant la Cour Suprême, pour excès de pouvoir ou violation de la loi.",
    "source": "sgg-scan-ocr-mistral",
-   "controle": "deux OCR indépendants (Mistral, MinerU) concordants à 100%"
+   "corrections": [],
+   "controle": "deux OCR (Mistral, MinerU) arbitrés mot à mot, Mistral retenu partout"
   },
   {
    "numero": "249",
@@ -3245,9 +3368,16 @@
     "texte_apres": "Le Lock-out est une mesure de fermeture temporaire de l’établissement ou de l’entreprise décidée par l’employeur du fait de la détérioration du climat social en son sein."
    },
    "desaccords": [],
-   "texte": "Sont interdits tout lock-out ou toute grève avant épuisement des procédures fixées par la présente loi ou en violation des dispositions d'un accord de conciliation ou d'une recommandation ayant acquis force exécutoire.\n\nLe lock-out ou la grève engagé en contravention des dispositions du présent code peut entraîner :\n\na) pour les employeurs le payement aux travailleurs des journées de salaires perdues de ce fait ; b) pour les travailleurs, la perte de salaires des journées de grève illégale ; c) pour les employeurs, par décision des Tribunaux de Droit Commun rendue à la requête du Ministre du Travail et de la Prévoyance Sociale, pendant une période minimum de deux ans, l'inéligibilité aux fonctions de membres des chambres de commerce, d'agriculture et d'industrie, l'interdiction de faire partie d'une Commission Nationale Consultative du Travail, de participer sous une forme quelconque à une entreprise de travaux ou un marché de fournitures pour le compte de l'Etat ou d'une collectivité publique.\n\nLa grève déclenchée après formation de l'opposition à la recommandation n'entraîne pas la rupture du contrat de travail.\n\n# T I T R E IX\n\n# P E N A L I T E S",
+   "texte": "Sont interdits tout lock-out ou toute grève avant épuisement des procédures fixées par la présente loi ou en violation des dispositions d'un accord de conciliation ou d'une recommandation ayant acquis force exécutoire.\n\nLe lock-out ou la grève engagé en contravention des dispositions du présent code peut entraîner :\n\na) pour les employeurs le payement aux travailleurs des journées de salaires perdues de ce fait ; b) pour les travailleurs, la perte de salaires des journées de grève illégale ; c) pour les employeurs, par décision des Tribunaux de Droit Commun rendue à la requête du Ministre du Travail et de la Prévoyance Sociale, pendant une période minimum de deux ans, l'inéligibilité aux fonctions de membres des chambres de commerce, d'agriculture et d'industrie, l'interdiction de faire partie d'une Commission Nationale Consultative du Travail, de participer sous une forme quelconque à une entreprise de travaux ou un marché de fournitures pour le compte de l'Etat ou d'une collectivité publique.\n\nLa grève déclenchée après formation de l'opposition à la recommandation n'entraîne pas la rupture du contrat de travail.",
    "source": "sgg-scan-ocr-mistral",
-   "controle": "deux OCR indépendants (Mistral, MinerU) concordants à 96%"
+   "corrections": [
+    {
+     "avant": "# T I T R E IX\n\n# P E N A L I T E S",
+     "apres": "",
+     "motif": "intitulé du Titre IX collé à l'article (p. 66)"
+    }
+   ],
+   "controle": "deux OCR (Mistral, MinerU) arbitrés mot à mot, écarts tranchés sur l'image"
   },
   {
    "numero": "250",
@@ -3269,7 +3399,8 @@
    "desaccords": [],
    "texte": "Seront punis d'une amende de 1.200 à 1.800 francs et en cas de récidive de 2.400 à 7.200 francs :\n\na) les auteurs d'infractions aux dispositions des articles 24, 39 (& 6), 71, 72, 74, 85, 87 (& 3), 88, 163 (& 2 et 3), 182 (avant dernier paragraphe); b) les auteurs d'infractions aux dispositions des arrêtés et décrets prévus par les articles 25, 75, 105, 181 et 182 (& 1er) ; c) les employeurs, fondés de pouvoirs ou leurs préposés, responsables du défaut d'affichage conforme aux dispositions de l'article 103.\n\nEn ce qui concerne les infractions à l'arrêté prévu à l'article 182 (& 1er), l'amende sera prononcée autant de fois qu'il y aura d'inscriptions omises ou erronnées.",
    "source": "sgg-scan-ocr-mistral",
-   "controle": "deux OCR indépendants (Mistral, MinerU) concordants à 100%"
+   "corrections": [],
+   "controle": "deux OCR (Mistral, MinerU) arbitrés mot à mot, Mistral retenu partout"
   },
   {
    "numero": "252",
@@ -3282,7 +3413,8 @@
    "desaccords": [],
    "texte": "Seront punis d'une amende de 2.400 à 7.200 francs et en cas de récidive d'une amende de 7.200 à 20.000 francs.\n\na) les auteurs d'infractions aux dispositions des articles 9, 117 ( & 2), 146 et 147 ; b) les auteurs d'infractions aux dispositions des arrêtés et décrets prévus par les articles 118, 142 et 148 ; c) les personnes qui auront omis de faire la déclaration prévue à l'article 141.",
    "source": "sgg-scan-ocr-mistral",
-   "controle": "deux OCR indépendants (Mistral, MinerU) concordants à 98%"
+   "corrections": [],
+   "controle": "deux OCR (Mistral, MinerU) arbitrés mot à mot, Mistral retenu partout"
   },
   {
    "numero": "253",
@@ -3295,7 +3427,8 @@
    "desaccords": [],
    "texte": "Les infractions aux dispositions des articles 184 à 187 inclus, 199, et de l'article 206, seront poursuivies contre les Directeurs ou Administrateurs des syndicats et punies d'une amende de 3.600 à 20.000 francs.\n\nAu cas de fausse déclaration relative aux statuts et aux noms et qualités des Administrateurs ou Directeurs, l'amende pourra être portée à 36.000 francs.\n\nLes peines prévues par la législation commerciale en vigueur contre les auteurs de contrefaçon, apposition, imitation ou usage frauduleux des marques de commerce sont applicables en matière de contrefaçon, apposition, imitation ou usage frauduleux des marques syndicales ou labels.",
    "source": "sgg-scan-ocr-mistral",
-   "controle": "deux OCR indépendants (Mistral, MinerU) concordants à 100%"
+   "corrections": [],
+   "controle": "deux OCR (Mistral, MinerU) arbitrés mot à mot, Mistral retenu partout"
   },
   {
    "numero": "254",
@@ -3308,7 +3441,8 @@
    "desaccords": [],
    "texte": "Seront punis d'une amende de 3.600 à 20.000 francs et en cas de récidive d'une amende de 7.200 à 40.000 francs et d'un emprisonnement de 12 à 20 jours ou de l'une de ces deux peines seulement :\n\na) les auteurs d'infractions aux dispositions des articles 76, 77, 108, 109, 110 ( & 2), 113, 114, 132, 133, 140, 155 (e,4°); b) les auteurs d'infractions aux décrets et arrêtés prévus aux articles 28, 112, 116, 137 et 173.\n\nDans le cas d'infraction à l'article 76, s'il y a double récidive, l'emprisonnement sera obligatoirement prononcé.\n\nDans le cas d'infractions à l'article 116 les pénalités ne seront pas encourues si l'infraction a été l'effet d'une erreur portant sur l'âge des enfants, commise lors de l'établissement du carnet de travailleur.",
    "source": "sgg-scan-ocr-mistral",
-   "controle": "deux OCR indépendants (Mistral, MinerU) concordants à 98%"
+   "corrections": [],
+   "controle": "deux OCR (Mistral, MinerU) arbitrés mot à mot, Mistral retenu partout"
   },
   {
    "numero": "255",
@@ -3321,7 +3455,8 @@
    "desaccords": [],
    "texte": "Seront punis d'une amende de 7.200 à 36.000 francs et, en cas de récidive d'une amende de 12.000 à 72.000 francs et d'un emprisonnement de 12 à 20 jours, ou de l'une de ces deux peines seulement :\n\na) les auteurs d'infractions aux dispositions des articles 10, 58 (en matière de salaires, primes et indemnités de toute nature) 100, 122, 134, 135 et 164 ; b) les auteurs d'infractions aux dispositions des décrets et arrêtés prévus par les articles 60, 83 et 101 ; c) toute personne qui aura employé un travailleur de nationalité étrangère démuni de carte de séjour ou de l'autorisation d'emploi pour une profession autre que celle de l'emploi réellement tenu ;\n\nd) toute personne qui aura embauché un travailleur étranger dont le contrat avec un précédent employeur n'était pas, soit expiré; soit résilié par décision judiciaire, à moins que le travailleur n'ait été autorisé par le Ministre du Travail et de la Prévoyance Sociale; cette autorisation réservant les droits du précédent employeur vis-à-vis du travailleur et du nouvel employeur.",
    "source": "sgg-scan-ocr-mistral",
-   "controle": "deux OCR indépendants (Mistral, MinerU) concordants à 99%"
+   "corrections": [],
+   "controle": "deux OCR (Mistral, MinerU) arbitrés mot à mot, Mistral retenu partout"
   },
   {
    "numero": "256",
@@ -3334,7 +3469,8 @@
    "desaccords": [],
    "texte": "Sera puni d'une amende de 12.000 à 72.000 francs et d'un emprisonnement de 12 jours à 2 mois ou de l'une de ces deux peines seulement, quiconque aura porté ou tenté de porter atteinte soit à la libre désignation des membres du bureau syndical, soit à l'exercice régulier de leurs fonctions.\n\nEn cas de récidive dans le délai d'une année, l'emprisonnement sera toujours prononcé. Les infractions pourront être constatées, soit par l'Inspection du Travail et des Lois Sociales, soit par les officiers de police judiciaire.",
    "source": "sgg-scan-ocr-mistral",
-   "controle": "deux OCR indépendants (Mistral, MinerU) concordants à 98%"
+   "corrections": [],
+   "controle": "deux OCR (Mistral, MinerU) arbitrés mot à mot, Mistral retenu partout"
   },
   {
    "numero": "257",
@@ -3345,9 +3481,21 @@
     "texte_apres": "Seront punis d’une amende de 600.000 FCFA à 900.000 FCFA et en cas de récidive d’une amende de 900.000 à 1.100.000 FCFA. a) les auteurs d’infractions aux dispositions des articles 4 sur l’interdiction du travail forcé 87(2) sur le paiement du salaire en alcool ou boisson alcoolisées, 103, sauf en matière d’affichage, 104 e 166. b) les personnes qui auront fait volontairement une fausse déclaration d’accident du travail ou de maladie professionnelle. c) toute personne qui par violence, menace ou tout autre moyen de pression aura contraint ou tenté de contraindre un travailleur à s’embaucher contre son gré ou qui, par les mêmes moyens aura tenté de l’empêcher ou l’aura empêché ou de remplir les obligations imposées par son contrat. d) Toute personne qui en faisant usage d’un contrat fictif ou d’un carnet de travailleur contenant des indications inexactes, se sera fait embaucher ou ne se sera substitué volontairement à un autre travailleur. e) tout employeur, fondé de pouvoirs ou préposé qui aura porté volontairement sur le couvert du travailleur, le registre d’employeur ou tout autre document des attestations mensongères relatives à la durée et aux conditions du travail accompli par le travailleur, ainsi que tout travailleur qui aura sciemment fait usage de ces attestations ; f) tout employeur, fondé de pouvoirs ou préposé, qui aura volontairement engagé, tenté d’engager ou conservé à son service un travailleur encore lié à un autre employeur par un contrat de travail, un apprenti encore lié par un contrat d’apprentissage ou un stagiaire en cours de formation dans un centre de formation professionnelle, indépendamment du droit à dommages et intérêts qui pourra être reconnu à la partie lésée. g) toute personne qui aura exigé ou accepté du travailleur une rémunération quelconque à titre d’intermédiaire dans le règlement ou le paiement des salaires, indemnités, allocations et frais de toute autre nature. h) toute personne exerçant l’activité d’entrepreneur de travail temporaire malgré une interdiction. En cas de double récidive, l’emprisonnement d’un mois est prononcé."
    },
    "desaccords": [],
-   "texte": "Seront punis d'une amende de 18.000 à 90.000 francs et d'un emprisonnement de 1 à 6 mois ou de l'une de ces deux peines seulement :\n\na) les auteurs d'infractions aux dispositions des articles 4 sur l'interdiction du travail forcé, 73 sur l'interdiction du \"marchandage\", 87 (& 2) sur le paiement du salaire en alcool ou boisson alcoolisée, 103, sauf en matière d'affichage, 104 et 166 ; b) les personnes qui auront fait sciemment une fausse déclaration d'accident du travail ou de maladie professionnelle ; c) toute personne, qui, par violence, menace, tromperie, dole ou promesses, aura contrait ou tenté de contraindre un travailleur à s'embaucher contre son gré, ou qui, par les mêmes moyens, aura tenté de l'empêcher ou l'aura empêché de s'embaucher ou de remplir les obligations imposées par son contrat ; d) toute personne qui, en faisant usage d'un contrat fictif ou d'un carnet de travailleur contenant des indications inexactes, se sera fait embaucher ou se sera substitué volontairement à un autre travailleur ; e) tout employeur, fondé de pouvoirs ou préposé, qui aura porté sciemment sur le carnet du travailleur, le registre d'employeur ou tout autre document, des attestations mensongères relatives à la durée et aux conditions du travail accompli par le travailleur, ainsi que tout travailleur qui aura sciemment fait usage de ces attestations ; f) tout employeur, fondé de pouvoirs ou préposé, qui aura sciemment engagé, tenté d'engager ou conserver à son service un travailleur encore lié à un autre employeur par contrat de travail, un apprenti encore lié par contrat d'apprentissage ou un stagiaire en cours de formation dans un centre de formation professionnelle, indépendamment du droit à dommages-intérêts qui pourra être reconnu à la partie lésée;\n\n./ 70.\n\ng) toute personne qui aura exigé ou accepté du travail, une rémunération quelconque à titre d'intermédiaire le règlement ou le paiement des salaires, indemnités, allocations et frais de toute nature.\n\nEn cas de récidive, l'amende sera de 36.000 à 360.000 francs et l'emprisonnement de 2 à 12 mois.",
+   "texte": "Seront punis d'une amende de 18.000 à 90.000 francs et d'un emprisonnement de 1 à 6 mois ou de l'une de ces deux peines seulement :\n\na) les auteurs d'infractions aux dispositions des articles 4 sur l'interdiction du travail forcé, 73 sur l'interdiction du \"marchandage\", 87 (& 2) sur le paiement du salaire en alcool ou boisson alcoolisée, 103, sauf en matière d'affichage, 104 et 166 ; b) les personnes qui auront fait sciemment une fausse déclaration d'accident du travail ou de maladie professionnelle ; c) toute personne, qui, par violence, menace, tromperie, dols ou promesses, aura contrait ou tenté de contraindre un travailleur à s'embaucher contre son gré, ou qui, par les mêmes moyens, aura tenté de l'empêcher ou l'aura empêché de s'embaucher ou de remplir les obligations imposées par son contrat ; d) toute personne qui, en faisant usage d'un contrat fictif ou d'un carnet de travailleur contenant des indications inexactes, se sera fait embaucher ou se sera substitué volontairement à un autre travailleur ; e) tout employeur, fondé de pouvoirs ou préposé, qui aura porté sciemment sur le carnet du travailleur, le registre d'employeur ou tout autre document, des attestations mensongères relatives à la durée et aux conditions du travail accompli par le travailleur, ainsi que tout travailleur qui aura sciemment fait usage de ces attestations ; f) tout employeur, fondé de pouvoirs ou préposé, qui aura sciemment engagé, tenté d'engager ou conserver à son service un travailleur encore lié à un autre employeur par contrat de travail, un apprenti encore lié par contrat d'apprentissage ou un stagiaire en cours de formation dans un centre de formation professionnelle, indépendamment du droit à dommages-intérêts qui pourra être reconnu à la partie lésée;\n\ng) toute personne qui aura exigé ou accepté du travail, une rémunération quelconque à titre d'intermédiaire le règlement ou le paiement des salaires, indemnités, allocations et frais de toute nature.\n\nEn cas de récidive, l'amende sera de 36.000 à 360.000 francs et l'emprisonnement de 2 à 12 mois.",
    "source": "sgg-scan-ocr-mistral",
-   "controle": "deux OCR indépendants (Mistral, MinerU) concordants à 97%"
+   "corrections": [
+    {
+     "avant": "dole ou",
+     "apres": "dols ou",
+     "motif": "lettre de la loi (p. 69)"
+    },
+    {
+     "avant": "./ 70.",
+     "apres": "",
+     "motif": "numéro de page (p. 69)"
+    }
+   ],
+   "controle": "deux OCR (Mistral, MinerU) arbitrés mot à mot, écarts tranchés sur l'image"
   },
   {
    "numero": "258",
@@ -3360,7 +3508,8 @@
    "desaccords": [],
    "texte": "Sera punie d'une amende de 72.000 à 360.000 francs et d'un emprisonnement de 2 à 6 mois ou de l'une de ces deux peines seulement, toute personne qui s'est opposée ou a tenté de s'opposer à l'exécution des obligations ou à l'exercice des pouvoirs qui incombent aux fonctionnaires du corps de l'Inspection du Travail et des Lois Sociales et aux Chefs de circonscriptions administratives agissant comme suppléant de l'Inspecteur du Travail et des Lois Sociales.\n\nEn cas de récidive l'emprisonnement de 2 à 6 mois est obligatoirement prononcé.\n\nLes dispositions du code pénal qui prévoient et répriment les actes de résistance, les outrages et les violentes contre les officiers de police judiciaire sont, en outre, applicables à ceux qui se rendent coupables de faits de même nature à l'égard des Inspecteurs du Travail et des Lois Sociales ou de leurs suppléants.",
    "source": "sgg-scan-ocr-mistral",
-   "controle": "deux OCR indépendants (Mistral, MinerU) concordants à 99%"
+   "corrections": [],
+   "controle": "deux OCR (Mistral, MinerU) arbitrés mot à mot, Mistral retenu partout"
   },
   {
    "numero": "259",
@@ -3382,7 +3531,8 @@
    "desaccords": [],
    "texte": "Les dispositions du code pénal en matière de sursis sont applicables à tout employeur pour les infractions prévues et réprimées au présent titre.\n\nLorsqu'une amende est prononcée en vertu du présent titre, elle est encourue autant de fois qu'il y a eu d'infractions, sans que cependant le montant total des amendes infligées puisse excéder cinquante fois les taux maxima prévus ci-dessus.\n\nCette règle s'applique notamment au cas où plusieurs travailleurs auraient été employés dans des conditions contraires à la présente loi.\n\nPour l'application des articles 251, 252, 253, 254, 255, 256, il y a récidive lorsque, dans les 12 mois antérieurs au fait poursuivi, le contrevenant a déjà subi une condamnation pour un fait identique.",
    "source": "sgg-scan-ocr-mistral",
-   "controle": "deux OCR indépendants (Mistral, MinerU) concordants à 97%"
+   "corrections": [],
+   "controle": "deux OCR (Mistral, MinerU) arbitrés mot à mot, Mistral retenu partout"
   },
   {
    "numero": "261",
@@ -3404,7 +3554,8 @@
    "desaccords": [],
    "texte": "Les dispositions de la présente loi sont de plein droit applicables aux contrats individuels en cours.\n\nElles ne peuvent constituer une cause de rupture de ces contrats.\n\nToute clause d'un contrat en cours qui ne serait pas conforme aux dispositions de la présente loi, ou d'un décret ou arrêté pris pour son application, sera modifiée dans un délai de six mois à compter de la publication de la présente loi ou du décret ou arrêté en cause.\n\nAu cas de refus de l'une des parties, la juridiction compétente pourra ordonner, sous peine d'astreinte, de procéder aux modifications qui seront jugées nécessaires.",
    "source": "sgg-scan-ocr-mistral",
-   "controle": "deux OCR indépendants (Mistral, MinerU) concordants à 100%"
+   "corrections": [],
+   "controle": "deux OCR (Mistral, MinerU) arbitrés mot à mot, Mistral retenu partout"
   },
   {
    "numero": "263",
@@ -3417,7 +3568,8 @@
    "desaccords": [],
    "texte": "En celles de ces dispositions qui ne sont pas contraires à la présente loi, la réglementation existante prise en application des lois du 15 décembre 1952 et 10/64 du 25 Juin 1964 demeurera en vigueur jusqu'à la mise en place des textes prévus par le présent code.",
    "source": "sgg-scan-ocr-mistral",
-   "controle": "deux OCR indépendants (Mistral, MinerU) concordants à 100%"
+   "corrections": [],
+   "controle": "deux OCR (Mistral, MinerU) arbitrés mot à mot, Mistral retenu partout"
   },
   {
    "numero": "264",
@@ -3430,7 +3582,8 @@
    "desaccords": [],
    "texte": "Sont abrogées toutes dispositions contraires à la présente loi.",
    "source": "sgg-scan-ocr-mistral",
-   "controle": "deux OCR indépendants (Mistral, MinerU) concordants à 100%"
+   "corrections": [],
+   "controle": "deux OCR (Mistral, MinerU) arbitrés mot à mot, Mistral retenu partout"
   },
   {
    "numero": "265",

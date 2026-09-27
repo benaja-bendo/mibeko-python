@@ -69,9 +69,32 @@ TRANSCRIPTIONS = {
     ),
 }
 
-# Corrections ponctuelles de la lecture Mistral, relues sur l'image.
+# Corrections de la lecture Mistral, arbitrées mot à mot contre MinerU puis relues sur l'image
+# (28/09/2026). Sur 116 écarts entre les deux OCR, Mistral avait raison presque partout ; ici ses
+# erreurs, souvent du français plausible (« arrêté du Centre du Travail… qui a préavis »). Là où
+# l'image ne tranche pas (art. 258 « violentes »), rien n'est touché. La lettre de la loi est
+# conservée, coquilles comprises (« dols », « contrait »).
 CORRECTIONS_OCR = {
-    "33": [("qu'en sortie", "ou sa sortie"), ("l'installat ", "l'installation ")],
+    "33": [("qu'en sortie", "ou sa sortie", "lu sur l'image (p. 9)"),
+           ("l'installat ", "l'installation ", "mot coupé (p. 9)"),
+           ("\n\n5t\n\n", "\n\n", "caractère parasite de l'OCR (p. 9)"),
+           ("sur le conformité", "sur la conformité", "lu sur l'image (p. 9)")],
+    "39": [("arrêté du Centre du Travail et de la Prévoyance Social, qui a préavis de la ",
+            "arrêté du Ministre du Travail et de la Prévoyance Sociale pris après avis de la ", "lu sur l'image (p. 11)")],
+    "41": [("sans préavis au sens que", "sans préavis ou sans que", "lu sur l'image (p. 12)")],
+    "42": [("l'inégociution", "l'inexécution", "lu sur l'image (p. 13)")],
+    "47": [("maladie professionnel e)", "maladie professionnelle ; e)", "fin d'alinéa mal lue (p. 15)")],
+    "131": [("près la Ministère", "près le Ministère", "lu sur l'image (p. 37)")],
+    "143": [("Ne compte pas l'application", "Ne compte pour l'application", "lu sur l'image (p. 40)")],
+    "165": [("En concertée du travail", "[En cas de cessat]ion concertée du travail",
+             "début blanchi sur le scan officiel (p. 46) ; restitué entre crochets d'après la suite (« cette cessation »)")],
+    "172": [("Unarrêté du Ministre", "Un arrêté du Ministre", "mots collés (p. 50)"),
+            ("Prévoyance Sociale présente avis", "Prévoyance Sociale pris après avis", "lu sur l'image (p. 50)")],
+    "173": [("réexpansion", "révocation", "lu sur l'image (p. 50)")],
+    "186": [("\n\n. 54", "", "numéro de page (p. 53)")],
+    "249": [("\n\n# T I T R E IX\n\n# P E N A L I T E S", "", "intitulé du Titre IX collé à l'article (p. 66)")],
+    "257": [("dole ou", "dols ou", "lettre de la loi (p. 69)"),
+            ("\n\n./ 70.\n\n", "\n\n", "numéro de page (p. 69)")],
 }
 
 # Pages du scan illisibles : l'écart avec la consolidation y vient de l'OCR, pas du droit.
@@ -215,14 +238,16 @@ def main() -> None:
                 a_relire.append((n, round(r, 3)))
         else:
             texte = nettoyer_ocr(m["texte"])
-            for avant, apres in CORRECTIONS_OCR.get(n, []):
-                texte = texte.replace(avant, apres)
+            corrections = []
+            for avant, apres, motif in CORRECTIONS_OCR.get(n, []):
+                if avant not in texte:
+                    raise ValueError(f"art. {n} : passage à corriger introuvable : {avant!r}")
+                texte = texte.replace(avant, apres, 1)
+                corrections.append({"avant": avant.strip(), "apres": apres.strip(), "motif": motif})
             accord = ratio(m["texte"], mineru.get(n, ""))
-            entree.update(texte=texte, source="sgg-scan-ocr-mistral",
-                          controle=("relu sur l'image" if n in CORRECTIONS_OCR else
-                                    f"deux OCR indépendants (Mistral, MinerU) concordants à {accord:.0%}"))
-            if accord < 0.95 and n not in CORRECTIONS_OCR:
-                a_relire.append((n, round(accord, 3)))
+            entree.update(texte=texte, source="sgg-scan-ocr-mistral", corrections=corrections,
+                          controle=("deux OCR (Mistral, MinerU) arbitrés mot à mot, "
+                                    + ("écarts tranchés sur l'image" if corrections else "Mistral retenu partout")))
 
         if mk:
             apres = None
@@ -275,6 +300,11 @@ def main() -> None:
     for a in avec_desaccord:
         for e in a["desaccords"]:
             lignes.append(f"- art. {a['numero']} : consolidation « {e['consolidation']} » / scan officiel « {e['scan_officiel']} »")
+    lignes += ["", "## Erreurs de l'OCR corrigées sur l'image (versions de 1975 tirées du scan)", "",
+               "Les 50 articles tirés du scan ont été arbitrés mot à mot entre Mistral et MinerU (116 écarts, "
+               "28/09/2026) ; Mistral avait raison partout ailleurs.", ""]
+    lignes += [f"- art. {a['numero']} : « {c['avant']} » → « {c['apres']} » ({c['motif']})"
+               for a in articles for c in a.get("corrections", [])]
     lignes += ["", "## À relire sur l'image", ""] + [f"- art. {n} (score {r})" for n, r in a_relire]
     (ICI / "rapport_base_1975.md").write_text("\n".join(lignes) + "\n", encoding="utf-8")
     print("\n".join(lignes[:8]))
