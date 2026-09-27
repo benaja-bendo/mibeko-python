@@ -134,6 +134,11 @@ data/**
 !data/corpus/corpus-v1.yaml
 !data/**/README.md
 !data/**/.keep
+# Curation manuelle d'un texte (scripts, lectures OCR, fichiers relus) : non régénérable
+# sans refaire le travail humain, donc versionnée. Les images de contrôle restent locales.
+!data/curation/**/*.py
+!data/curation/**/*.json
+!data/curation/**/*.md
 
 backups/
 /data/manifests/depots.jsonl

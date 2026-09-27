@@ -65,7 +65,11 @@ Le `.gitignore` de `mibeko-python` ignore tout `data/**` sauf des motifs explici
 cd mibeko-python && git add -An data/
 ```
 
-→ ne doit lister que des manifestes, le carnet, ce README et des `.keep`. Rien d'autre. Si un PDF apparaît dans cette liste, corrige le `.gitignore` avant de commit quoi que ce soit.
+→ ne doit lister que des manifestes, le carnet, ce README, des `.keep` et les fichiers de `curation/` (point 7). Rien d'autre. Si un PDF apparaît dans cette liste, corrige le `.gitignore` avant de commit quoi que ce soit.
+
+### 7. `curation/` : le travail humain sur un texte, versionné
+
+Quand un texte ne sort pas proprement du pipeline, sa remise en état vit dans `curation/<texte>/`. Premier cas : le Code du travail, `mibeko-dashboard#201`, 27/09/2026. On y range les scripts rejouables, les lectures OCR, les fichiers relus et un rapport. Ce contenu n'est **pas régénérable** sans refaire des relectures humaines : il est donc versionné (`.py`, `.json`, `.md`), à la différence de `pipeline/`. Les images de contrôle (`images/`) restent locales. Les scripts lisent les sources par `MIBEKO_DATA_DIR`. Depuis un worktree, pointer cette variable vers le `data/` du dépôt principal, où vivent les PDF.
 
 ## Historique
 
