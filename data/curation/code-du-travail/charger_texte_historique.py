@@ -134,10 +134,28 @@ def main() -> int:
     nb_versions = sum(len(a["versions"]) - 1 for a in plan["articles"])
     print(f"Plan : {len(plan['lois'])} loi(s) modificative(s), {len(plan['noeuds'])} nœuds, "
           f"{len(plan['articles'])} articles, {nb_versions} amendements — cible {args.base_url}, document {args.document}")
+    hote = urlparse(args.base_url).netloc.replace(":", "_")
+    journal = Journal(Path(args.journal) if args.journal else ICI / f"journal-{hote}-{args.document[:8]}.json")
+
     if not args.execute:
+        # Sur une reprise, seul compte ce que le journal n'a pas encore : c'est ce que l'humain
+        # doit lire avant d'autoriser l'exécution.
+        reste = {
+            "lois": sum(1 for code in plan["lois"] if not journal.get(f"loi:{code}")),
+            "articles de loi": sum(1 for code, l in plan["lois"].items() for a in l["articles"]
+                                   if not journal.get(f"loi:{code}:art:{a['numero']}")),
+            "métadonnées du document": 0 if journal.get("code:patch") else 1,
+            "retrait du contenu actuel": 0 if journal.get("code:retrait") else 1,
+            "nœuds": sum(1 for n in plan["noeuds"] if not journal.get(n["cle"])),
+            "articles": sum(1 for a in plan["articles"] if not journal.get(a["cle"])),
+            "amendements": sum(1 for a in plan["articles"] for r in range(2, len(a["versions"]) + 1)
+                               if not journal.get(f"{a['cle']}:v{r}")),
+        }
         print("SIMULATION — aucun appel émis. Ajouter --execute pour écrire.")
-        print(f"Appels estimés : ~{3 + sum(1 + len(l['articles']) for l in plan['lois'].values()) + len(plan['noeuds']) + len(plan['articles']) + nb_versions}"
-              f" (+ le retrait du contenu actuel), soit ~{(len(plan['noeuds']) + len(plan['articles']) + nb_versions) / args.rythme:.0f} min au rythme de {args.rythme}/min.")
+        print(f"Journal : {journal.chemin.name} ({'absent : chargement complet' if not journal.donnees else f'{len(journal.donnees)} entrées'})")
+        print("Reste à faire : " + ", ".join(f"{n} {k}" for k, n in reste.items()))
+        appels = sum(reste.values())
+        print(f"soit ~{appels} appels (+ le retrait, s'il reste à faire), ~{appels / args.rythme:.0f} min au rythme de {args.rythme}/min.")
         return 0
 
     jeton = os.getenv("MIBEKO_API_TOKEN", "")
@@ -145,8 +163,6 @@ def main() -> int:
         print("MIBEKO_API_TOKEN absent du shell. À exporter à la main, jamais dans un fichier.", file=sys.stderr)
         return 1
 
-    hote = urlparse(args.base_url).netloc.replace(":", "_")
-    journal = Journal(Path(args.journal) if args.journal else ICI / f"journal-{hote}-{args.document[:8]}.json")
     api = Api(args.base_url, jeton, args.rythme)
     sonder_api(api)
     print("  sonde : jeton accepté, l'API date les créations")
