@@ -24,10 +24,27 @@
   "provenance": {
    "source_url": "https://sgg.cg/codes/congo-code-1975-travail.pdf",
    "fetched_at": "2025-10-25T00:00:00+00:00",
-   "autorite": "Secrétariat général du Gouvernement (sgg.cg) — loi n° 45-75 du 15 mars 1975"
+   "autorite": "Secrétariat général du Gouvernement (sgg.cg) — loi n° 45-75 du 15 mars 1975 ; art. 33 et 162 à 167 selon la loi n° 22/88, d'après la consolidation Droit-Afrique (texte officiel de cette loi non publié)"
   }
  },
  "lois": {
+  "22-88": {
+   "titre_officiel": "Loi n° 22/88 du 17 septembre 1988 portant modification de la loi n° 1/86 du 22 février 1986 remplaçant et complétant la loi n° 3/85 du 14 février 1985 portant création de l'Office national de l'emploi et de la main-d'œuvre (ONEMO) et modification du Code du travail",
+   "type_code": "LOI",
+   "statut": "abroge",
+   "date_signature": "1988-09-17",
+   "date_entree_vigueur": null,
+   "source": {
+    "manifeste": "natlex/cog-14546-code-du-travail-consolide",
+    "notice": "https://natlex.ilo.org/dyn/natlex2/r/natlex/fe/details?p3_isn=40942"
+   },
+   "provenance": {
+    "source_url": "https://natlex.ilo.org/dyn/natlex2/r/natlex/fe/details?p3_isn=40942",
+    "fetched_at": "2026-09-27T23:05:00+00:00",
+    "autorite": "Organisation internationale du Travail (NATLEX) — notice seule, texte non publié ; effets sur le Code d'après la consolidation Droit-Afrique"
+   },
+   "articles": []
+  },
   "6-96": {
    "titre_officiel": "Loi n° 6-96 du 6 mars 1996 modifiant et complétant certaines dispositions de la loi n° 45/75 du 15 mars 1975 instituant un Code du Travail",
    "type_code": "LOI",
@@ -1216,6 +1233,11 @@
      "debut": "1975-03-15",
      "texte": "Tout contrat de travail stipulant une durée déterminée supérieure à trois mois ou nécessitant l'installation des travailleurs hors de leur lieu de recrutement doit être, après visite médicale de ceux-ci, constaté par écrit devant le Bureau de Placement du lieu d'embauche et assorti d'un visa. Tout contrat de travail nécessitant l'entrée d'un travailleur en République Populaire du Congo ou sa sortie doit être constaté par écrit et soumis obligatoirement au visa de la Direction Générale du Travail.\n\nL'Autorité compétente vise le contrat après notamment :\n\n1. avoir recueilli le visa d'accord préalable de l'inspecteur du Travail du lieu de l'emploi sur les conditions de travail consenties et sur la conformité du contrat aux dispositions applicables en matière de travail ;\n\n2. avoir recueilli l'avis de la Direction Centrale de la Main-d'œuvre dans les cas visés par le paragraphe 2 du présent article ;\n\n3. s'être assuré que le Bureau de Placement du lieu de l'emploi est favorable à l'embauchage ; 4. avoir constaté l'identité du travailleur et son libre consentement ; 5. avoir vérifié que le travailleur est libre de tout engagement antérieur ; 6. avoir donné aux parties lecture et éventuellement traduction du contrat ; 7. avoir vérifié en cas de contrat conclu pour une durée déterminée que celle-ci est stipulée sans ambiguïté.\n\nLa demande de visa incombe à l'employeur.\n\nSi le visa prévu au présent article est refusé, le contrat est nul de plein droit.\n\nSi l'omission du visa est due au fait de l'employeur, le travailleur aura droit de faire constater la nullité du contrat et pourra, en cas de préjudice dûment établi, réclamer des dommages-intérêts.\n\nLe voyage du travailleur du lieu d'emploi au lieu de recrutement est, dans ces deux cas, supporté par l'employeur.",
      "loi": null
+    },
+    {
+     "debut": "1988-09-17",
+     "texte": "Tout contrat de travail passé avec un Congolais et impliquant sa sortie du territoire de la République Populaire du Congo est soumis au visa de la direction générale de l’ONEMO.\n\nLe visa n’est accordé qu’après avoir :\n\n- constaté l’identité du travailleur et son libre consentement ;\n\n- donné lecture aux parties et éventuellement traduction du contrat ;\n\n- vérifié en cas de contrat conclu pour une durée déterminée que celle-ci est stipulée sans ambiguïté ;\n\n- vérifié qu’un titre de transport aller et retour est prévu au contrat.\n\nSi le visa prévu au présent article est refusé, le contrat est nul de plein droit.",
+     "loi": "22-88"
     }
    ]
   },
@@ -3642,6 +3664,11 @@
      "debut": "1975-03-15",
      "texte": "Sur toute l'étendue du territoire national, il est créé des bureaux de placements rattachés à la Direction Générale du Travail et de la Prévoyance Sociales avec laquelle ils correspondent directement.\n\nLes Bureaux de Placement reçoivent les offres et demandes d'emploi et procèdent au placement : ils rassemblent et tiennent une documentation permanente sur l'état du marché du travail dans leur ressort. Ils établissent pour chaque travailleur, un dossier d'après les indications fixées par arrêté du Ministre du Travail et de la Prévoyance Sociale, et délivrent des cartes de travail, ils donnent leur avis au contrat de travail après approbation des services de l'Inspection du Travail et des Lois Sociales et dans le cadre de l'africanisation de postes de travail.",
      "loi": null
+    },
+    {
+     "debut": "1988-09-17",
+     "texte": "Abrogé par la loi n° 22/88 du 17 septembre 1988.",
+     "loi": "22-88"
     }
    ]
   },
@@ -3655,6 +3682,11 @@
      "debut": "1975-03-15",
      "texte": "Tout travailleur recherchant un emploi est tenu de requérir son inscription au Bureau de Placement de son domicile.\n\nTout chef d'entreprise ou d'établissement est tenu de s'adresser au Bureau de Placement du ressort pour le recrutement du personnel.\n\nTout chef d'entreprise ou d'établissement est tenu de notifier au Bureau de Placement du ressort tout emploi vacant dans son entreprise ou établissement.\n\nDes arrêtés du Ministre du Travail et de la Prévoyance Sociale pris après avis de la Commission Nationale Consultative du Travail détermineront les cas dans lesquels des dérogations à la règle de recours obligatoire au Bureau du Placement pourront être admises.\n\nNul employeur n'est tenu d'agréer le salarié qui lui est présenté par le Bureau de Placement, nul travailleur n'est tenu également d'accepter l'emploi qui lui est proposé par le même service ; toutefois, le motif du refus doit être donné dans les 48 heures au Bureau de Placement ; s'il quitte l'entreprise, notification devra être faite par l'employeur dans les mêmes délais.",
      "loi": null
+    },
+    {
+     "debut": "1988-09-17",
+     "texte": "Abrogé par la loi n° 22/88 du 17 septembre 1988.",
+     "loi": "22-88"
     }
    ]
   },
@@ -3668,6 +3700,11 @@
      "debut": "1975-03-15",
      "texte": "Les opérations des Bureaux de Placement sont gratuites.\n\nIl est interdit sous peine de sanctions d'offrir et de remettre à toute personne faisant partie de ces services et à celle-ci de l'accepter une rétribution sous quelque forme que ce soit.",
      "loi": null
+    },
+    {
+     "debut": "1988-09-17",
+     "texte": "Abrogé par la loi n° 22/88 du 17 septembre 1988.",
+     "loi": "22-88"
     }
    ]
   },
@@ -3681,6 +3718,11 @@
      "debut": "1975-03-15",
      "texte": "[En cas de cessat]ion concertée du travail, les opérations des Bureaux de Placement concernant les entreprises touchées par cette cessation sont immédiatement interrompues.\n\nLa liste desdites entreprises est en outre affichée dans la salle réservée aux demandeurs et aux offreurs d'emploi.",
      "loi": null
+    },
+    {
+     "debut": "1988-09-17",
+     "texte": "Abrogé par la loi n° 22/88 du 17 septembre 1988.",
+     "loi": "22-88"
     }
    ]
   },
@@ -3694,6 +3736,11 @@
      "debut": "1975-03-15",
      "texte": "Il est interdit de maintenir ou d'ouvrir un Bureau de Placement privé sur toute l'étendue du Territoire de la République Populaire du Congo, sauf dérogation accordée par arrêté du Ministre du Travail et de la Prévoyance Sociale pris après avis de la Commission Nationale Consultative du Travail.\n\nIl est interdit de diffuser de quelque manière que ce soit, notamment par la presse, la radio, le cinéma, etc... une offre ou une demande d'emploi qui n'aurait pas été préalablement enregistrée par un Bureau de Placement ou sans indiquer le numéro de l'enregistrement par ce service.",
      "loi": null
+    },
+    {
+     "debut": "1988-09-17",
+     "texte": "Abrogé par la loi n° 22/88 du 17 septembre 1988.",
+     "loi": "22-88"
     }
    ]
   },
@@ -3707,6 +3754,11 @@
      "debut": "1975-03-15",
      "texte": "Des décrets pourront créer\n\n- auprès du Ministre du Travail et de la Prévoyance Sociale un comité de l'emploi chargé de l'étude du planning du marché de la main-d'oeuvre ; - des centres de formation professionnelle des adultes.",
      "loi": null
+    },
+    {
+     "debut": "1988-09-17",
+     "texte": "Abrogé par la loi n° 22/88 du 17 septembre 1988.",
+     "loi": "22-88"
     }
    ]
   },
@@ -5781,20 +5833,6 @@
   }
  ],
  "en_attente": {
-  "22-88": {
-   "modifie": [
-    "33"
-   ],
-   "abroge": [
-    "162",
-    "163",
-    "164",
-    "165",
-    "166",
-    "167"
-   ],
-   "motif": "texte de la loi n° 22/88 du 17 septembre 1988 non encore obtenu (NATLEX p_isn=40942)"
-  },
   "248": "phrase sur la grève ajoutée par la consolidation, absente du scan de 1975 et de la loi 6-96 : origine à établir"
  }
 }
