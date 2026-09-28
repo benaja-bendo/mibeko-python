@@ -1,0 +1,1590 @@
+{
+ "order": [
+  "1",
+  "2",
+  "3",
+  "4",
+  "5",
+  "6",
+  "7",
+  "8",
+  "9",
+  "10",
+  "11",
+  "12",
+  "13",
+  "14",
+  "15",
+  "16",
+  "17",
+  "18",
+  "19",
+  "20",
+  "21",
+  "22",
+  "23",
+  "24",
+  "24_dup",
+  "25",
+  "26",
+  "27",
+  "28",
+  "29",
+  "30",
+  "31",
+  "32",
+  "33",
+  "34",
+  "35",
+  "35_dup",
+  "37",
+  "38",
+  "39",
+  "40",
+  "41",
+  "42",
+  "43",
+  "44",
+  "45",
+  "46",
+  "47",
+  "48",
+  "49",
+  "50",
+  "51",
+  "52",
+  "53",
+  "54",
+  "55",
+  "56",
+  "57",
+  "58",
+  "59",
+  "60",
+  "61",
+  "64",
+  "65",
+  "66",
+  "67",
+  "68",
+  "69",
+  "70",
+  "71",
+  "72",
+  "73",
+  "74",
+  "75",
+  "76",
+  "77",
+  "78",
+  "79",
+  "80",
+  "81",
+  "82",
+  "83",
+  "84",
+  "85",
+  "86",
+  "87",
+  "88",
+  "89",
+  "90",
+  "91",
+  "92",
+  "93",
+  "94",
+  "95",
+  "96",
+  "97",
+  "98",
+  "99",
+  "100",
+  "101",
+  "102",
+  "103",
+  "104",
+  "105",
+  "106",
+  "107",
+  "108",
+  "109",
+  "110",
+  "111",
+  "112",
+  "113",
+  "114",
+  "115",
+  "116",
+  "117",
+  "118",
+  "119",
+  "120",
+  "121",
+  "122",
+  "123",
+  "124",
+  "125",
+  "126",
+  "127",
+  "128",
+  "129",
+  "130",
+  "131",
+  "132",
+  "133",
+  "134",
+  "135",
+  "136",
+  "137",
+  "138",
+  "139",
+  "140",
+  "141",
+  "142",
+  "143",
+  "144",
+  "145",
+  "146",
+  "147",
+  "148",
+  "149",
+  "150",
+  "151",
+  "152",
+  "153",
+  "154",
+  "155",
+  "156",
+  "157",
+  "158",
+  "159",
+  "160",
+  "161",
+  "162",
+  "163",
+  "164",
+  "165",
+  "166",
+  "167",
+  "168",
+  "169",
+  "170",
+  "171",
+  "172",
+  "173",
+  "174",
+  "175",
+  "176",
+  "177",
+  "178",
+  "179",
+  "180",
+  "181",
+  "182",
+  "183",
+  "184",
+  "185",
+  "186",
+  "187",
+  "188",
+  "189",
+  "190",
+  "191",
+  "192",
+  "193",
+  "194",
+  "195",
+  "196",
+  "197",
+  "198",
+  "199",
+  "200",
+  "201",
+  "202",
+  "203",
+  "204",
+  "205",
+  "206",
+  "207",
+  "208",
+  "209",
+  "210",
+  "211",
+  "212",
+  "213",
+  "214",
+  "215",
+  "216",
+  "217",
+  "218",
+  "219",
+  "220",
+  "221",
+  "222",
+  "223",
+  "224",
+  "225",
+  "226",
+  "227",
+  "228",
+  "229",
+  "230",
+  "231",
+  "232",
+  "233",
+  "234",
+  "235",
+  "236",
+  "237",
+  "238",
+  "239",
+  "240",
+  "241",
+  "242",
+  "243",
+  "244",
+  "245",
+  "246",
+  "247",
+  "248",
+  "249",
+  "250",
+  "251",
+  "252",
+  "253",
+  "254",
+  "255",
+  "256",
+  "257",
+  "258",
+  "259",
+  "260",
+  "261",
+  "262",
+  "263",
+  "264",
+  "265"
+ ],
+ "arts": {
+  "1": {
+   "numero": "1",
+   "page": 2,
+   "texte": "La présente loi institue un Code du Travail de la République Populaire du Congo."
+  },
+  "2": {
+   "numero": "2",
+   "page": 2,
+   "texte": "Est considéré comme travailleur au sens du présent Code, quels que soient son sexe et sa nationalité, toute personne qui s'est engagée à mettre son activité professionnelle, moyennant rémunération, sous la direction et l'autorité d'une autre personne, physique ou morale, publique ou privée. Pour la détermination de la qualité de travailleur, il ne sera tenu compte ni du statut juridique de l'employeur ni de celui de l'employé.\n\nLes personnes nommées dans un emploi permanent d'un cadre d'une administration publique ne sont pas soumises aux dispositions du présent Code.\n\nLes travailleurs continuent à bénéficier des avantages qui leur ont été consentis, lorsque ceux-ci sont supérieurs à ceux que leur reconnaît le présent Code dont les dispositions ne s'opposent pas, par ailleurs, aux dispositions plus favorables qui peuvent être consenties par des conventions ou accords collectifs ou par des contrats particuliers."
+  },
+  "3": {
+   "numero": "3",
+   "page": 2,
+   "texte": "Toute personne, physique ou morale, publique ou privée, employant un ou plusieurs travailleurs au sens de l'article 2 est considérée comme constituant une entreprise et est soumise aux dispositions du présent Code visant les employeurs."
+  },
+  "4": {
+   "numero": "4",
+   "page": 2,
+   "texte": "Le travail forcé ou obligatoire est interdit de façon absolue.\n\n../\n2\n\nLe terme \"travail forcé ou obligatoire\" désigne tout travail ou service exigé d'un individu sous la menace d'une peine quelconque ou pour lequel ledit individu ne s'est pas offert de plein gré.\n\nLe terme \"travail forcé\" ne s'applique pas aux obligations résultant du service civique de la jeunesse ainsi qu'au travail ou service exigé en cas de guerre, de sinistre, de menace de sinistre, de désastre naturel ou d'épidémie et, de façon générale, dans toutes circonstances susceptibles de mettre en danger ou mettant en danger la vie d'autrui ou les conditions normales d'existence de l'ensemble ou d'une partie de la population.\n\nLe terme \"travail obligatoire\" ne s'applique pas à tout travail décidé et exécuté de plein gré par une collectivité et visant à des tâches d'intérêt direct pour cette collectivité tels que l'établissement ou l'entretien de voies de communication, l'assainissement et la propreté des lieux d'habitation, le ravitaillement en eau, l'aménagement du sol, les constructions à des fins sociales, culturelles ou économiques."
+  },
+  "5": {
+   "numero": "5",
+   "page": 3,
+   "texte": "Le contrat d'apprentissage est celui par lequel un chef d'établissement industriel, commercial ou agricole, un artisan ou un façonnier s'oblige à donner ou à faire donner une formation professionnelle méthodique et complète à une autre personne et par lequel celle-ci s'oblige, en retour, à se conformer aux instructions qu'elle recevra et à exécuter les ouvrages qui lui seront confiés en vue de son apprentissage."
+  },
+  "6": {
+   "numero": "6",
+   "page": 3,
+   "texte": "Le contrat d'apprentissage est établi en tenant compte des usages et coutumes de la profession.\n\nIl contient en particulier :\n\n- Les nom, prénoms, âge, profession, domicile du maître ou la raison sociale ;\n- Les nom, prénoms, âge, domicile de l'apprenti ;\n- Si l'apprenti est mineur, les nom, prénoms, profession et domicile de ses père et mère, de son tuteur ou de la personne autorisée par les parents ou à leur défaut par le juge d'instance ;\n\n../\n3\n\n- La date et la durée du contrat, celle-ci fixée conformément aux usages de la profession ne pourra excéder 4 ans ;\n- Les conditions de rémunération, de nourriture et de logement de l'apprenti ;\n- L'indication de la profession qui sera enseignée à l'apprenti, éventuellement l'indication des cours professionnels que le chef d'établissement s'engage à faire suivre à l'apprenti soit dans l'établissement soit au dehors."
+  },
+  "7": {
+   "numero": "7",
+   "page": 4,
+   "texte": "Le contrat d'apprentissage doit être constaté par écrit à peine de nullité ; il est signé par le maître et les parents ou le tuteur de l'apprenti si ce dernier est mineur, par l'apprenti lui-même s'il est majeur.\n\nLe contrat d'apprentissage est exempt de tous droits de timbre et d'enregistrement. Il est soumis au visa de l'Inspecteur du Travail ou de son représentant qui doit notamment :\n\n- exiger la production par le maître d'un certificat médical datant de moins de trois mois déclarant le futur apprenti apte aux travaux de la profession choisie ;\n- constater l'identité de l'apprenti et la conformité du contrat aux dispositions applicables en la matière ;\n- vérifier que l'apprenti est libre de tout engagement antérieur ;\n- avoir donné aux parties lecture et éventuellement traduction du contrat.\n\nLa demande de visa incombe au maître.\n\nSi le visa est refusé, le contrat d'apprentissage est nul de plein droit.\n\nSi l'omission du visa est due au fait du maître, l'apprenti aura droit de faire constater la nullité du contrat et pourra se réclamer de toutes les mesures législatives ou réglementaires applicables aux salariés titulaires d'un contrat de travail de droit commun."
+  },
+  "8": {
+   "numero": "8",
+   "page": 4,
+   "texte": "Nul ne peut recevoir des apprentis mineurs s'il n'est âgé de 21 ans au moins."
+  },
+  "9": {
+   "numero": "9",
+   "page": 4,
+   "texte": "Aucun maître s'il ne vit en famille ou en communauté, ne peut loger en son domicile personnel ou dans son atelier, comme apprentices, des jeunes filles-mineures."
+  },
+  "10": {
+   "numero": "10",
+   "page": 4,
+   "texte": "Ne peuvent recevoir des apprentis les individus qui ont été condamnés soit pour crime, soit pour délit contre les moeurs, soit pour quelque délit que ce soit, à une peine d'au moins 3 mois de prison sans sursis.\n\n../\n4"
+  },
+  "11": {
+   "numero": "11",
+   "page": 5,
+   "texte": "L'apprenti doit être âgé de 16 ans au minimum. Il bénéficie des dispositions relatives au travail des enfants et de la réglementation concernant le repos hebdomadaire, la protection des travailleurs, la durée du travail, l'hygiène et la sécurité, la réparation des accidents du travail."
+  },
+  "12": {
+   "numero": "12",
+   "page": 5,
+   "texte": "Dans le cas où l'apprenti est employé aux seuls travaux qu'exige sa formation et seulement pendant le temps nécessaire à cette formation, il ne peut prétendre à une rémunération.\n\nDans le cas où pour certaines techniques ou professions, l'apprentissage représente pour le maître une perte d'argent, compte tenu notamment de la valeur des matières premières employées ou de l'usure particulière de l'outillage résultant de l'initiation aux méthodes de travail, il peut être prévu au contrat que l'apprenti versera une redevance au maître. Cette redevance doit être précisée au contrat ; elle ne pourra excéder la moitié du SMIG.\n\nDès l'instant où l'apprenti commence à faire des travaux dont le maître tire profit, il y a lieu à rémunération de l'apprenti.\n\nCette rémunération qui tient compte, d'une part des avantages que l'apprenti tire de l'enseignement du métier et d'autre part des soins et sujétions que cet enseignement représente pour le maître, peut être inférieure au SMIG. Elle est progressive avec les années d'apprentissage pour devenir au moins égale au SMIG au cours de la dernière année d'apprentissage.\n\nLes Inspecteurs du Travail disposent du pouvoir de recommandation le plus large en matière de fixation de la rémunération de l'apprenti.\n\nIl peut être prévu que l'apprenti s'engage après l'achèvement de l'apprentissage à exercer pendant une durée déterminée qui ne peut excéder 2 ans une activité professionnelle salariée pour le compte de son ancien maître, faute de quoi l'apprenti sera tenu de verser, à titre de clause pénale, une somme qui sera fixée en considération du préjudice qui pourra en résulter pour le maître."
+  },
+  "13": {
+   "numero": "13",
+   "page": 5,
+   "texte": "Toute période égale à onze mois d'apprentissage, ouvre droit, pour l'apprenti, à un mois de repos effectif."
+  },
+  "14": {
+   "numero": "14",
+   "page": 5,
+   "texte": "Le maître doit prévenir sans retard les parents de l'apprenti ou leurs représentants en cas de maladie, d'absence ou de tout fait de nature à motiver leur intervention.\n\nIl n'emploiera l'apprenti, dans la mesure de ses forces, qu'aux travaux et services qui se rattachent à l'exercice de la profession.\n\n../\n5"
+  },
+  "15": {
+   "numero": "15",
+   "page": 6,
+   "texte": "Le maître doit traiter l'apprenti en bon père de famille, lui assurer les soins médicaux et les meilleures conditions de logement et de nourriture.\n\nSi l'apprenti ne sait pas lire, écrire et compter, le maître est tenu de lui accorder le temps et la liberté nécessaires pour son instruction. Ce temps sera dévolu à l'apprenti selon un accord réalisé entre les parties, mais ne pourra excéder une durée calculée sur la base de 2 heures par jour de travail."
+  },
+  "16": {
+   "numero": "16",
+   "page": 6,
+   "texte": "Le maître doit enseigner à l'apprenti, progressivement et complètement, l'art, le métier ou la profession spéciale qui fait l'objet du contrat.\n\nIl lui délivrera, à la fin de l'apprentissage, un congé d'acquit ou certificat constatant l'exécution du contrat."
+  },
+  "17": {
+   "numero": "17",
+   "page": 6,
+   "texte": "L'apprenti doit à son maître, dans le cadre de l'apprentissage, obéissance et respect. Il doit l'aider par son travail dans la mesure de ses aptitudes et de ses forces.\n\nL'apprenti dont le temps d'apprentissage est terminé passe un examen devant un jury professionnel désigné par le Directeur du Service Central de la Main-d'Œuvre ou à défaut par l'Inspecteur du Travail et composé de deux membres employeurs et de deux membres employés de la profession, sous la présidence d'un professeur de l'Enseignement Technique ou d'un technicien de la profession.\n\nUn certificat constatant la qualification professionnelle de l'apprenti lui est remis en cas de succès à l'examen de fin d'apprentissage. Il est signé par les autorités compétentes."
+  },
+  "18": {
+   "numero": "18",
+   "page": 6,
+   "texte": "L'apprenti est tenu de remplacer à la fin de l'apprentissage le temps qu'il n'a pu employer par suite de maladie ou d'absence ayant duré plus de quinze jours."
+  },
+  "19": {
+   "numero": "19",
+   "page": 6,
+   "texte": "L'embauchage, comme ouvrier ou employé, de jeunes gens liés par contrat d'apprentissage, élèves ou stagiaires dans les écoles ou centres de formation professionnelle, est passible d'une indemnité au profit du chef d'établissement abandonné.\n\nTout nouveau contrat d'apprentissage conclu sans que les obligations du précédent contrat aient été remplies complètement ou sans qu'il ait été résolu légalement, est nul de plein droit."
+  },
+  "20": {
+   "numero": "20",
+   "page": 6,
+   "texte": "Les deux premiers mois de l'apprentissage sont considérés comme un temps d'essai pendant lequel le contrat peut être annulé par la seule volonté d'une des parties."
+  },
+  "21": {
+   "numero": "21",
+   "page": 7,
+   "texte": "La résolution du contrat d'apprentissage intervient de plein droit dans les cas suivants :\n\n- mort du maître ou de l'apprenti ;\n- service militaire du maître ou de l'apprenti ;\n- condamnation du maître à l'une des pièces prévues à l'article 10 ;\n\n- divorce du maître, décès de sa femme ou de toute autre femme de la famille qui dirigeait la maison à l'époque de la conclusion du contrat, si les apprentissages sont des filles mineures."
+  },
+  "22": {
+   "numero": "22",
+   "page": 7,
+   "texte": "Le contrat est résolu à la demande de l'une ou de l'autre des parties ;\n\n- pour manquement aux stipulations du contrat ou infraction grave et habituelle aux prescriptions du présent chapitre et des autres lois et règlements relatifs aux conditions de travail des apprentis ;\n- en cas de changement de résidence du maître ;\n- en cas de vente du fonds ou de cessation de l'exploitation du maître.\n\nLa résolution peut également être demandée par le maître pour l'exécution par l'apprenti de société de fabrication, de l'acte de clientèle ou pour vol.\n\nUne maladie entraînant l'impossibilité de poursuivre l'apprentissage dans la profession choisie ou la suspension de l'apprentissage pour une durée supérieure à 5 mois par an, un motif de demande de résiliation."
+  },
+  "23": {
+   "numero": "23",
+   "page": 7,
+   "texte": "La rupture abusive du contrat d'apprentissage ouvre droit à des dommages-intérêts ;\n\nLes actions en résolution du contrat d'apprentissage sont portées devant les tribunaux du travail qui peuvent éventuellement les indemnités ou institutions qui pourraient être prévues à l'une ou à l'autre des parties."
+  },
+  "24": {
+   "numero": "24",
+   "page": 7,
+   "texte": "L'isolement de la date de signature du contrat est de la date de fin de l'apprentissage."
+  },
+  "24_dup": {
+   "numero": "24_dup",
+   "page": 7,
+   "texte": "Un carnet d'apprentissage est ouvert par le maître pour chaque apprenti. Il doit mentionner les professions de l'apprenti au cours de l'enseignement. Il doit être tenu à jour et présenté à l'Inspecteur du Travail sur la demande.\n\nMention y est portée de la date de signature du contrat et de la date de fin de l'apprentissage.\n\nLa réexpiration du contrat le carnet sera dû de l'envoi de l'apprentissage."
+  },
+  "25": {
+   "numero": "25",
+   "page": 7,
+   "texte": "L'Inspecteur du Travail, ou son représentant, est chargé du contrôle de l'exécution du contrat d'apprentissage ; il peut se faire assister d'un technicien pour le contrôle de l'enseignement donné à l'apprenti.\n\n1/2\n7\n\nToute cessation du contrat d'apprentissage doit être portée à sa connaissance.\n\nDes arrêtés du Ministre du Travail et de la Prévoyance Sociale pris après avis de la Commission Nationale Consultative du Travail détermineront les catégories d'entreprises dans lesquelles est imposé un pourcentage d'apprentis par rapport au nombre total de travailleurs.\n\nDes arrêtés du Ministre du Travail et de la Prévoyance Sociale peuvent limiter l'effectif des apprentis ou suspendre le droit de former des apprentis dans les entreprises dans lesquelles il aura été constaté une formation professionnelle manifestement insuffisante."
+  },
+  "26": {
+   "numero": "26",
+   "page": 8,
+   "texte": "Le contrat individuel de travail est un accord de volonté par lequel une personne s'engage à accomplir des actes matériels de nature professionnelle sous la direction et l'autorité d'une autre personne qui s'oblige à lui payer, en contre-partie, une rémunération, généralement en argent, appelée salaire."
+  },
+  "27": {
+   "numero": "27",
+   "page": 8,
+   "texte": "Les contrats individuels de travail sont passés librement, sous réserve des dispositions prévues à l'article 28, et dans les formes qu'il convient aux parties contractantes d'adopter. La preuve peut être rapportée par tous moyens.\n\nLe contrat écrit est exempt de tous droits de timbre et d'enregistrement."
+  },
+  "28": {
+   "numero": "28",
+   "page": 8,
+   "texte": "Pour des raisons d'ordre économique, démographique ou social, et notamment dans l'intérêt de la santé ou de l'hygiène publique, l'interdiction ou les limitations à l'embauchage dans des régions données pourront être décidées par décret."
+  },
+  "29": {
+   "numero": "29",
+   "page": 8,
+   "texte": "Quels que soient le lieu de la conclusion du contrat et la résidence de l'une ou l'autre des parties, tout contrat de travail conclu pour être exécuté en République Populaire du Congo est soumis aux dispositions du présent Code.\n\nIl en est de même pour tout contrat de travail conclu pour être exécuté sous l'empire d'une autre législation, mais dont l'exécution partielle en République Populaire du Congo excède une durée de 3 mois consécutifs."
+  },
+  "30": {
+   "numero": "30",
+   "page": 8,
+   "texte": "Le travailleur doit toute son activité professionnelle à l'entreprise sauf, dérogation stipulée au contrat.\n\n../\n8\n\nToutefois, il lui est loisible, sauf convention contraire, d'exercer, en dehors de son temps de travail, toute activité à caractère professionnel non susceptible de concurrencer l'entreprise ou de nuire à la bonne exécution des services convenus.\n\nEst nulle de plein droit toute clause d'un contrat de travail portant interdiction pour le travailleur d'exercer une activité quelconque à l'expiration ou en cas de rupture de contrat."
+  },
+  "31": {
+   "numero": "31",
+   "page": 9,
+   "texte": "Les formes et modalités d'établissement des contrats individuels de travail sont fixées par arrêté du Ministre du Travail et de la Prévoyance Sociale pris après avis de la Commission Nationale Consultative du Travail."
+  },
+  "32": {
+   "numero": "32",
+   "page": 9,
+   "texte": "On ne peut engager ses services qu'à temps ou pour un ouvrage déterminé.\n\nLorsque le contrat est conclu pour une durée déterminée, celle-ci ne peut excéder deux ans pour les travailleurs recrutés sur le Territoire de la République Populaire du Congo et trois ans pour ceux recrutés à l'extérieur.\n\nSi le contrat arrivé à terme se poursuit par la volonté même tacite des parties, cette prolongation lui confère la caractère de contrat à durée indéterminée nonobstant toute clause prohibant la tacite reconduction."
+  },
+  "33": {
+   "numero": "33",
+   "page": 9,
+   "texte": "Tout contrat de travail stipulant une durée déterminée supérieure à trois mois ou nécessitant l'installat des travailleurs hors de leur lieu de recrutement doit être, après visite médicale de ceux-ci, constaté par écrit devant le Bureau de Placement du lieu d'embauche et assorti d'un visa. Tout contrat de travail nécessitant l'entrée d'un travailleur en République Populaire du Congo qu'en sortie doit être constaté par écrit et soumis obligatoirement au visa de la Direction Générale du Travail.\n\nL'Autorité compétente vise le contrat après notamment :\n\n1. avoir recueilli le visa d'accord préalable de l'inspecteur du Travail du lieu de l'emploi sur les conditions de travail consenties et sur le conformité du contrat aux dispositions applicables en matière de travail ;\n\n2. avoir recueilli l'avis de la Direction Centrale de la Main-d'œuvre dans les cas visés par le paragraphe 2 du présent article ;\n\n../\n5t\n\n9\n\n3. s'être assuré que le Bureau de Placement du lieu de l'emploi est favorable à l'embauchage ;\n4. avoir constaté l'identité du travailleur et son libre consentement ;\n5. avoir vérifié que le travailleur est libre de tout engagement antérieur ;\n6. avoir donné aux parties lecture et éventuellement traduction du contrat ;\n7. avoir vérifié en cas de contrat conclu pour une durée déterminée que celle-ci est stipulée sans ambiguïté.\n\nLa demande de visa incombe à l'employeur.\n\nSi le visa prévu au présent article est refusé, le contrat est nul de plein droit.\n\nSi l'omission du visa est due au fait de l'employeur, le travailleur aura droit de faire constater la nullité du contrat et pourra, en cas de préjudice dûment établi, réclamer des dommages-intérêts.\n\nLe voyage du travailleur du lieu d'emploi au lieu de recrutement est, dans ces deux cas, supporté par l'employeur."
+  },
+  "34": {
+   "numero": "34",
+   "page": 10,
+   "texte": "Il y a engagement à l'essai lorsque l'employeur et le travailleur, en vue de conclure un contrat définitif verbal ou écrit, décident au préalable d'apprécier notamment, le premier, la qualité des services du travailleur et son rendement, le second, les conditions, chez l'employeur, de travail, de vie, de rémunération, d'hygiène et de sécurité ainsi que le climat social.\n\nLe contrat d'engagement à l'essai est, à peine de nullité, constaté par écrit. Il est soumis au visa s'il répond aux conditions prévues par l'article 33.\n\nIl peut constituer une clause incluse dans le corps d'un contrat appelé à devenir définitif."
+  },
+  "35": {
+   "numero": "35",
+   "page": 10,
+   "texte": "Le contrat d'engagement à l'essai ne peut être conclu pour une durée supérieure au délai nécessaire pour mettre à l'épreuve le personnel engagé, compte tenu de la technique et des usages de la profession.\n\nDans tous les cas il ne peut porter, renouvellement compris, que sur une période maximum de 6 mois.\n\nLes délais de recrutement et de route ne sont pas compris dans la durée maximum de l'essai.\n\n../\nH\n\nS'il y a résiliation du contrat pendant la période d'essai par l'une ou l'autre des parties, le voyage du travailleur ou lieu de recrutement au lieu d'emploi, et vice-versa est, dans tous les cas, supporté par l'employeur."
+  },
+  "35_dup": {
+   "numero": "35_dup",
+   "page": 11,
+   "texte": "La prolongation des services après expiration du contrat d'engagement à l'essai sans qu'il y ait établissement de nouveau contrat équivaut à la conclusion d'un contrat à durée indéterminée prenant effet à la date du début de l'essai."
+  },
+  "37": {
+   "numero": "37",
+   "page": 11,
+   "texte": "Le contrat de travail à durée déterminée ne peut cesser avant terme par la volonté d'une seule des parties que dans les cas prévus au contrat ou dans celui de faute lourde laissé à l'appréciation de la juridiction compétente.\n\nS'il n'y a aucune faute lourde imputable au travailleur, que, néanmoins, l'employeur, par sa seule volonté, prononce la rupture anticipée du contrat, le travailleur percevra, sous réserve de l'appréciation de la juridiction compétente, à titre d'indemnité, les rémunérations et les avantages de toute nature qu'il aurait recueillis si le contrat avait été exécuté jusqu'à la date prévue par les parties."
+  },
+  "38": {
+   "numero": "38",
+   "page": 11,
+   "texte": "Sauf dispositions particulières expressément prévues au contrat, l'engagement à l'essai peut, à tout moment, cesser sans préavis par la volonté de l'une des parties.\n\nToutefois, la partie qui prend l'initiative de la rupture du contrat de travail à l'essai doit rapporter le preuve du motif de sa non-satisfaction devant l'inspecteur du Travail ou l'Autorité compétente qui en apprécie l'authenticité."
+  },
+  "39": {
+   "numero": "39",
+   "page": 11,
+   "texte": "Le contrat de travail à durée indéterminée peut toujours cesser par la volonté de l'une des parties.\n\nCette résiliation est subordonnée à un préavis donné par la partie qui prend l'initiative de la rupture, ce préavis ne devant en aucun cas se confondre avec la période de congé.\n\nEn l'absence de convention collective, un arrêté du Centre du Travail et de la Prévoyance Social, qui a préavis de la Commission Nationale Consultative du Travail, détermine les conditions et la durée du préavis compte tenu, notamment, de la durée du contrat et des catégories professionnelles.\n\nToute rupture doit être notifiée par écrit, la lettre de notification indique expressément le motif.\n11\n\nEn vue de recueillir leurs suggestions, l'employeur doit informer par écrit les membres du bureau syndical des mesures de licenciement qu'il a l'intention de prendre.\n\nEn cas de licenciement collectif, ou individuel motivé par une diminution de l'activité de l'établissement ou une réorganisation intérieure, l'employeur doit établir l'ordre des licenciements en tenant compte de la qualification professionnelle, de l'ancienneté des travailleurs et de leurs charges de famille.\n\nSeront licenciés en premier, par la Commission de litiges présidée par l'Inspecteur du Travail, les travailleurs présentant les moindres aptitudes professionnelles pour les emplois maintenus et, en cas d'égalité d'aptitudes professionnelles, les travailleurs moins anciens dans l'entreprise, l'ancienneté étant majorée d'un an pour le salarié marié et d'un an pour chaque enfant à charge aux termes de la réglementation des prestations familiales.\n\nUn arrêté du Ministre du Travail et de la Prévoyance Sociale fixera la composition de la Commission des litiges.\n\nLe travailleur ainsi congédié conserve pendant un an la priorité d'embauchage dans la même catégorie d'emploi. Il est tenu de communiquer à son employeur tout changement d'adresse survenant après son départ de l'entreprise. En cas de vacance, l'employeur transmet au Bureau de Placement une offre nominative d'emploi avec indication de la dernière adresse connue et de la date de licenciement du travailleur."
+  },
+  "40": {
+   "numero": "40",
+   "page": 12,
+   "texte": "Pendant la durée du préavis, l'employeur et le travailleur sont tenus au respect de toutes les obligations réciproques qui leur incombent.\n\nEn vue de la recherche d'un autre emploi, le travailleur bénéficiera pendant la durée du préavis, de deux jours de liberté par semaine pris à son choix, payés à plein salaire.\n\nLa partie à l'égard de laquelle ces obligations ne seraient pas respectées sera dispensée d'observer le délai de préavis restant à courir, sans préjudice des dommages-intérêts qu'elle jugerait bon de demander."
+  },
+  "41": {
+   "numero": "41",
+   "page": 12,
+   "texte": "Toute rupture du contrat à durée indéterminée sans préavis au sens que le délai de préavis ait été intégralement observé emporte obligation pour la partie responsable de verser à l'autre partie une indemnité dite \"indemnité de préavis\" dont le montant correspond à la rémunération et aux avantages de toute nature dont aurait bénéficié le travailleur durant le délai de préavis qui n'aura pas été effectivement respecté.\n\nToutefois, le travailleur congédié qui trouve un autre emploi durant la période de préavis peut quitter son dernier employeur sans lui être redevable d'une quelconque indemnité; sous la seule réserve de le prévenir de son départ définitif deux jours ouvrables auparavant.\n\n../\n12\n\nCependant la rupture de contrat peut intervenir sans préavis en cas de faute lourde, sous réserve de l'appréciation des services du Ministère du Travail et de la juridiction compétente en ce qui concerne la gravité de la faute.\n\nLe licenciement pour faute lourde ne prend effet qu'après que le travailleur ait présenté sa défense auprès de l'employeur avec la faculté de se faire assister par une personne de son choix. Pendant le délai nécessaire au travailleur pour présenter sa défense, délai ne pouvant excéder trente (30) jours, les relations de travail sont suspendues."
+  },
+  "42": {
+   "numero": "42",
+   "page": 13,
+   "texte": "Toute rupture abusive du contrat de travail donne lieu à la réintégration.\n\nL'Administration du Travail et la juridiction compétente constatent l'abus par une enquête sur les causes et les circonstances de la résiliation du contrat.\n\nLes licenciements effectués sans motifs légitimes tels que les licenciements motivés par les opinions du travailleur, son activité syndicale, son appartenance ou sa non-appartenance à un syndicat déterminé, son affiliation à un groupe politique ou philosophique en particulier, sont abusifs et donnent lieu à la réintégration.\n\nEn cas de contestation, la preuve de l'existence d'un motif légitime de licenciement incombe à l'employeur.\n\nLa décision ou le jugement devra mentionner expressément le motif allégué par la partie qui aura rompu le contrat.\n\nEn cas de refus de réintégration le montant des dommages-intérêts est fixé compte tenu de tous les éléments qui peuvent justifier l'existence et déterminer l'étendue du préjudice causé et notamment.\n\na) - Lorsque la responsabilité incombe au travailleur, du préjudice subi par l'employeur en raison de l'inégociution du contrat;\n\nb) - Lorsque la responsabilité incombe à l'employeur, des usages, de la nature des services engagés, de l'ancienneté des services, de l'âge du travailleur et des droits acquis à quelque titre que ce soit.\n\nCes dommages-intérêts ne se confondent ni avec l'indemnité pour inobservation de préavis, ni avec l'indemnité de licenciement éventuellement prévue par le contrat ou la convention collective"
+  },
+  "43": {
+   "numero": "43",
+   "page": 13,
+   "texte": "Lorsqu'un travailleur ayant rompu abusivement un contrat de travail engage à nouveau ses services, le\n13\n\nnouvel employeur est solidairement responsable du dommage causé à l'employeur précédent dans les trois (3) cas suivants :\n\n1. quand il est démontré qu'il est intervenu dans le débouchage ;\n2. quand il a embauché un travailleur qu'il savait déjà lié par un contrat de travail ;\n3. quand il a continué à occuper un travailleur après avoir appris que ce travailleur était encore lié à un autre employeur par un contrat de travail. Dans ce 3ème cas, la responsabilité du nouvel employeur cesse d'exister si, au moment où il a été averti, le contrat de travail abusivement rompu par le travailleur était venu à expiration, soit, s'il s'agit de contrat à durée déterminée, par l'arrivée du terme, soit s'il s'agit de contrat à durée indéterminée, par l'expiration du pré-vie ou si l'engagement du travailleur a été effectué dans les conditions prévues à l'article 41."
+  },
+  "44": {
+   "numero": "44",
+   "page": 14,
+   "texte": "En cas de résiliation avant terme d'un contrat soumis aux dispositions de l'article 33, l'employeur est tenu d'en aviser dans les quinze jours l'autorité devant laquelle le contrat a été conclu."
+  },
+  "45": {
+   "numero": "45",
+   "page": 14,
+   "texte": "S'il survient une modification dans la situation juridique de l'employeur, notamment par succession, vente, fusion, transformation de fonds, mise en société, tous les contrats de travail en cours au jour de la modification subsistent entre le nouvel employeur et le personnel de l'entreprise. Leur résiliation ne peut intervenir que dans les formes et aux conditions prévues par la présente section.\n\nLa cessation de l'entreprise, sauf le cas de force majeure, ne dispense pas l'employeur de respecter les règles établies à ladite section. La faillite et la liquidation judiciaire ne sont pas considérées comme des cas de force majeure.\n\nLes parties ne peuvent renoncer à l'avance au droit éventuel de demander des dommages-intérêts en vertu des dispositions ci-dessus."
+  },
+  "46": {
+   "numero": "46",
+   "page": 14,
+   "texte": "A l'expiration du contrat de travail, tout employeur est tenu de remettre à son travailleur, sous peine de dommages-intérêts, un certificat indiquant exclusivement la date de son entrée, celle de sa sortie, la nature et les dates des emplois successivement occupés.\n\nCe certificat est exempt de tous droits de timbre et d'enregistrement, même s'il contient la formule \"libre de tout engagement\" ou toute autre formule ne constituent ni obligation ni quittance.\n14"
+  },
+  "47": {
+   "numero": "47",
+   "page": 15,
+   "texte": "Le contrat de travail est suspendu :\n\na)- en cas de fermeture de l'établissement par suite du départ de l'employeur sous les drapeaux ou pour une période obligatoire d'instruction militaire ;\nb)- pendant la durée du service militaire ou para-militaire (service civique de la jeunesse) du travailleur et pendant les périodes obligatoires d'instruction militaire auxquels il est astreint ;\nc)- pendant la durée de l'absence du travailleur, en cas de maladie dûment constatée par un médecin agréé, durée limitée à 6 mois. Ce délai est prorogé jusqu'au remplacement du travail;\nd)- pendant la période d'indisponibilité résultant d'un accident du travail ou d'une maladie professionnel\ne)- pendant la durée de la détention préventive du travailleur, durée limitée à 6 mois ;\nf)- pendant les périodes de repos des femmes salariées en couches (article 113);\ng)- pendant la grève ou le lock-out déclenché dans le respect de la procédure de règlements des conflits collectifs ;\nh)- pendant l'exercice des fonctions syndicales ou électives impliquant une occupation à temps plein ;\ni)- en cas de réquisition d'intérêt national.\n\nNe sont pas considérés comme temps de service pour la détermination de l'ancienneté du travailleur dans l'entreprise, les périodes de suspension visées aux alinéas a) et e) ci-dessus.\n\nLes droits du travailleur mobilisé sont garantis en tout état de cause par la législation en vigueur."
+  },
+  "48": {
+   "numero": "48",
+   "page": 15,
+   "texte": "Dans les cas prévus aux alinéas a, b et c, l'employeur est tenu de verser au travailleur, dans la limite normale du préavis, une indemnité égale au montant de sa rémunération pendant la durée de l'absence.\n\nSi le contrat est à durée déterminée, la limite du préavis à prendre en considération est celle fixée dans les conditions prévues à l'article 39 pour les contrats à durée indéterminée. Dans ce cas la suspension ne peut avoir pour effet de proroger le terme du contrat initialement prévu."
+  },
+  "49": {
+   "numero": "49",
+   "page": 15,
+   "texte": "Les dispositions des articles 37, 39 à 46 ne s'appliquent pas, sauf convention contraire, aux contrats d'engagement à l'essai.\n\n../\n15"
+  },
+  "50": {
+   "numero": "50",
+   "page": 16,
+   "texte": "La convention collective de travail est un accord relatif aux conditions de travail conclu entre d'une part, les représentants d'un ou plusieurs syndicats ou groupements professionnels de travailleurs, et d'autre part, une ou plusieurs organisations syndicales d'employeurs ou tout autre groupement d'employeurs ou un ou plusieurs employeurs pris individuellement.\n\nLa convention peut mentionner des dispositions plus favorables aux travailleurs que celles des lois et règlements en vigueur. Elle ne peut déroger aux dispositions d'ordre public définies par ces lois et règlements.\n\nLes conventions collectives déterminent leur champ d'application. Celui-ci peut être national, régional ou local."
+  },
+  "51": {
+   "numero": "51",
+   "page": 16,
+   "texte": "Les représentants des organisations syndicales ou de tout autre groupement professionnel visés à l'article précédent peuvent contracter au nom de l'organisation qu'ils représentent, en vertu :\n\nsoit des stipulations particulières ou statutaires de cette organisation ;\n\n- soit d'une délibération spéciale de cette organisation.\n\nA défaut, pour être valable, la convention collective doit être ratifiée par une délibération spéciale de ce groupement.\n\nLes groupements déterminent eux-mêmes leur mode de délibération."
+  },
+  "52": {
+   "numero": "52",
+   "page": 16,
+   "texte": "La convention collective est applicable pendant une durée déterminée ou pour une durée indéterminée. Quand la convention est conclue pour une durée déterminée, celle-ci ne peut être supérieure à 5 ans.\n\nA défaut de stipulation contraire, la convention collective a durée déterminée qui arrive à expiration continue à produire ses effets comme une convention à durée indéterminée.\n\nLa convention collective a durée indéterminée peut cesser par la volonté d'une des parties.\n\nLa convention collective doit prévoir dans quelles formes et à quelle époque elle pourra être dénoncée, renouvelée ou revisée. La convention collective doit prévoir notamment la durée du préavis qui doit précéder la dénonciation.\n\nTout syndicat professionnel ou tout employeur qui ne fait pas partie à la convention peut y adhérer ultérieurement.\n\n../\n16"
+  },
+  "53": {
+   "numero": "53",
+   "page": 17,
+   "texte": "La convention collective doit être écrite, a peine de nullité.\n\nUn arrêté du Ministre du Travail et de la Prévoyance Sociale pris après avis de la Commission Nationale Consultative du Travail, détermine les conditions dans lesquelles sont déposées et publiées les conventions collectives ainsi que les conditions dans lesquelles s'effectuent les adhésions prévues au dernier paragraphe de l'article précédent.\n\nLes conventions collectives sont applicables, sauf stipulation contraire, à partir du jour qui suit leur dépôt dans les conditions et aux lieux qui seront indiqués par l'arrêté susvisé. Elles feront l'objet d'une publication, sans frais, au Journal Officiel."
+  },
+  "54": {
+   "numero": "54",
+   "page": 17,
+   "texte": "Sont soumises aux obligations de la convention collective toutes les personnes qui l'ont signée ou qui sont membres des organisations qui lui donnent leur adhésion ainsi que tous ceux qui, à un moment quelconque, deviennent membres de ces organisations.\n\nLorsque l'employeur est lié par les clauses de la convention collective de travail, ces clauses s'appliquent aux contrats de travail conclus avec lui.\n\nDans tout établissement compris dans le champ d'application d'une convention collective, les dispositions de cette convention s'imposent, sauf dispositions plus favorables pour les travailleurs, aux rapports nés des contrats individuels."
+  },
+  "55": {
+   "numero": "55",
+   "page": 17,
+   "texte": "A la demande de l'une des organisations syndicales d'employeurs ou de travailleurs intéressés, considérées comme les plus représentatives ou de sa propre initiative, le Ministre du Travail et de la Prévoyance Sociale provoque la réunion d'une commission mixte en vue de la conclusion d'une convention collective de travail ayant pour objet de régler les rapports entre employeurs et travailleurs d'une branche d'activité déterminée sur le plan national.\n\nUn arrêté du Ministre du Travail et de la Prévoyance Sociale détermine la composition de cette commission mixte qui comprendra en nombre égal, d'une part, des représentants des organisations syndicales les plus représentatives des travailleurs, d'autre part, des représentants des organisations syndicales les plus représentatives d'employeurs, ou à défaut de celles-ci, des employeurs.\n\nDes conventions annexes pourront être conclues pour chacune des principales catégories professionnelles ; elles contiendront les conditions particulières du travail à ces catégories et seront discutées par les représentants des organisations syndicales les plus représentatives des catégories intéressées.\n\n.../\n17\n\nLe caractère représentatif d'un syndicat ou d'un groupement professionnel est déterminé par le Ministre du Travail et de la Prévoyance Sociale qui réunira tous les éléments d'appréciation et prendra l'avis de l'Inspecteur du Travail et des Lois Sociales.\n\nLes éléments d'appréciation comprendront notamment :\n\n- le résultat des élections des membres du bureau syndical ;\n- les effectifs ;\n- les cotisations ;\n- l'expérience du syndicat, l'étendue et la nature de son activité.\n\nLa décision du Ministre du Travail et de la Prévoyance Sociale est susceptible, le cas échéant, de recours dans un délai de trente (30) jours. Dans tous les cas cette décision peut être déférée devant les tribunaux judiciaires statuant en matière de contentieux administratif.\n\nLes dispositions qui précèdent ne pourront être interprétées comme autorisant l'administration à prendre connaissance des registres d'inscription des adhérents et des livres de trésorerie du syndicat.\n\nSi une commission mixte n'arrive pas à se mettre d'accord sur une ou plusieurs des dispositions à introduire dans la Convention, l'Inspecteur du Travail doit, à la demande de l'une des parties, intervenir pour faciliter la réalisation de cet accord."
+  },
+  "56": {
+   "numero": "56",
+   "page": 18,
+   "texte": "Les conventions collectives visées à la présente section comprennent obligatoirement des dispositions concernant :\n\n1. le libre exercice du droit syndical et la liberté d'opinion des travailleurs ;\n2. Les salaires applicables par catégories professionnelles ;\n3. Les modalités d'exécution et les taux des heures supplémentaires, du travail de nuit et des jours non ouvrables ;\n4. La durée de la période d'essai et celle du préavis ;\n5. Les bureaux syndicaux ;\n6. Les dispositions concernant le procédure de révision, modification et dénonciation de tout ou partie de la convention collective ;\n7. Les modalités d'application du principe \"à travail égal, salaire égal\" pour les femmes et les enfants ;\n18\n\n8. Les congés payés, notamment la fixation de leur durée pour les travailleurs recrutés hors du lieu d'emploi;\n9. Les primes d'ancienneté ;\n10. L'indemnité de licenciement\n11. Les indemnités de déplacement et quand il y a lieu, les indemnités de dépayement ;\n12. Les conditions d'embauchage et de licenciement des travailleurs sans que les dispositions prévues puissent porter atteinte au libre choix du syndicat par le travailleur ;\n13. Les procédures conventionnelles de règlement des conflits collectifs de travail susceptibles de survenir entre les employeurs et les travailleurs liés par la convention.\n\nElles peuvent également contenir, sans que cette énumération soit limitative :\n\n1) Les primes d'assiduité ;\n2) L'indemnité de responsabilité\n3) L'indemnité pour frais professionnels et assimilés ;\n4) Les primes de panier pour les travailleurs doivent prendre leur repas sur le lieu du travail ;\n5) Les conditions générales de rémunération au rendement chaque fois qu'un tel mode de rémunération sera reconnu possible ;\n6) La majoration pour travaux pénibles, dangereux, insalubres ;\n7) Quand il y a lieu, l'organisation et le fonctionnement de l'apprentissage et de la formation professionnelle dans le cadre de la branche d'activité considérée ;\n8) Les conditions particulières de travail des femmes et des jeunes dans certaines entreprises se trouvent dans le champ d'application de la convention ;\n9) L'emploi à temps réduit de certaines catégories de personnel et leurs conditions de rémunération ;\n10) L'organisation, la gestion et le financement des services sociaux et médico-sociaux ;\n11) Les conditions particulières du travail ; travaux par roulement, travaux durant le repos hebdomadaire et durant les jours fériés\n\n./\n19"
+  },
+  "57": {
+   "numero": "57",
+   "page": 20,
+   "texte": "Dans le cas où une convention collective concernant une branche d'activité déterminée a été conclue sur le plan national, les conventions collectives conclues sur le plan inférieur régional ou local, adaptent cette convention ou certaines de ses dispositions aux conditions particulières de travail existant sur le plan inférieur.\n\nElles peuvent prévoir des dispositions nouvelles et des clauses plus favorables aux travailleurs."
+  },
+  "58": {
+   "numero": "58",
+   "page": 20,
+   "texte": "A la demande de l'une des organisations syndicales les plus représentatives ou à l'initiative du Ministre du Travail et de la Prévoyance Sociale, les dispositions des conventions collectives répondant aux conditions déterminées par la présente section peuvent être rendues obligatoires pour tous les employeurs et travailleurs compris dans le champ d'application professionnel et territorial de la convention collective, par décret pris après avis motivé de la Commission Nationale Consultative du Travail.\n\nCette extension des effets et des sanctions de la convention collective se fera pour la durée et aux conditions prévues par ladite convention.\n\nToutefois, le décret prévu au présent article peut extraire de la convention, sans en modifier l'économie, après avis motivé de la Commission Nationale Consultative du Travail, les clauses qui ne répondraient pas à la situation de la branche d'activité dans le champ d'application considéré. Par ailleurs doivent être exclues de l'extension des dispositions qui seraient en contradiction avec les textes législatifs ou réglementaires en vigueur."
+  },
+  "59": {
+   "numero": "59",
+   "page": 20,
+   "texte": "Le décret prévu à l'article précédent cessera d'avoir effet lorsque la convention collective aura cessé d'être en vigueur entre les parties par suite de sa dénonciation ou de son non-renouvellement.\n\nPar décret, pris après avis motivé de la Commission Nationale Consultative du Travail, à la demande de l'une des parties signataires ou à l'initiative du Ministre du Travail et de la Prévoyance Sociale, il peut être mis fin à l'extension de la convention collective ou de certaines de ses dispositions lorsque ladite convention ou les dispositions considérées ne paraissent plus répondre à la situation de la branche d'activité dans le champ d'application territorial considéré."
+  },
+  "60": {
+   "numero": "60",
+   "page": 20,
+   "texte": "Un décret, pris après avis de la Commission Nationale Consultative du Travail, peut, à défaut ou en attendant d'établissement d'une convention ou d'un accord d'établissement, réglementer les conditions de travail pour une profession déterminée en s'inspirant des conventions collectives déjà en vigueur."
+  },
+  "61": {
+   "numero": "61",
+   "page": 20,
+   "texte": "Tout projet d'extension ou de retrait d'extension d'une convention collective devra être précédé d'une consultation des organisations professionnelles et de toutes personnes intéressées, réalisé dans les conditions suivantes :\n\n../\n21"
+  },
+  "64": {
+   "numero": "64",
+   "page": 21,
+   "texte": "Lorsqu'une convention collective fait l'objet d'un décret portant extension, pris en application de l'article 58, elle est, en l'absence de dispositions contraires, applicables aux services, entreprises et établissements publics visés par la présente section qui, en raison de leur nature et de leur activité, se trouvent placés dans son champ d'application."
+  },
+  "65": {
+   "numero": "65",
+   "page": 21,
+   "texte": "Les groupements de travailleurs ou d'employeurs liés par une convention collective ou un accord prévu à l'article 62 ci-dessus sont tenus de ne rien faire, qui soit de nature à en compromettre la loyale exécution. Ils ne sont garants de cette exécution que dans la mesure déterminée par la convention."
+  },
+  "66": {
+   "numero": "66",
+   "page": 21,
+   "texte": "Les groupements capables d'ester en justice, liés par une convention collective de travail ou l'accord prévu à l'article 62 ci-dessus, peuvent, en leur nom propre, intenter une action en dommages-intérêts à tous autres groupements, à leurs propres membres ou à toutes personnes liées par la convention ou l'accord, qui en violeraient les engagements contractés."
+  },
+  "67": {
+   "numero": "67",
+   "page": 21,
+   "texte": "Les personnes liées par une convention collective ou l'accord prévu à l'article 62 ci-dessus peuvent intenter une action en dommages-intérêts aux autres personnes ou aux groupements liés par la convention qui violeraient à leur égard des engagements contractés."
+  },
+  "68": {
+   "numero": "68",
+   "page": 21,
+   "texte": "Les groupements capables d'ester en justice qui sont liés par la convention collective ou l'accord prévu à l'article 62 ci-dessus peuvent exercer toutes les actions qui naissent de cette convention ou de cet accord en faveur de leurs membres, sans avoir à justifier d'un mandat de l'intéressé, pourvu que celui-ci ait été averti et n'ait pas déclaré s'y opposer. L'intéressé peut toujours intervenir à l'instance engagée par le groupement.\n\nLorsqu'une action née de la convention collective ou de l'accord prévu à l'article 62 est intentée soit par une personne, soit par un groupement, tout groupement capable d'ester en justice, dont les membres sont liés par la convention ou l'accord peut toujours intervenir à l'instance engagée à raison de l'intérêt collectif que la solution du litige peut présenter pour ses membres."
+  },
+  "69": {
+   "numero": "69",
+   "page": 21,
+   "texte": "La sous-entreprise est la convention par laquelle un entrepreneur traite avec un autre entrepreneur pour l'exécution de la totalité ou d'une partie d'un travail donné ou pour le fourniture de certains services moyennant un prix forfaitaire.\n\n.../\n22\n\nLe sous-entrepreneur recrute lui-même la main-d'œuvre nécessaire."
+  },
+  "70": {
+   "numero": "70",
+   "page": 22,
+   "texte": "Quand les travaux sont exécutés dans les ateliers, magasins ou chantiers de l'entrepreneur ce dernier est, en cas d'insolvabilité du sous-entrepreneur, substitué à celui-ci en ce qui concerne ses obligations à l'égard des travailleurs et de la Caisse Nationale de Prévoyance Sociale.\n\nQuand les travaux sont exécutés dans un lieu autre que les ateliers, magasins ou chantiers de l'entrepreneur, ce dernier est en cas d'insolvabilité du sous-entrepreneur, responsable du paiement des salaires dûs aux travailleurs et du versement des cotisations à la Caisse Nationale de Prévoyance Sociale.\n\nLe travailleur lésé et la Caisse Nationale de Prévoyance Sociale, auront, dans ces cas, une action directe contre l'entrepreneur qui, lui, dispose d'une action récursoire contre le sous-entrepreneur."
+  },
+  "71": {
+   "numero": "71",
+   "page": 22,
+   "texte": "Dans le cas où un sous-entrepreneur inscrit ou non au registre de commerce, exécute ou fait exécuter des travaux dans des ateliers, magasins et chantiers, autres que ceux de l'entrepreneur principal qui les lui a confiés, il doit apposer dans chacun de ces ateliers, magasins ou chantiers, une pancarte indiquant en caractères durables et lisibles de la voie publique :\n\n- ses nom et adresse ;\n- sa qualité de sous-entrepreneur ;\n- le nom et l'adresse de la personne de qui il tient les travaux.\n\nCes indications sont communiquées à l'Inspecteur ou Travail en précisant la nature, la durée probable et l'emplacement des travaux.\n\nMême lorsqu'il applique les règlements, barèmes, salaires, etc. de l'entrepreneur principal, le sous-entrepreneur est tenu d'effectuer pour son propre compte des affichages réglementaires."
+  },
+  "72": {
+   "numero": "72",
+   "page": 22,
+   "texte": "L'entrepreneur doit tenir à jour la liste des sous-entrepreneurs avec lesquels il a passé contrat."
+  },
+  "73": {
+   "numero": "73",
+   "page": 22,
+   "texte": "Le \"marchandage\", c'est-à-dire la sous-entreprise qui a pour objet exclusif de procurer de la main d'œuvre à l'entrepreneur maître de l'ouvrage, est interdit en tant qu'il constitue une exploitation des ouvriers."
+  },
+  "74": {
+   "numero": "74",
+   "page": 22,
+   "texte": "Un règlement intérieur est tenu dans les établissements de toute nature, qu'ils dépendent d'une\n51\n\n23\n\nentreprise privée ou de la puissance publique"
+  },
+  "75": {
+   "numero": "75",
+   "page": 23,
+   "texte": "Le projet de règlement intérieur est établi par l'employeur, son contenu est exclusivement limité aux règles relatives à l'organisation technique du travail, à la discipline et aux prescriptions concernant l'hygiène et la sécurité nécessaires à la bonne marche de l'entreprise.\n\nToutes les autres clauses qui viendraient à y figurer, notamment celles relatives à la rémunération, seront considérées comme nulles de plein droit, à l'exception toutefois de celles concernant le retrait du salaire par les travailleurs absents le jour de la paie.\n\nAvant de le mettre en vigueur, le chef d'entreprise doit communiquer le règlement intérieur au bureau syndical s'il en existe, pour étude et discussion, et à l'Inspecteur du Travail qui peut exiger le retrait ou la modification des dispositions contraires aux lois et règlements en vigueur.\n\nUn arrêté du Ministre du Travail et de la Prévoyance Sociale pris après avis de la Commission Nationale Consultative du Travail, déterminera les modalités de communication, de dépôt et d'affichage du règlement intérieur, ainsi que le nombre de travailleurs de l'entreprise au-dessus duquel l'existence de ce règlement est obligatoire."
+  },
+  "76": {
+   "numero": "76",
+   "page": 23,
+   "texte": "Il est interdit à l'employeur d'infliger des amendes."
+  },
+  "77": {
+   "numero": "77",
+   "page": 23,
+   "texte": "Tout chef d'entreprise qui se fera remettre par un travailleur, à titre de cautionnement, des sommes d'argent ou des titres, devra en délivrer récépissé, les mentionner en détail sur le registre d'employeur prévu à l'article 182 et les mettre en dépôt dans le délai d'un mois à dater de leur réception.\n\nLe Mention du dépôt sera également portée au registre d'employeur et justifiée par un certificat de dépôt à la disposition de l'Inspection du Travail.\n\nLe Ministre du Travail et de la Prévoyance Sociale fixe, en arrêt, après consultation du Ministre des Finances et du Ministre de l'Economie Nationale, les modalités de ce dépôt, ainsi que la liste des caisses publiques et des banques habilitées à le recevoir. Les caisses d'épargne doivent accepter le dépôt et délivrer un livret spécial, distinct de celui que le travailleur pourrait posséder déjà ou acquérir ultérieurement."
+  },
+  "78": {
+   "numero": "78",
+   "page": 23,
+   "texte": "Le retrait de tout ou partie du dépôt ne pourra être effectué que sous le double consentement de l'employeur ou du travailleur, ou sous celui de l'un d'eux habilité à l'effet par une décision de la juridiction compétente.\n\n../\n24"
+  },
+  "79": {
+   "numero": "79",
+   "page": 24,
+   "texte": "L'affectation du livret ou du dépôt au cautionnement de l'intéressé entraîne privilège sur les sommes déposées au profit de l'employeur et à l'égard des tiers qui formeraient des saisies-arrêts aux mains de ce dernier. Toute saisie-arrêt formée entre les mains de l'administration de la caisse publique ou de la banque est nulle de plein droit."
+  },
+  "80": {
+   "numero": "80",
+   "page": 24,
+   "texte": "A conditions égales de travail, de qualification professionnelle et de rendement le salaire est égal pour tous les travailleurs quels que soient leur origine, leur sexe, leur âge et leur statut.\n\nDans tous les cas où les conditions de travail et d'exploitation le permettront, les salaires seront fixés au mois.\n\nLes dispositions nécessaires seront prévues par les conventions collectives ou accords d'établissements."
+  },
+  "81": {
+   "numero": "81",
+   "page": 24,
+   "texte": "Dans le cas où le travailleur est déplacé de son lieu de recrutement par l'employeur, celui-ci est tenu de le loger ou de lui verser une indemnité compensatrice.\n\nDans le cas où le travailleur ne peut, par ses propres moyens, obtenir, pour lui et sa famille, un ravitaillement régulier en denrées alimentaires de première nécessité, l'employeur est tenu de le classer dans les conditions prévues à l'article 83 ou d'ouvrir un économement des conditions de l'article 103."
+  },
+  "82": {
+   "numero": "82",
+   "page": 24,
+   "texte": "Les conditions d'attribution de primes d'éloignement ou de dépaysement aux travailleurs recrutés hors du lieu d'emploi relèvent du domaine de la convention collective ou du contrat individuel de travail.\n\nUne indemnité sera allouée au travailleur s'il est astreint par des obligations professionnelles à un déplacement occasionnel et temporaire hors de son lieu habituel d'emploi. Le taux de cette indemnité dite \"indemnité de déplacement\" est fixé par convention collective ou par le contrat individuel, ou à défaut, par voie réglementaire."
+  },
+  "83": {
+   "numero": "83",
+   "page": 24,
+   "texte": "Des décrets pris, après avis de la Commission Nationale Consultative du Travail, fixent :\n\n- les salaires minima interprofessionnels (SMIG) et, à défaut de conventions collectives ou de leurs silence, les salaires minima par cette indemnité sont en elles ainsi que les taux minima des heures supplémentaires et du travail de nuit ou des jours non ouvrables et, après paiement, les primes d'ancienneté et d'assiduité ;\n25\n\n- la valeur maxima de remboursement du logement et les conditions auxquelles il doit répondre notamment au regard de l'hygiène et pour assurer la protection des femmes et jeunes filles ne vivant pas en famille ;\n- les régions et les catégories de travailleurs pour lesquelles est obligatoire la fourniture d'une ration journalière de vivres, la valeur maxima de remboursement de celle-ci, le détail en nature et en poids des denrées alimentaires de première nécessité le composant, les conditions de sa fourniture."
+  },
+  "84": {
+   "numero": "84",
+   "page": 25,
+   "texte": "La rémunération d'un travail à la tâche ou aux pièces doit être calculée de telle sorte qu'elle procure au travailleur de capacité moyenne, et travaillant normalement, un salaire au moins égal à celui du travailleur rémunéré au temps effectuant un travail analogue.\n\nAucun salaire n'est dû en cas d'absence, en dehors des cas prévus par la réglementation et sauf accord entre les parties intéressées."
+  },
+  "85": {
+   "numero": "85",
+   "page": 25,
+   "texte": "Les taux minima de salaire, ainsi que les conditions de rémunération du travail à la tâche ou aux pièces sont affichés aux bureaux des employeurs et sur les lieux de paye du personnel après accord de l'Inspecteur du Travail et des Lois Sociales qui y appose son visa."
+  },
+  "86": {
+   "numero": "86",
+   "page": 25,
+   "texte": "Lorsque la rémunération des services est constituée, en totalité ou en partie, par des commissions ou des primes et prestations dans la mesure où celles-ci ne constituent pas un remboursement de frais, il en est tenu compte pour le calcul de la rémunération pendant la durée du congé payé, des indemnités de préavis et de licenciement, des dommages-intérêts.\n\nLe montant à prendre en considération à ce titre est la moyenne mensuelle des éléments visés au paragraphe précédent.\n\nToutefois, la période sur laquelle s'effectue ce calcul n'excèdera pas les douze mois de service ayant précédé la cessation du travail."
+  },
+  "87": {
+   "numero": "87",
+   "page": 25,
+   "texte": "Le salaire doit être payé en monnaie ayant cours légal, nonobstant toute stipulation contraire.\n\nLe paiement de tout ou partie du salaire en alcool ou en boissons alcoolisées est formellement interdit.\n\nLe paiement de tout ou partie du salaire en nature est également interdit sous réserve des dispositions du chapitre 1er du présent titre.\n\n../\n26\n\nLa paie est faite, sauf cas de force majeure, sur le lieu du travail ou au bureau de l'employeur lorsqu'il est voisin du lieu de travail. En aucun cas, elle ne peut être faite, ni dans un débit de boissons ou dans un magasin de vente, sauf pour les travailleurs qui y sont normalement occupés, ni le jour où le travailleur a droit au repos.\n\nLe paiement des salaires a lieu durant les heures de travail lorsque celles-ci concordent avec les heures d'ouverture normale de la caisse."
+  },
+  "88": {
+   "numero": "88",
+   "page": 26,
+   "texte": "A l'exception des professions pour lesquelles les usages établis prévoient une périodicité de paiement différente, et qui seront déterminées par arrêté du Ministre du Travail et de la Prévoyance Sociale après avis de la Commission Nationale Consultative du Travail, le salaire doit être payé à intervalles réguliers ne pouvant excéder quinze jours pour les travailleurs engagés à la journée ou à la semaine, et un mois pour les travailleurs engagés à la quinzaine ou au mois. Toutefois le travailleur journalier, engagé à l'heure ou à la journée, pour une occupation de courte durée, est payé chaque jour après la fin du travail.\n\nLes paiements mensuels doivent être effectués au plus tard huit jours après la fin du mois de travail qui donne droit au salaire, les paiements à la quinzaine ou à la semaine 4 jours après la quinzaine ou la semaine qui donne droit au salaire.\n\nPour tout travail aux pièces ou au rendement dont l'exécution doit durer plus d'une quinzaine, les dates de paiements peuvent être fixées de gré à gré, mais le travailleur doit recevoir chaque quinzaine les acomptes correspondant au moins à 90% du salaire minimum et être intégralement payé dans la quinzaine qui suit la livraison de l'ouvrage.\n\nLes commissions acquises au cours d'un trimestre doivent être payées dans les trois mois suivant la fin de ce trimestre.\n\nLes participations aux bénéfices réalisés durant un exercice doivent être payées dans les neuf mois qui suivent l'exercice.\n\nEn cas de résiliation ou de rupture de contrat, le salaire et les indemnités doivent être payés dès la cessation de service. Toutefois, en cas de litige, l'employeur peut obtenir du Président du Tribunal du Travail l'immobilisation provisoire entre ses mains de tout ou partie de la fraction saisissable des sommes dues.\n\nLes travailleurs absents le jour de la paie peuvent ensuite retirer leur salaire aux heures normales d'ouverture de la caisse et conformément au règlement intérieur de l'établissement."
+  },
+  "89": {
+   "numero": "89",
+   "page": 26,
+   "texte": "Par dérogation aux dispositions du premier alinéa de l'article précédent, les entreprises occupant plus\n\n../\n27\n\nde 50 travailleurs seront autorisées à payer mensuellement les ouvriers dont le salaire est calculé sur une base horaire ou journalière, à condition qu'un acompte représentant au moins le tiers du salaire du mois précédent soit versé chaque quinzaine.\n\nLes travailleurs employés par les services et établissements publics seront payés une fois par mois."
+  },
+  "90": {
+   "numero": "90",
+   "page": 27,
+   "texte": "Le paiement du salaire doit être constaté par une pièce certifiée par l'employeur ou son représentant et émargée par chaque intéressé ou par deux témoins s'il est illettré. Ces pièces sont conservées par l'employeur dans les mêmes conditions que les pièces comptables et doivent être présentées à toute réquisition de l'Inspection du Travail.\n\nSauf dérogation autorisée par l'Inspecteur du Travail, les employeurs seront tenus de délivrer au travailleur, au moment du paiement, un bulletin individuel de paie. Mention sera faite par l'employeur du paiement du salaire sur un registre tenu à cette fin dit \"livre de paie\".\n\nLa contexture du \"bulletin individuel de paie\" est du \"livre de paie\" sera fixée par arrêté du Ministre du Travail et de la Prévoyance Sociale après avis de la Commission Nationale Consultative du Travail.\n\nNe sera pas opposable au travailleur la mention \"pour solde de tout compte\" ou toute mention équivalente souscrite par lui, soit au cours de l'exécution, soit après la résiliation de son contrat de travail et par laquelle le travailleur renonce à tout ou partie des droits qu'il tient de son contrat de travail.\n\nL'acceptation sans protestation ni réserve, par le travailleur d'un bulletin individuel de paie ne peut valoir renonciation de sa part au paiement de tout ou partie du salaire, des primes et des indemnités de toute nature qui lui sont dues en vertu des dispositions législatives, réglementaires ou contractuelles. Elles ne peuvent valoir non plus compte arrêté et réglé au sens du Code Civil et du Code de procédure civile.\n\nEn cas de contestation sur le paiement du salaire, des primes et indemnités de toute nature, le non-paiement sera présumé de manière irréfragable, sauf cas de force majeure, si l'employeur n'est pas en mesure de produire le livre de paie dûment émargé par le travailleur ou des témoins sous les mentions contestées ou le double émargé dans les mêmes conditions du bulletin de paie afférent au paiement du salaire contesté."
+  },
+  "91": {
+   "numero": "91",
+   "page": 27,
+   "texte": "Au sens des dispositions du présent titre, le salaire s'entend, du salaire proprement dit quelle que soit son appellation, de l'allocation de congé, des primes, des\n28\n\nindemnités de toute nature et des dommages-intérêts pour rupture abusive du contrat de travail."
+  },
+  "92": {
+   "numero": "92",
+   "page": 28,
+   "texte": "A due concurrence de la fraction insaisissable du salaire, telle qu'elle résulte des dispositions de l'article 101 ci-après, les créances du salaire du travailleur bénéficient d'un privilège préférable à tous les autres privilèges généraux ou spéciaux.\n\nLe privilège s'exerce sur les biens, meubles et immeubles de l'employeur."
+  },
+  "93": {
+   "numero": "93",
+   "page": 28,
+   "texte": "En cas de liquidation judiciaire ou de faillite les sommes précomptées par le Trésor, postérieurement à la date de cessation des paiements, sur les mandats dûs à l'employeur sont rapportées à la masse."
+  },
+  "94": {
+   "numero": "94",
+   "page": 28,
+   "texte": "Au plus tard dans les 10 jours qui suivent le jugement déclaratif de faillite ou de liquidation judiciaire, et sur simple ordonnance du juge commissaire, le syndic ou le liquidateur paie les créances des travailleurs.\n\nAu cas où il n'aurait pas de fonds nécessaires, ces créances doivent être acquittées sur les premières rentrées de fonds avant toute créance, comme indiqué à l'article 92 ci-dessus."
+  },
+  "95": {
+   "numero": "95",
+   "page": 28,
+   "texte": "Au cas où lesdites créances sont payées, grâce à une avance faite par le syndic ou le liquidateur ou toute autre personne, le prêteur est, par cela même, subrogé dans les droits du travailleur et doit être remboursé dès la rentrée des fonds nécessaires, sans qu'aucun autre créancier puisse y faire opposition."
+  },
+  "96": {
+   "numero": "96",
+   "page": 28,
+   "texte": "Le travailleur logé par l'employeur avant la liquidation ou la faillite continue à être logé jusqu'à la date de paiement de sa dernière créance ou, éventuellement, jusqu'à la date du départ du moyen de transport mis à sa disposition pour regagner son lieu de recrutement."
+  },
+  "97": {
+   "numero": "97",
+   "page": 28,
+   "texte": "Le travailleur détenteur de l'objet par lui ouvré peut exercer le droit de rétention dans les conditions prévues par la législation en vigueur.\n\nLes objets mobiliers confiés à un ouvrier pour être travaillés, façonnés, réparés ou nettoyés et qui n'auront pas été retirés dans le délai d'un an pourront être vendus dans les conditions et formes déterminées par la législation en vigueur."
+  },
+  "98": {
+   "numero": "98",
+   "page": 28,
+   "texte": "Les sommes dues aux entrepreneurs de tous les travaux ayant le caractère de travaux publics ne peuvent être frappées de saisie-arrêt, ni d'opposition au préjudice des ouvriers auxquels les salaires sont dûs.\n\nLes sommes dues aux ouvriers pour salaires sont payées de préférence à celles dues aux fournisseurs.\n\n.../\n29"
+  },
+  "99": {
+   "numero": "99",
+   "page": 29,
+   "texte": "L'action en paiement des salaires, indemnités, primes, commissions et prestations diverses ou indemnités représentatives de ces prestations, se prescrit par un an.\n\nLa prescription court à compter de la date à partir de laquelle le salaire ou les accessoires de salaires sont exigibles. Elle est interrompue soit par la réclamation verbale ou écrite formulée par le travailleur en matière de paiement de salaire devant les services de l'Inspection du Travail, soit lorsqu'il y a compte arrêté, cédule, obligation ou citation en justice non périmés."
+  },
+  "100": {
+   "numero": "100",
+   "page": 29,
+   "texte": "Les prélèvements obligatoires et les consignations qui peuvent être prévues par les conventions collective et les contrats individuels de travail, peuvent faire l'objet de retenues sur le salaire.\n\nLe remboursement d'avances d'argent consenties par l'employeur au travailleur ne peut faire l'objet de retenues sur les appointements ou salaires que par saisie-arrêt ou cession volontaire souscrite devant le magistrat du lieu de la résidence ou devant l'Inspecteur du Travail.\n\nToutefois, lorsque le magistrat ou l'Inspecteur du Travail habitera à plus de 50 kilomètres, il pourra y avoir consentement réciproque et écrit devant le chef de l'unité administrative la plus proche.\n\nLe plafond des prêts ou avances sur salaires consentis directement par l'employeur à son salarié ne peut excéder deux mois de salaire, sauf convention contraire conclue dans les conditions des paragraphes 2 et 3 ci-dessus.\n\nLes acomptes sur travail en cours ne sont pas considérés comme avances.\n\nSauf décision judiciaire, aucune compensation ne s'opère au profit des employeurs entre le montant des appointements ou salaires dûs par eux à leurs travailleurs et les sommes qui leur seraient dues à eux-mêmes."
+  },
+  "101": {
+   "numero": "101",
+   "page": 29,
+   "texte": "Des décrets pris, après avis de la Commission Nationale Consultative du Travail, fixent les portions de salaires soumises à prélèvements progressifs et les taux y afférents. La retenue visée à l'article précédent ne peut pour chaque paie, excéder les taux fixés par décret.\n\nIl doit être tenu compte, pour le calcul de la retenue non seulement du salaire proprement dit, mais de tous les accessoires du salaire à l'exception toutefois des indemnités déclarées insaisissables par la réglementation en vigueur\n\n.../\n30\n\ndes sommes allouées à titre de remboursement de frais exposés par le travailleur et des allocations ou indemnités pour charge de famille."
+  },
+  "102": {
+   "numero": "102",
+   "page": 30,
+   "texte": "Les dispositions d'une convention ou d'un contrat autorisant tous autres prélèvements sont nulles de plein droit\n\nLes sommes retenues au travailleur en contravention des dispositions ci-dessus portent intérêts à son profit au taux légal depuis la date où elles auraient dû être payées et peuvent être réclamées par lui jusqu'à prescription. Le cours en étant suspendu pendant la durée du contrat."
+  },
+  "103": {
+   "numero": "103",
+   "page": 30,
+   "texte": "Est considérée comme économat, toute organisation ou l'employeur pratique, directement ou indirectement, la vente ou la cession de marchandises aux travailleurs de l'entreprise pour leurs besoins personnels et normaux.\n\nLes économats sont admis sous la triple condition :\n\n- a) que les travailleurs ne soient pas obligés de s'y fournir ;\n- b) que la vente des marchandises y soit faite exclusivement au comptant et sans bénéfice ;\n- c) que la comptabilité du ou des économats de l'entreprise soit entièrement autonome.\n\nLe prix des marchandises mises en vente doit être affiché lisiblement.\n\nTout commerce installé à l'intérieur de l'entreprise est soumis aux dispositions qui précèdent à l'exception des coopératives ouvrières.\n\nLa vente des alcools et spiritueux est interdite dans les économats, ainsi que sur le lieu d'emploi du travailleur."
+  },
+  "104": {
+   "numero": "104",
+   "page": 30,
+   "texte": "L'ouverture d'un économat, dans les conditions prévues à l'article précédent, est subordonnée à l'autorisation du Ministre du Travail et de la Prévoyance Sociale délivrée après avis de l'Inspecteur du Travail du ressort et consultation du Ministre de l'Economie Nationale.\n\nElle peut être prescrite dans toute entreprise par le Ministre du Travail et de la Prévoyance Sociale sur proposition de l'Inspecteur du Travail et après consultation du Ministre de l'Economie Nationale.\n\nLe fonctionnement et la comptabilité des économats sont contrôlés par l'Inspecteur du Travail qui, en cas d'abus constaté peut prescrire la fermeture provisoire pour une durée maximum d'un mois.\n\n../\n31\n\nLe Ministre du Travail et de la Prévoyance social ou ordonner la fermeture définitive du ou des économiste de l'entreprise, leur rapport de l'inspecteur du Travail et après consultation du Ministre de l'Economie Nationale.\n\nIl y a\n- 1.2.1.\n\n1. 2. 3. 4. 5. 6. 7. 8. 9. 10. 11. 12. 13. 14. 15. 16. 17. 18. 19. 20. 21. 22. 23. 24. 25. 26. 27. 28. 29. 30. 31. 32. 33. 34. 35. 36. 37. 38. 39. 40. 41. 42. 43. 44. 45. 46. 47. 48. 49. 50. 51. 52. 53. 54. 55. 56. 57. 58. 59. 60. 61. 62. 63. 64. 65. 66. 67. 68. 69. 70. 71. 72. 73. 74. 75. 76. 77. 78. 79. 80. 81. 82. 83. 84. 85. 86. 87. 88. 89. 90. 91. 92. 93. 94. 95. 96. 97. 98. 99.\n\nDES CONDITIONS DU TRAVAIL"
+  },
+  "105": {
+   "numero": "105",
+   "page": 31,
+   "texte": "Dans tous les établissements publics ou pris non agricoles, ou compris ceux d'enseignement et de bienfaisance, la durée légale du travail des employés ou ouvriers de l'un ou l'autre sexe, de tout âge, travaillant à temps, à la tâche ou aux pièces, ne peut excéder quarante heures par semaine.\nDans toutes les entreprises agricoles, les heures de travail sont basées sur 2.400 heures pour l'année. Dans cette limite la durée hebdomadaire du travail selon les saisons et les régions sera fixée par décret pris après avis de la Commission Nationale Consultative du Travail.\n\nDes déceptions à la durée légale du travail pourront toutefois être admises dans des conditions qui seront fixées par décret pris après avis de la Commission Nationale Consultative du Travail.\n\nDes déceptions dans les mêmes conditions de termineront par branche d'activité et par catégorie professionnelle, s'il y a lieu, les modalités d'application de la durée du travail et des déceptions sont plus que le durée maximum des heures supplémentaires du travail et les déceptions sont plus que le durée maximum des heures supplémentaires du travail et les déceptions sont plus que le durée maximum des heures supplémentaires du travail et les déceptions sont plus que le durée maximum des heures supplémentaires du travail et les déceptions sont plus que le durée maximum des heures supplémentaires du travail et les déceptions sont plus que le durée maximum des heures supplémentaires du travail et les déceptions sont plus que le durée maximum des heures supplémentaires du travail et les déceptions sont plus que le durée maximum des heures supplémentaires du travail et les déceptions sont plus que le durée maximum des heures"
+  },
+  "106": {
+   "numero": "106",
+   "page": 31,
+   "texte": "Le travail d'indiquer entre 20 heures et 5 heures est considéré comme travail de nuit."
+  },
+  "107": {
+   "numero": "107",
+   "page": 31,
+   "texte": "La durée du travail de nuit ne peut excéder huit heures consécutives."
+  },
+  "108": {
+   "numero": "108",
+   "page": 31,
+   "texte": "Dans les autres, manquez des适宜, d'autres, d'autres, d'autres, d'autres, d'autres, d'autres, d'autres, d'autres, d'autres, d'autres, d'autres, d'autres, d'autres, d'autres, d'autres, d'autres, d'autres, d'autres, d'autres, d'autres, d'autres, d'autres, d'autres, d'autres, d'autres, d'autres, d'autres, d'autres, d'autres, d'autres, d'autres, d'autres, d'autres, d'autres\n\nLorsque, en raison de conditions économiques exceptionnelles et par collerement valables, le intérêt général de la864, le travail de nuit des femmes pourra être conservé par la promotion du Ministre du Travail et de la Prévoyance social, par décret pris après consultation des organisations les plus représentatives d'employeurs et de travailleurs intéressés.\n32"
+  },
+  "109": {
+   "numero": "109",
+   "page": 32,
+   "texte": "Le repos des femmes doit avoir une durée de\nonze heures consécutives au minimum, et le\nmembre de ce qu'il doit comprendre la période nocturne, définie à l'arti-\ncle 406, le 1er trimestre de 1999."
+  },
+  "110": {
+   "numero": "110",
+   "page": 32,
+   "texte": "Dans les industries dans lesquelles le travail\ns'applique à des matières qui seraient susceptibles d'altéra-\ntion très rapide, il peut être dérogé temporairement, et sur\nsimple préavis, aux dispositions du premier alinéa de l'arti-\ncle 108, en ce qui concerne les femmes majeures.\n\nLes chefs d'établissements devront toutefois prévenir\nl'inspecteur du travail et des Lois Sociales de leur ressort\navant de faire usage de cette dérogation."
+  },
+  "111": {
+   "numero": "111",
+   "page": 32,
+   "texte": "Des dérogations permanentes aux dispositions\nprévues aux articles 107, 108 et 109 pourront être admises\npar décret pris après avis de la Commission Nationale Consul-\ntative du Travail pour les femmes occupées dans les services\nde l'hygiène et du bien-être et qui n'effectueront pas norma-\nlement un travail manuel."
+  },
+  "112": {
+   "numero": "112",
+   "page": 32,
+   "texte": "Des décrets pris après avis de la Commission Na-\ntionale Consultative du Travail fixent la nature des travaux\ninterdits aux femmes et aux femmes enceintes."
+  },
+  "113": {
+   "numero": "113",
+   "page": 32,
+   "texte": "Toute femme enceinte dont l'état a été médicale-\nment constaté peut quitter le travail sans préavis et sans\navoir de ce fait à payer une indemnité de rupture de contrat.\n\nLa décision de son accouchement, de faire que cette\ninterruption de service puisse être considérée comme une cause\nde rupture du contrat, toute femme a le droit de suspendre\n\nson travail pendant des 15 semaines, dont pour\npossession de trois semaines en cas de malheur dûment concrétée\net résultant de la grossesse ou des couches. Pendant cette pé-\nriode, l'employeur ne peut lui donner. Toute telle a droit\nd'une part de la charge de l'employeur à la moitié de son sa-\nlaire et d'autre part de la charge de la presse nationale de\nPrévoyance Sociale, ou de la partie de la autre moitié du\nsalaire qu'elle percevait au moment de la suspension du tra-\nvail, elle conserve le droit aux prestations en cours.\n\nL'inspecteur du travail peut décider sur le base d'un\ncertificat médical, d'une durée de 1er trimestre de 1999, comme\nenceinte, avant la période d'interruption du travail, pour une\nou plusieurs périodes, dont le durée de 1er trimestre de 1999\nl'inspecteur du travail, dans les cas suivants :\n\nUn ou un cas, pour la présence de la grossesse,\nle travail, un ou un cas, pour la présence de la\npédagogie, un ou un cas, pour la présence de la\npédagogie, un ou un cas, pour la présence de la\npédagogie, un ou un cas, pour la présence de la\npédagogie, un ou un cas, pour la présence de la\npédagogie, un ou un cas, pour la présence de la\npédagogie, un ou un cas, pour la présence de la\npédagogie, un ou un cas, pour la présence de la\npédagogie, un ou un cas, pour la présence de la\npédagogie.\n33\n\nb) quand les conditions de travail ou d'environnement sont considérées comme préjudiciables à la santé de la mère et de l'enfant.\n\nPendant cette période la femme garde le bénéfice de tous les droits tels qu'ils sont prévus au paragraphe 2 du présent article.\n\nToute convention contraire est nulle de plein droit."
+  },
+  "114": {
+   "numero": "114",
+   "page": 33,
+   "texte": "Il est interdit d'employer une femme pendant les 15 semaines de congé de maternité prévu à l'article précédent."
+  },
+  "115": {
+   "numero": "115",
+   "page": 33,
+   "texte": "Pendant une période de quinze mois à compter de la naissance de l'enfant, la mère a droit à des repos pour allaitement.\n\nLa durée de ces repos ne peut dépasser une heure par journée de travail, cette heure pouvant être fractionnée en deux demi-heures à la demande de la mère.\n\nCelle-ci peut, pendant cette période, quitter son travail sans préavis, et sans avoir de ce fait à payer une indemnité de rupture."
+  },
+  "116": {
+   "numero": "116",
+   "page": 33,
+   "texte": "Les enfants ne peuvent être employés dans aucune entreprise même comme apprentis, avant l'âge de 16 ans sauf dérogation accordée par le Ministre de l'Education Nationale après avis de l'Inspecteur du Travail du lieu de l'emploi ou de son suppléant légal. Un décret pris après avis de la Commission Nationale Consultative du Travail fixera la nature des travaux et les catégories d'entreprises interdits aux jeunes et l'âge limite auquel s'applique l'interdiction."
+  },
+  "117": {
+   "numero": "117",
+   "page": 33,
+   "texte": "L'Inspecteur du Travail et des Lois Sociales peut requérir l'examen des femmes et des enfants par un médecin agréé, en vue de vérifier si le travail dont ils sont chargés n'excède pas leurs forces. Cette réquisition est de droit à la demande des intéressés.\n\nLa femme ou l'enfant ne peut être maintenu dans un emploi ainsi reconnu au-dessus de ses forces et doit être affecté à un emploi convenable.\n\nSi cela n'est pas possible, le contrat doit être résolu avec paiement de l'indemnité de préavis et, éventuellement, de l'indemnité de licenciement."
+  },
+  "118": {
+   "numero": "118",
+   "page": 33,
+   "texte": "Le repos hebdomadaire est obligatoire. Il est au minimum de vingt quatre heures consécutives par semaine. Il a lieu en principe le dimanche.\n\n../\nUn décret pris après suite de la Commission Nationale\nconsulcaive du travail, détermine les modalités d'applica-\ntion du paragraphe précédent, notamment les professions\npour lesquelles et les conditions dans lesquelles le repos\npourra exceptionnellement et pour des motifs nettement\nétablis, soit, être donné par roulement ou collectivement\nd'autres jours que le dimanche, soit, être suspendu par\ncompensation des fêtes rituelles ou locales, soit, réparti\nsur une période plus longue que la semaine."
+  },
+  "119": {
+   "numero": "119",
+   "page": 34,
+   "texte": "Sauf dispositions plus favorables des conven-\ntions collectives ou des contrats individuels de travail, le\ntravailleur acquiert droit au congé paye à la charge de\nl'employeur à raison d'un minimum de 26 jours ouvrables par\nannée de service effectif.\n\nSont assimilées à un mois de service effectif les\npériodes équivalentes à 26 jours de travail.\nLe code du congé est commandé en considération de\nl'ancienneté des travailleurs dans l'entreprise suivant les\nrèglements en vigueur ou les dispositions des conventions\ncollectives.\n\nPour le calcul de la durée du congé acquiert, le code ne\nsouhaite pas de présence pour allonger le travail ou\ndéterminer les(b)les(b)les(b)les(b)les(b)les(b)les(b)les(b)les(b)les(b)les(b)les(b)les(b)les(b)les(b)les(b)les(b)les(b)les(b)les(b)les(b)les(b)les(b)les(b)les(b)les(b)les(b)les(b)les(b)les(b)les(b)les(b)les(b)les(b)les\n\nSont également décomposés, sur les bases indiquées ci-\ndées, les services effectués dans cette correspondance sont\nle compte du même employeur, quel que soit la date de\nl'emploi.\n\nDans une limite de 10 jours, ne peuvent être déduites\nde la durée du congé acquiert les permissions exceptionnelles\nqui auraient été formulées au travailleur à l'occasion d'une\ndémarche familiale touchant directement son compte (voir\nparfaites exceptionnelles) dont paye en 26 jours de la\ncompte, que les produits de son date (jours d'envie) pourront\nêtre déduits à la date de l'emploi d'aucune compensation\nou décompression des journées d'âge annoncées.\n\nPour le travailleur pendant son congé paye au lieu de\nl'emploi, au lieu de son règlement, le code du congé est\nsupréglé des délais de toute correspondance à la place de\nl'emploi, ainsi que le code de la date de la date de la date\nde la date de la date de la date de la date de la date\nde la date de la date de la date de la date de la date\nde la date de la date de la date de la date de la date\nde la date de la date de la date de la date de la date\nde la date de la date de la date de la date de la date\nde la date de la date de la date de la date de la date\nde la date de la date de la date de la date de la date\nde la date de la date de la date de la date de la date\nde la date de la date de la date de la date de la date\nde la date de la date de la date de la date de la date\nde la date de la date de la date de la date de la date\nde la date de la date de la date de la date\nde la date de la date de la date de la date\nde la date de la date de la date\n\nUn congé pour effet de déconstruire ou une mise en\ndisponibilité peut être adopté à tous les cas, soit pendant\nun (1) un renouvelable une date de la date de la date\nnété\n35\n\nde deux (2) ans sur autorisation de l'employeur.\n\nAu terme de cette disponibilité ou congé, le travailleur réintègre automatiquement son emploi. Toutefois les conventions collectives ou accords d'établissements, détermineront les conditions d'application."
+  },
+  "120": {
+   "numero": "120",
+   "page": 35,
+   "texte": "Le droit de jouissance au congé est acquis après une durée de service effectif égale à 12 mois.\n\nCe droit se prescrit par trois ans.\n\nLes conventions collectives ou les contrats individuels de travail pourront prévoir une durée plus longue de service effectif ouvrant droit de jouissance au congé, sans que cette durée puisse être supérieure à 24 mois.\n\nEn cas de rupture ou d'expiration du contrat avant que le travailleur ait acquis droit au congé, une indemnité calculée sur les bases des droits acquis d'après l'article précédent doit être accordée en place de congé.\n\nEn dehors de ce cas, est nulle et de nul effet toute convention prévoyant l'octroi d'une indemnité compensatrice aux lieu et place du congé."
+  },
+  "121": {
+   "numero": "121",
+   "page": 35,
+   "texte": "Le travailleur est libre de prendre son congé dans le pays de son choix, sous réserve des dispositions du présent chapitre."
+  },
+  "122": {
+   "numero": "122",
+   "page": 35,
+   "texte": "L'employeur doit verser au travailleur, pendant toute la durée du congé, une allocation qui sera au moins égale aux rémunérations et aux différents éléments de rémunération définis à l'article 86 dont le travailleur bénéficiait au cours des 12 mois ayant précédé la date de départ en congé, à l'exclusion, s'il y a lieu, de l'indemnité de dépaysement.\n\nLe montant de l'allocation de congé devra être versé en totalité au travailleur au jour de son départ en congé."
+  },
+  "123": {
+   "numero": "123",
+   "page": 35,
+   "texte": "Lorsque l'exécution du contrat de travail entraîne ou a entraîné le déplacement du travailleur du lieu de son recrutement, les frais de voyage du travailleur, de son (ou ses) épouse(s) légitime(s) et de ses enfants mineurs vivant habituellement avec lui, ainsi que les frais de transports de leurs bagages sont à la charge de l'employeur.\n\n1. du lieu de recrutement au lieu de l'emploi,\n\n2. du lieu de l'emploi au lieu du recrutement ;\n\nen cas d'expiration du contrat à durée déterminée en cas de résiliation du contrat lorsque le travailleur a acquis droit au congé dans les conditions prévues à l'article 120 ;\n\nen cas de rupture du contrat du fait de l'employeur\n\n.../...\n36\n\nou à la suite d'une faute lourde de celui-ci ;\n\nen cas de rupture du contrat due à un cas de force majeure ;\n\n3. du lieu de l'emploi au lieu de recrutement et vice-versa\n\nen cas de congé normal. Le retour sur le lieu d'emploi n'est dû que si le contrat n'est pas venu à expiration avant la date de fin de congé et si le travailleur à cette date est en état de reprendre son service.\n\nToutefois, le contrat individuel de travail ou la convention collective pourra prévoir une durée minima de séjour en décà de laquelle le transport des familles ne sera pas à la charge de l'employeur. Cette durée n'excèdera pas 6 mois."
+  },
+  "124": {
+   "numero": "124",
+   "page": 36,
+   "texte": "Sous réserve des dispositions des articles 33 et 35, lorsqu'un contrat est résilié pour des causes autres que celles visées à l'article précédent ou par la faute lourde du travailleur, le montant des frais de transport, aller et retour incombent à l'entreprise."
+  },
+  "125": {
+   "numero": "125",
+   "page": 36,
+   "texte": "Le moyen de transport, la classe de passage et le poids des bagages sont déterminés par la situation occupée par le travailleur dans l'entreprise, suivant la stipulation de la convention collective ou du contrat individuel de travail ou, à défaut, suivant les règles adoptées par l'employeur à l'égard de son personnel ou suivant les usages locaux.\n\nIl sera tenu compte, dans tous les cas, des charges de famille pour le calcul du poids des bagages. Toutefois l'employeur est tenu de remettre au travailleur et à sa famille les titres de transport"
+  },
+  "126": {
+   "numero": "126",
+   "page": 36,
+   "texte": "Sauf stipulation contraire, les voyages et transports sont effectués par une voie et des moyens de transport normaux au choix de l'employeur. Le travailleur qui use d'une voie ou des moyens de transports plus coûteux que ceux régulièrement choisis ou agréés par l'employeur n'est défrayé par l'entreprise qu'à concurrence des frais occasionnés par la voie ou les moyens régulièrement choisis.\n\nS'il use d'une voie ou de moyens de transport plus économiques il ne peut prétendre qu'au remboursement des frais engagés.\n\nLes délais de transport ne sont pas compris dans la durée maxima du contrat telle qu'elle est prévue à l'article 32."
+  },
+  "127": {
+   "numero": "127",
+   "page": 36,
+   "texte": "A défaut de convention contraire, le travailleur qui use d'une voie ou de moyens de transport moins rapides que ceux régulièrement choisis par l'employeur ne peut prétendre de ce fait à des délais de route plus longs que ceux prévus par la voie et les moyens normaux.\n\nS'il use d'une voie ou de moyens plus rapides, il continue à bénéficier, en plus de la durée du congé proprement dit,\n\n.../\n37\n\ndes délais qui auraient été nécessaires avec l'usage de la voie et des moyens choisis par l'employeur."
+  },
+  "128": {
+   "numero": "128",
+   "page": 37,
+   "texte": "Le travailleur qui a cessé son service peut exiger de son ancien employeur, la mise à sa disposition des titres de transport auxquels il a droit, dans un délai de deux ans à compter de la cessation du travail chez ledit employeur.\n\nCe délai sera majoré, le cas échéant, du temps écoulé entre la citation en justice motivée par la réclamation de ce droit et le jugement définitif."
+  },
+  "129": {
+   "numero": "129",
+   "page": 37,
+   "texte": "Le travailleur qui a cessé son service et qui est dans l'attente du moyen de transport désigné par son employeur pour regagner son lieu de recrutement conserve le bénéfice des avantages en nature et reçoit de l'employeur une indemnité égale à la rémunération qu'il aurait perçue s'il avait continué à travailler.\n\nLe travailleur dont le contrat est signé ou dont le congé est arrivé à expiration et qui reste à la disposition de son employeur dans l'attente du moyen de transport désigné par l'employeur et lui permettant de quitter son lieu de recrutement pour rejoindre son lieu d'emploi, reçoit de l'employeur pendant cette période d'attente, une indemnité calculée sur la base de l'allocation de congé.\n\nL'indemnité prévue à l'alinéa précédent est due également lorsque le travailleur a été empêché d'utiliser le moyen de transport désigné à la date prévue, à charge pour lui de prévenir son employeur par les voies les plus rapides et de rendre compte et prouver que l'attente ne lui est pas imputable."
+  },
+  "130": {
+   "numero": "130",
+   "page": 37,
+   "texte": "Les dispositions de la présente section ne peuvent être un obstacle à l'application de la réglementation sur les conditions d'admission et de séjour des étrangers."
+  },
+  "131": {
+   "numero": "131",
+   "page": 37,
+   "texte": "Il est institué près la Ministère du Travail et de la Prévoyance Sociale un comité technique consultatif pour l'étude des questions intéressant l'hygiène, la sécurité des travailleurs et la prévention des risques professionnels.\n\nCe comité comprendra un nombre égal de représentants des employeurs et des représentants des travailleurs, à côté de fonctionnaires et experts qualifiés.\n\nUn arrêté du Ministre du Travail et de la Prévoyance Sociale règle la composition et le fonctionnement de ce comité.\n\n../\n38"
+  },
+  "132": {
+   "numero": "132",
+   "page": 38,
+   "texte": "L'entreprise doit être tenue dans un état constant de propreté et présenter des conditions d'hygiène et de sécurité nécessaires à la santé du personnel ; elle doit être aménagée de manière à garantir la sécurité des travailleurs."
+  },
+  "133": {
+   "numero": "133",
+   "page": 38,
+   "texte": "Les ouvriers appelés à travailler dans les puits, conduites de gaz et d'eau, fosses d'aissances, cuves, appareils quelconques pouvant contenir des gaz délétères, doivent être attachés par une ceinture ou protégés par un autre dispositif de sûreté.\n\nLes puits et ouvertures de descente doivent être clôturés.\n\nLes moteurs doivent être isolés par des barrières de protection.\n\nLes machines électriques doivent toutes être pourvues d'une prise de terre.\n\nLes escaliers doivent être solides et munis de fortes rampes.\n\nLes échafaudages doivent être munis de garde-corps rigides de 90 cms de haut.\n\nLes pièces mobiles suivantes des machines à transmission : bielles et volants de moteurs, roues, arbres de transmission, engrenage, cônes ou cylindres de friction, doivent être munis d'un dispositif protecteur ou séparés des ouvriers, à moins qu'elles ne soient hors de portée de la main.\n\nIl en est de même des courroies ou câbles traversant le sol d'un atelier ou fonctionnant sur des poulies de transmission placées à moins de deux mètres du sol."
+  },
+  "134": {
+   "numero": "134",
+   "page": 38,
+   "texte": "La consommation par l'employeur ou le travailleur de toutes boissons alcoolisées est interdite sur les lieux de travail."
+  },
+  "135": {
+   "numero": "135",
+   "page": 38,
+   "texte": "Il est interdit de mettre en vente, vendre, louer ou utiliser des machines ou parties de machines dangereuses et de l'exploiter des dispositifs de protection appropriés.\n\nLes sites machines ou parties de machines seront déterminées par un arrêté du Ministre du Travail et de la Prévoyance Sociale, pris après avis du Comité Technique Consultatif d'Hygiène et de Sécurité."
+  },
+  "136": {
+   "numero": "136",
+   "page": 38,
+   "texte": "L'acheteur auquel est livrée une machine ou partie de machine dangereuse pour les ouvriers peut, nonobstante, toute clause contraire, dans le délai d'une année à compter du jour de la livraison, demander la résolution de la vente. Le tribunal qui prononce cette résolution pourra, en outre, accorder des dommages-intérêts à l'acheteur."
+  },
+  "137": {
+   "numero": "137",
+   "page": 38,
+   "texte": "Des arrêtés du Ministre du Travail et de la Prévoyance Sociale, pris après avis du Comité Technique Consultatif d'Hygiène et de Sécurité, déterminent :\n\n../\n39\n\na) les mesures générales de protection et de salubrité applicables à toutes les entreprises ou les prescriptions particulières à certaines professions, notamment en ce qui concerne l'éclairage, l'aération ou la ventilation, les eaux potables, les lieux d'aisance, l'évacuation des poussières et vapeurs, les lavabos et douches, les bruits et vibrations, les précautions à prendre contre les incendies, etc... ;\nb) les mesures relatives à l'organisation et au fonctionnement dans les entreprises, des institutions ayant pour mission d'aider à l'observation des prescriptions ci-dessus indiquées et de contribuer à l'amélioration des conditions d'hygiène et de sécurité du travail et à la protection de la santé des travailleurs."
+  },
+  "138": {
+   "numero": "138",
+   "page": 39,
+   "texte": "En ce qui concerne l'application des arrêtés prévus à l'article précédent, les Inspecteurs du Travail, s'agissant des prescriptions de ces arrêtés pour lesquelles cette procédure aura été prévue, doivent mettre les chefs d'entreprise en demeure de se conformer auxdites prescriptions avant de dresser procès-verbal."
+  },
+  "139": {
+   "numero": "139",
+   "page": 39,
+   "texte": "Cette mise en demeure doit être faite par écrit soit sur le registre d'employeur, soit par lettre-recommandée avec accusé de réception. Elle est datée et signée, elle précise les infractions ou dangers constatés et fixe les délais dans lesquels ils devront avoir disparu, et qui ne pourront être inférieurs à quatre jours francs, sauf en cas d'extrême urgence."
+  },
+  "140": {
+   "numero": "140",
+   "page": 39,
+   "texte": "Lorsqu'il existe des conditions de travail dangereuses pour la sécurité ou la santé des travailleurs et non visées par les arrêtés prévus à l'article 137, l'employeur est mis en demeure par l'Inspecteur du Travail d'y remédier dans les formes et conditions prévues à l'article précédent.\n\nToutefois, dans ce cas, avant l'expiration des délais fixés par l'Inspecteur du Travail et des Lois Sociales, au plus tard dans les huit jours qui suivent la mise en demeure, l'employeur peut adresser une réclamation au Ministre du Travail et de la Prévoyance Sociale. Cette réclamation est suspensive ; elle est soumise après enquête au Comité Technique Consultatif d'Hygiène et de Sécurité qui, entend, s'il y a lieu, le réclamant. Notification de la décision du Ministre est faite à l'employeur dans la forme administrative ; avis en est donné à l'Inspecteur."
+  },
+  "141": {
+   "numero": "141",
+   "page": 39,
+   "texte": "L'employeur est tenu d'aviser le Directeur de la Caisse Nationale de Prévoyance Sociale ou son représentant dans un délai de 48 heures de tout accident du travail survenu ou de toute maladie professionnelle constatée dans l'entreprise. Les modalités de cette déclaration sont fixées par la législation spéciale applicable aux accidents du travail et aux maladies professionnelles.\n\nLa déclaration peut être faite par le travailleur ou ses représentants jusqu'à l'expiration de la 2ème année suivant\n\n../\n40\n\nla date de l'accident ou la première constatation médicale de la maladie professionnelle.\n\nEn ce qui concerne les maladies professionnelles, la date de la première constatation médicale de la maladie est assimilée à la date de l'accident.\n\nCopie de la déclaration d'accident du travail ou de maladie professionnelle est transmise à l'Inspection du Travail et des Lois Sociales dans le délai prévu au premier alinéa."
+  },
+  "142": {
+   "numero": "142",
+   "page": 40,
+   "texte": "Toute entreprise ou établissement doit obligatoirement assurer un service médical ou sanitaire à ses travailleurs et aux membres de leur famille reconnus par la Caisse Nationale de Prévoyance Sociale.\n\nLes entreprises qui ne peuvent se doter de formations sanitaires adéquates doivent se regrouper pour créer des formations sanitaires inter-entreprises.\n\nDes arrêtés du Ministre du Travail et de la Prévoyance Sociale pris après avis du Comité Technique Consultatif d'Hygiène et de Sécurité et après consultation du Ministre de la Santé, déterminent les modalités d'exécution de cette obligation. Ils déterminent également les modalités dans lesquelles seront effectuées les visites médicales périodiques et précisent l'effectif et la qualification du personnel médical à employer compte tenu des conditions locales et du nombre des travailleurs et des membres de leurs familles."
+  },
+  "143": {
+   "numero": "143",
+   "page": 40,
+   "texte": "Ne compte pas l'application des prescriptions de l'article précédent que le personnel médical ayant fait l'objet d'une décision d'agrément du Ministre du Travail et de la Prévoyance Sociale.\n\nCette décision prise après avis de l'Inspecteur du Travail et des Lois Sociales et consultation du Ministre de la Santé, peut être annulée dans les mêmes formes."
+  },
+  "144": {
+   "numero": "144",
+   "page": 40,
+   "texte": "Le service médical et l'organisation des dispensaires ou infirmeries communs à un groupe d'entreprises peuvent être installés suivant des modalités à fixer par arrêté du Ministre du Travail et de la Prévoyance Sociale après avis de l'Inspecteur du Travail et des Lois Sociales et du Comité Technique Consultatif d'Hygiène et de Sécurité. Chacune des entreprises participant au fonctionnement des organisations précitées reste tenue d'avoir une infirmerie avec salle d'isolement pour les cas urgents, dans laquelle le nombre de lits, le matériel et l'approvisionnement sont fixés par arrêté du Ministre du Travail et de la Prévoyance Sociale après avis du Comité Technique Consultatif d'Hygiène et de Sécurité."
+  },
+  "145": {
+   "numero": "145",
+   "page": 40,
+   "texte": "Dans chaque exploitation dont l'effectif moyen dépasse cent personnes, une visite des travailleurs se\n\n../\n41\n\ndéclarant malades est passée chaque matin après l'appel. Les femmes légitimes et les enfants s'ils le demandent, peuvent se présenter à cette visite pour y être examinés, et, le cas échéant, recevoir les soins et les traitements nécessaires.\n\nLes résultats de cette visite sont consignés sur un registre spécial dont le modèle est fixé par arrêté du Ministre du Travail et de la Prévoyance Sociale, après avis du Comité Technique Consultatif d'Hygiène et de Sécurité."
+  },
+  "146": {
+   "numero": "146",
+   "page": 41,
+   "texte": "En cas de maladie d'un travailleur, d'une femme ou d'un enfant logé avec lui aux frais de l'entreprise, l'employeur est tenu de leur fournir gratuitement les soins et médicaments dans la limite des moyens définis par les textes d'application du présent chapitre.\n\nL'employeur est également tenu d'assurer gratuitement l'alimentation de tout travailleur malade soigné sur place."
+  },
+  "147": {
+   "numero": "147",
+   "page": 41,
+   "texte": "L'employeur doit faire évacuer sur la formation médicale la plus proche, les blessés et les malades transportables, non susceptibles d'être traités par les moyens dont il dispose.\n\nSi l'employeur ne dispose pas immédiatement de moyens appropriés, il en rend compte d'urgence au chef de la circonscription administrative la plus proche, qui fait procéder à l'évacuation par les moyens à sa disposition, tous les frais occasionnés de ce chef à l'administration devant être remboursés par l'employeur au tarif officiel des transports médicaux."
+  },
+  "148": {
+   "numero": "148",
+   "page": 41,
+   "texte": "Un arrêté du Ministre du Travail et de la Prévoyance Sociale pris après avis du Comité Technique Consultatif d'Hygiène et de Sécurité détermine les conditions dans lesquelles les employeurs sont obligatoirement tenus d'installer et d'approvisionner en médicaments accessoires une infirmerie, une salle de pansements ou une boîte de secours."
+  },
+  "149": {
+   "numero": "149",
+   "page": 41,
+   "texte": "L'administration du Travail est chargée, sous l'autorité du Ministre du Travail et de la Prévoyance Sociale, d'assurer dans le domaine du travail, de l'emploi, de la promotion et de la prévoyance sociale un rôle de conception et de conseil, de coordination et de contrôle.\n\nElle a notamment pour mission :$^{6}$\n\na) d'élaborer tous les projets de lois ou de règlements intéressant la condition des travailleurs, les rapports professionnels, l'emploi et le placement des travailleurs, la formation et le perfectionnement professionnel, la prévoyance sociale ;\n42\n\nb) de veiller à l'application de ces lois et règlements;\nc) d'éclairer de ses conseils et de ses recommandations les employeurs et les travailleurs ;\nd) de conseiller, de coordonner et de contrôler les services et organismes concourant à l'application de la législation du travail et de la prévoyance sociale ;\ne) de réaliser, en collaboration avec les autorités et organismes intéressés, la meilleure organisation possible du marché de l'emploi comme partie intégrante du programme national tendant à assurer et à maintenir le plein emploi, ainsi qu'à développer et à utiliser pleinement les ressources productives;\nf) de réunir et tenir à jour les bonnes statistiques relatives aux conditions d'emploi et de travail et aux opérations de prévoyance sociale;\ng) de suivre les relations avec les autres Etats et les organisations internationales en ce qui concerne les questions du travail, de l'emploi, de la promotion et de la prévoyance sociale.\n\nL'Administration du travail comporte :\n\n1) auprès du Ministre, une Direction Générale du Travail et de la Prévoyance Sociale à laquelle fait partie intégrante la Direction Centrale de la Main-d'Oeuvre et de la Formation Professionnelle ;\n2) des Inspections du Travail et des Lois Sociales auxquelles sont rattachés des Contrôles du Travail ;\n3) des Bureaux de Placement.\n\nL'organisation et le fonctionnement de la Direction Générale du Travail et de la Prévoyance Sociale et des Services subordonnés sont fixés par décret.\n\nUn arrêté du Ministre du Travail et de la Prévoyance Sociale fixe le ressort territorial des Inspections du Travail, des Contrôles du Travail et des Bureaux de Placement."
+  },
+  "150": {
+   "numero": "150",
+   "page": 42,
+   "texte": "Outre les autres attributions que leur confère la présente loi, la Direction Générale du Travail et de la Prévoyance Sociale assume les attributions prévues aux alinéas a), b), d), e), f), et g) de l'article précédent, les Inspections du Travail et des Lois Sociales celles prévues aux alinéas b) et c), les Bureaux de Placement, celles prévues aux alinéas e) et f). Les Inspections du Travail et des Lois Sociales, les Bureaux de Placement relèvent de la Direction Générale du Travail et de la Prévoyance Sociale avec laquelle ils correspondent directement.\n43"
+  },
+  "151": {
+   "numero": "151",
+   "page": 43,
+   "texte": "Le corps de l'Inspection du Travail et des Lois Sociales comprend des Administrateurs, des Inspecteurs, des Contrôleurs Principaux et des Contrôleurs du Travail."
+  },
+  "152": {
+   "numero": "152",
+   "page": 43,
+   "texte": "Les fonctionnaires du corps de l'Inspection du Travail et des Lois Sociales prêtent serment de bien et fidèlement remplir leur charge et de ne pas révéler, même après avoir quitté leur service, les secrets de fabrication et, en général, les procédés d'exploitation dont ils pourraient prendre connaissance dans l'exercice de leurs fonctions.\n\nCe serment est prêté par écrit devant la cour d'appel en ce qui concerne les Administrateurs et des Inspecteurs du Travail, devant le Tribunal de Grande Instance en ce qui concerne les Contrôleurs Principaux et Contrôleurs du Travail.\n\nToute violation de ce serment est punie conformément aux dispositions du Code pénal prévues en la matière.\n\nIls doivent tenir pour confidentielle toute plainte leur signalant un défaut dans l'installation des dispositifs d'hygiène et de sécurité ou une infraction aux dispositions légales et réglementaires."
+  },
+  "153": {
+   "numero": "153",
+   "page": 43,
+   "texte": "Les fonctionnaires du corps de l'Inspection du Travail et des Lois Sociales ne sauraient avoir un intérêt quelconque direct ou indirect, dans les entreprises placées sous leur contrôle."
+  },
+  "154": {
+   "numero": "154",
+   "page": 43,
+   "texte": "Les Inspecteurs du Travail et des Lois Sociales ainsi que les fonctionnaires responsables d'un bureau de contrôle du travail peut constater, par procès-verbal faisant foi jusqu'à preuve du contraire, les infractions aux dispositions de la législation et de la réglementation du travail. Ils sont habilités à saisir directement les autorités judiciaires compétentes.\n\nTout procès-verbal devra être notifié par la remise d'une copie certifiée conforme à la partie intéressée ou à son représentant. A peine de nullité des poursuites à intervenir, cette remise doit être effectuée dans les 15 jours de la constatation de l'infraction soit par lettre-recommandée avec accusé de réception, soit directement de la main à la main contre-récepissé daté et signé par l'employeur ou son représentant.\n\nUn exemplaire du procès-verbal est déposé au Parquet, un second envoyé au Directeur Général du Travail et de la Prévoyance Sociale, un troisième est classé aux archives de l'Inspection.\n\nLes autorités habilitées par le présent article à dresser procès-verbaux, sont tenues informées par le Parquet de la suite réservée à ces procès-verbaux.\n\n.../\n44"
+  },
+  "155": {
+   "numero": "155",
+   "page": 44,
+   "texte": "Les Inspecteurs du Travail et des Lois Sociales ainsi que les fonctionnaires responsables d'un bureau de contrôle du travail ont dans leur ressort territorial l'initiative de leurs tournées et de leurs enquêtes dans le cadre de la législation en vigueur.\n\nIls ont le pouvoir de :\n\na) pénétrer librement et sans avertissement préalable, à toute heure du jour, dans les établissements assujettis au contrôle de l'Inspection où ils peuvent avoir un motif raisonnable de supposer que sont occupées des personnes jouissant de la protection et de les inspecter. Ils préviendront, au début de leur inspection, l'employeur ou son représentant qui pourra les accompagner au cours de leur visite.\nb) pénétrer la nuit dans les locaux où il est constant qu'il est effectué un travail de nuit collectif.\n\nPour l'exercice du pouvoir de libre entrée spécifié aux alinéas (a et b) ci-dessus, l'employeur est tenu de prendre des dispositions pour que le libre accès à l'entreprise soit assuré à l'Inspecteur du Travail et des Lois Sociales en tout état de cause et sur le champ, même si la visite est inopinée et même au cas où il est absent.\n\nc) requérir, si besoin est, les avis et les consultations de médecins et techniciens, notamment en ce qui concerne les prescriptions d'hygiène et de sécurité. Les médecins et techniciens sont tenus au secret professionnel dans les mêmes conditions et sous les mêmes sanctions que les Inspecteurs du Travail et des Lois Sociales\nd) se faire accompagner, dans leurs visites, d'interprète officiels assemblés et des membres du bureau syndical de l'entreprise visitée, ainsi que des médecins et techniciens visés au paragraphe c) ci-dessus.\ne) procéder à tous les examens, contrôles ou enquêtes jugés nécessaires pour s'assurer que les dispositions applicables sont effectivement observées et notamment :\n- 1) interroger, avec ou sans témoin, l'employeur ou le personnel de l'entreprise, contrôler leur identité, demander des renseignements à toutes autres personnes dont le témoignage peut sembler nécessaire\n- 2) requérir la production de tout registre ou document dont la tenue est prescrite par la présente loi et par les textes pris pour son application.\n- 3) prélever et emporter aux fins d'analyse, en présence du chef d'entreprise ou du chef d'établissement ou de son suppléant et contre reçu, des échantillons des matières et substances utilisées ou manipulées.\n- 4) convoquer par écrit à l'Inspection du Travail et des Lois Sociales tout employeur ou tout travailleur, et en cas de refus d'obtempérer dans un délai normal à cette convocation, dresser procès-verbal. ../\n45"
+  },
+  "156": {
+   "numero": "156",
+   "page": 45,
+   "texte": "Des Contrôleurs Principaux et des Contrôleurs du Travail assistent les Inspecteurs du Travail et des Lois Sociales dans le fonctionnement des services. Ils ont le pouvoir de libre entrée et de libre contrôle prévu à l'article précédent et sont habilités à constater les infractions par des rapports écrits au vu desquels l'Inspecteur pourra décider d'établir la mise en demeure et en cas de non application de dresser le procès-verbal dans les formes prévues à l'article 154."
+  },
+  "157": {
+   "numero": "157",
+   "page": 45,
+   "texte": "Les fonctionnaires du corps de l'Inspection du Travail et des Lois Sociales seront porteurs d'une carte professionnelle établissant leur identité et justifiant leur fonction."
+  },
+  "158": {
+   "numero": "158",
+   "page": 45,
+   "texte": "Dans les mines, minières et carrières, ainsi que dans les établissements et chantiers où les travaux sont soumis au contrôle d'un service technique, les fonctionnaires chargés de ce contrôle veillent à ce que les installations relevant de leur contrôle technique soient aménagées en vue de garantir la sécurité des travailleurs. Ils assurent l'application des règlements spéciaux qui peuvent être pris dans ce domaine et disposent à cet effet et dans cette limite des pouvoirs des Inspecteurs du Travail et des Lois Sociales. Ils portent à la connaissance de l'Inspecteur du Travail et des Lois Sociales les mesures qu'ils ont prescrites et, le cas échéant, les mises en demeure qui sont signifiées.\n\nL'Inspecteur du Travail et des Lois Sociales peut, à tout moment, demander et effectuer avec les fonctionnaires visés au paragraphe précédent la visite des mines, minières, carrières, établissements et chantiers soumis à un contrôle technique.\n\nDans les parties d'établissements ou établissements militaires employant de la main-d'œuvre civile dans lesquels l'intérêt de la défense nationale s'oppose à l'introduction d'agents étrangers au service, le contrôle de l'exécution des dispositions applicables en matière de travail est assuré par les fonctionnaires ou officiers désignés à cet effet.\n\nCette désignation est faite sur proposition conjointe du Ministre des Armées et du Ministre du Travail et de la Prévoyance Sociale."
+  },
+  "159": {
+   "numero": "159",
+   "page": 45,
+   "texte": "En cas d'absence des fonctionnaires du corps de l'Inspection du Travail et des Lois Sociales, les chefs des circonscriptions administratives sont leurs suppléants légaux. Ils sont habilités dans les limites définies à l'article 156."
+  },
+  "160": {
+   "numero": "160",
+   "page": 45,
+   "texte": "Le Directeur Général du Travail et de la Prévoyance Sociale peut, à tout moment, exercer les pouvoirs et prérogatives prévus aux articles 154, 155, et 158."
+  },
+  "161": {
+   "numero": "161",
+   "page": 45,
+   "texte": "Les dispositions des articles 152, 154 et 155 du présent chapitre ne dérogent pas aux règles du droit commun quant à la constatation et à la poursuite des infractions par les officiers de police judiciaire.\n46"
+  },
+  "162": {
+   "numero": "162",
+   "page": 46,
+   "texte": "Sur toute l'étendue du territoire national, il est créé des bureaux de placements rattachés à la Direction Générale du Travail et de la Prévoyance Sociales avec laquelle ils correspondent directement.\n\nLes Bureaux de Placement reçoivent les offres et demandes d'emploi et procèdent au placement : ils rassemblent et tiennent une documentation permanente sur l'état du marché du travail dans leur ressort. Ils établissent pour chaque travailleur, un dossier d'après les indications fixées par arrêté du Ministre du Travail et de la Prévoyance Sociale, et délivrent des cartes de travail, ils donnent leur avis au contrat de travail après approbation des services de l'Inspection du Travail et des Lois Sociales et dans le cadre de l'africanisation de postes de travail."
+  },
+  "163": {
+   "numero": "163",
+   "page": 46,
+   "texte": "Tout travailleur recherchant un emploi est tenu de requérir son inscription au Bureau de Placement de son domicile.\n\nTout chef d'entreprise ou d'établissement est tenu de s'adresser au Bureau de Placement du ressort pour le recrutement du personnel.\n\nTout chef d'entreprise ou d'établissement est tenu de notifier au Bureau de Placement du ressort tout emploi vacant dans son entreprise ou établissement.\n\nDes arrêtés du Ministre du Travail et de la Prévoyance Sociale pris après avis de la Commission Nationale Consultative du Travail détermineront les cas dans lesquels des dérogations à la règle de recours obligatoire au Bureau du Placement pourront être admises.\n\nNul employeur n'est tenu d'agréer le salarié qui lui est présenté par le Bureau de Placement, nul travailleur n'est tenu également d'accepter l'emploi qui lui est proposé par le même service ; toutefois, le motif du refus doit être donné dans les 48 heures au Bureau de Placement ; s'il quitte l'entreprise, notification devra être faite par l'employeur dans les mêmes délais."
+  },
+  "164": {
+   "numero": "164",
+   "page": 46,
+   "texte": "Les opérations des Bureaux de Placement sont gratuites.\n\nIl est interdit sous peine de sanctions d'offrir et de remettre à toute personne faisant partie de ces services et à celle-ci de l'accepter une rétribution sous quelque forme que ce soit."
+  },
+  "165": {
+   "numero": "165",
+   "page": 46,
+   "texte": "En concertée du travail, les opérations des Bureaux de Placement concernant les entreprises touchées par cette cessation sont immédiatement interrompues.\n\nLa liste desdites entreprises est en outre affichée dans la salle réservée aux demandeurs et aux offreurs d'emploi.\n\n../\n47"
+  },
+  "166": {
+   "numero": "166",
+   "page": 47,
+   "texte": "Il est interdit de maintenir ou d'ouvrir un Bureau de Placement privé sur toute l'étendue du Territoire de la République Populaire du Congo, sauf dérogation accordée par arrêté du Ministre du Travail et de la Prévoyance Sociale pris après avis de la Commission Nationale Consultative du Travail.\n\nIl est interdit de diffuser de quelque manière que ce soit, notamment par la presse, la radio, le cinéma, etc... une offre ou une demande d'emploi qui n'aurait pas été préalablement enregistrée par un Bureau de Placement ou sans indiquer le numéro de l'enregistrement par ce service."
+  },
+  "167": {
+   "numero": "167",
+   "page": 47,
+   "texte": "Des décrets pourront créer\n\n- auprès du Ministre du Travail et de la Prévoyance Sociale un comité de l'emploi chargé de l'étude du planning du marché de la main-d'oeuvre ;\n- des centres de formation professionnelle des adultes."
+  },
+  "168": {
+   "numero": "168",
+   "page": 47,
+   "texte": "La formation professionnelle et la formation complémentaire des travailleurs doivent être fondées sur les exigences de l'économie nationale ainsi que sur les connaissances les plus avancées et le niveau le plus élevé de la science et de la technique.\n\na) la formation professionnelle et la formation complémentaire sont assurées par les institutions d'Etat, les institutions sociales tant du secteur public que du secteur privé, et les entreprises privées;\nb) la formation complémentaire sert à compléter les connaissances et capacités techniques et ouvre la possibilité d'exercer des professions similaires ou voisines.\n\nLes mesures de formation complémentaire doivent tenir compte du degré du développement antérieur des travailleurs et forment un ensemble systématique et cohérent;\n\nc) les travailleurs soumis à la formation complémentaire doivent bénéficier de toute assistance possible au cours de leurs études. Des accords collectifs, déterminent le cas échéant pour chacune des branches d'activité et pour chacune des catégories socio-professionnelles considérées la nature de l'assistance;\nd) des contrats de formation professionnelle et complémentaire seront conclus avec les travailleurs, sur la base des plans de formation professionnelle et complémentaire d'entreprises;\ne) la formation professionnelle ou complémentaire peut être dispensée soit à l'étranger, soit à l'intérieur de l'entreprise, soit par l'intermédiaire des centres de formation professionnelle.\n\n7\n48\n\nf)- les plannings de formation professionnelle et complémentaire doivent être soumis à l'agrément du Ministre du Travail et de la Prévoyance Sociale.\n\nPour la réalisation de cette politique de formation professionnelle, des centres de formation doivent être créés.\n\nUn arrêté du Ministre du Travail et de la Prévoyance Sociale pris après avis de la Commission Nationale Consultative du Travail fixera les conditions de fonctionnement de ces centres\n\ng)- toutefois, tout institut, établissement ou groupement hormis les collectivités publiques ne peut s'assigner la formation professionnelle que s'il présente des garanties de recrutement des stagiaires dûment formés.\n\nLe Ministre du Travail et de la Prévoyance Sociale peut mettre fin à tout instant aux activités de tout centre de formation qui n'aura pas obéi aux présentes prescriptions;\n\nh)- lorsque pour des raisons d'efficacité ou d'intérêt national, l'Etat prend en charge la formation professionnelle de certains travailleurs, pour répondre aux besoins des entreprises, celles-ci sont tenues de contribuer au financement de l'opération par le paiement d'une taxe dont la nature et le taux seront fixés par arrêtés ministériels.\n\ni)- lorsque les effectifs des entreprises le permettront, celles-ci pourront instituer un service d'alphabétisation. Les conventions collectives ou accords d'établissements détermineront les modalités pratiques."
+  },
+  "169": {
+   "numero": "169",
+   "page": 48,
+   "texte": "Une Commission Nationale Consultative du Travail est instituée auprès du Ministre du Travail et de la Prévoyance Sociale ; outre les cas pour lesquels son avis est obligatoirement requis par la présente loi, elle a pour mission générale :\n\n- d'étudier les problèmes concernant le travail, la main-d'œuvre et la prévoyance sociale ;\n- d'émettre des avis de formuler des propositions et résolutions sur la réglementation à intervenir en ces matières ;\n- d'étudier les éléments pouvant servir de base à la détermination du salaire minimum ; étude du minimum vital ; étude des conditions économiques générales.\n\nElle peut, à la demande du Ministre du Travail et de la Prévoyance Sociale :\n\n- examiner toute difficulté née à l'occasion de la négociation des conventions collectives\n\n../\n49\n\n- se prononcer sur toutes les questions relatives à la conclusion et à l'application des conventions collectives et notamment sur leurs incidences économiques.\n\nElle peut demander aux administrations compétentes par l'intermédiaire de son Président, tous documents ou informations utiles à l'accomplissement de sa mission."
+  },
+  "170": {
+   "numero": "170",
+   "page": 49,
+   "texte": "La Commission Nationale Consultative du Travail présidée par le Ministre du Travail et de la Prévoyance Sociale, est composée :\n\n- en nombre égal d'employeurs et de travailleurs respectivement désignés par les organisations professionnelles les plus représentatives ;\n\n- pour un sixième de membres représentant la Commission Nationale du Plan.\n\nLa Commission peut, à la demande de son Président ou de la majorité de ses membres s'adjoindre à titre consultatif des fonctionnaires ou personnalités qualifiées en matière économique, médicale, sociale et ethnographique.\n\nLe Secrétariat de la Commission est assuré par un fonctionnaire de la Direction Générale du Travail et de la Prévoyance Sociale.\n\nUn décret fixe les conditions d'organisation et de fonctionnement de la Commission Nationale Consultative du Travail, ainsi que le nombre des membres la composant."
+  },
+  "171": {
+   "numero": "171",
+   "page": 49,
+   "texte": "Le mandat de membre de la Commission Nationale Consultative du Travail est en principe gratuit ; toutefois, il pourra être alloué par décret des indemnités compensatrices aux membres de la Commission Nationale Consultative du Travail qui perdront tout ou partie de leur salaire pendant la durée des réunions ou qui seront astreints de loger à l'hôtel et de manger au restaurant du fait qu'ils seront déplacés du lieu de leur résidence ; éventuellement le voyage aller-retour sera dans ce dernier cas à la charge de l'Etat.\n\nLa durée du mandat est de 2 ans ; le mandat est renouvelable sans limitation.\n\nL'employeur d'un membre de la Commission Nationale Consultative du Travail est tenu de lui assurer le temps nécessaire pour assister aux réunions de la Commission. Il ne peut le licencier que dans les conditions prévues à l'article 176 pour les membres du bureau syndical."
+  },
+  "172": {
+   "numero": "172",
+   "page": 49,
+   "texte": "Dans les entreprises et établissements qui ne seront pas régis par le principe de la trilogie déterminante, instituée par l'ordonnance n°12/73 du 18 mai 1973, il sera institué un Comité d'entreprise. Le Comité d'entreprise ne supplée pas le bureau syndical.\n50\n\nUnarrêté du Ministre du Travail et de la Prévoyance\nSociale présente avis de la Commission Nationale Consultative\ndu Travail déterminera sa composition, ses attributions et son\nfonctionnement."
+  },
+  "173": {
+   "numero": "173",
+   "page": 50,
+   "texte": "Dans les entreprises et établissements, les\ntravailleurs sont groupés au sein d'un syndicat de base et\nd'entreprise dans les conditions prévues par les statuts de\nl'organisation syndicale.\n\nLa représentation des travailleurs auprès de l'entreprise\nou de l'établissement est assuré par le bureau syndical d'entre-\nprise et de base.\n\nLes membres du bureau syndical d'entreprise et de base sont\nélus par les travailleurs de l'entreprise dans les conditions\nfixées par les statuts de l'organisation syndicale.\n\nLes conditions d'éligibilité du bureau syndical de base\nd'entreprise, la durée du mandat des membres du bureau syndical,\nles conditions de réexpansion d'un membre du bureau syndical\nd'entreprise et de base sont déterminées par les statuts de\nl'organisation syndicale."
+  },
+  "174": {
+   "numero": "174",
+   "page": 50,
+   "texte": "Les contestations relatives à l'élection et à\nl'éligibilité des membres du bureau syndical de base et d'entre-\nprise ainsi qu'à la régularité des opérations sont examinées par\nla direction syndicale."
+  },
+  "175": {
+   "numero": "175",
+   "page": 50,
+   "texte": "Un arrêté du Ministre du Travail et de la Prévoyance\nSociale présente avis de la Commission Nationale Consultative\ndu Travail d'Exe. Il effectif, minimum des travailleurs par-\nmérités à partir duquel des droits et prérogatives prévus par\nl'originalité sont reconnus aux membres des bureaux syndicaux en\nmatière d'éducation ouvrière et d'activité syndicale. Il dé-\ntrement également les conditions dans lesquelles les membres des\nbureaux syndicaux exerçaient leur mission dans l'entreprise."
+  },
+  "176": {
+   "numero": "176",
+   "page": 50,
+   "texte": "Tout l'écoulement d'un membre du bureau syndical\nd'entreprise et de base envisagé par l'employeur ou son représen-\ntant doit être soumis à la décision de la Commission de litiges\nprévoyant article 59, et a été par le}).\nLe Secrétaire, en cas de faute présumée lourde par l'employeur,\ncelui-ci peut prononcer immédiatement le mise à pied provisoire\ndu membre du bureau syndical en attendant la décision définitive\nde la Commission de litiges. Cette mise à pied n'entraîne pas\nsuspension du paiement du salaire de base.\n\nLe Secrétaire a été par le).\nTout membre du bureau syndical s'estiment abusivement\nau public, mais le Secrétaire a été immédiatement le Tribunal du Travail qui cite\nsans délai les parties à comparaître.\n\nPendant la procédure judiciaire, le membre du bureau syndi-\ncal, conservé le bénéfice de son salaire de base, sauf lorsque\n\n../\n5\n\nla Commission de litiges reconnaissant la faute lourde, de l'orgueil, la suspension du versement du salaire de base jusqu'au prononcé du jugement.\n\nEn cas de licenciement reconnu abusif, le Tribunal ordonne à compter du prononcé du jugement, soit la réintégration du membre du bureau syndical dans ses fonctions au sein de l'entreprise, soit à titre de dommages-intérêts, le versement à son profit, à échéance mensuelle, du salaire de base pendant une durée de deux ans, sauf si à l'intérieur de cette période, l'intéressé exerce ou retrouve une activité lucrative.\n\nDans le cas où la Commission de litiges aura décidé le maintien du versement du salaire pendant la procédure judiciaire, celui-ci reste acquis, quelle que soit l'issue du procès.\n\nToutes les garanties ci-dessus sont applicables aux anciens membres du bureau syndical pendant une durée de six (6) mois à partir de l'expiration du mandat."
+  },
+  "177": {
+   "numero": "177",
+   "page": 51,
+   "texte": "Outre les attributions prévues par le statut de l'organisation syndicale, les membres du bureau syndical de base et d'entreprise ont pour mission :\n\n- de présenter aux employeurs toutes les réclamations individuelles ou collectives qui n'auraient pas été directement satisfaites concernant les conditions de travail et la protection des travailleurs, l'application des conventions collectives des classifications professionnelles et des salaires ;\n- de donner leur préalables avis pour tout licenciement collectif ou individuel motivé par une diminution d'activité de l'établissement ou par une organisation intérieure et selon la procédure fixée par l'article 39 du présent code ;\n- de saisir l'inspecteur du Travail et des Lois Sociales de toute plainte ou réclamation concernant l'application des prescriptions légales ou réglementaires dont il est chargé d'assurer le contrôle ;\n- de veiller à l'application des prescriptions relatives à l'hygiène et la sécurité des travailleurs et à la prévoyance sociale et de proposer toutes mesures utiles à ce sujet ;\n- de communiquer à l'employeur toutes suggestions utiles tendant à l'amélioration de l'organisation et du rendement de l'entreprise."
+  },
+  "178": {
+   "numero": "178",
+   "page": 51,
+   "texte": "Nonobstant les dispositions ci-dessus, les travailleurs ont le faculté de présenter eux-mêmes leurs réclamations et suggestions à l'employeur."
+  },
+  "179": {
+   "numero": "179",
+   "page": 51,
+   "texte": "Pour l'accomplissement de leur mission, les membres du bureau syndical d'entreprise disposent de 20 heures par mois considérées et rémunérées comme temps de travail. Un arrêté du Ministre du Travail et de la Prévoyance Sociale pris après avis\n\n../\n52\n\nde la Commission Nationale Consultative du Travail pourra, dans les entreprises à faibles effectifs, limiter le nombre de membres du bureau syndical d'entreprise pouvant bénéficier des dispositions qui précèdent.\n\nEn outre, les membres du bureau syndical d'entreprise ont droit chaque année à un congé payé d'éducation ouvrière de dix (10) jours ouvrables dont les conditions d'attribution sont fixées par arrêté du Ministre du Travail et de la Prévoyance Sociale pris après avis de la Commission Nationale Consultative du Travail. Toutefois, cet arrêté pourra, dans les entreprises à faibles effectifs, fixer le nombre de membres du bureau syndical d'entreprise ayant droit au congé payé d'éducation ouvrière."
+  },
+  "180": {
+   "numero": "180",
+   "page": 52,
+   "texte": "Hormis les dispositions de l'article 176, 4ème paragraphe sur la conservation du salaire du membre du bureau syndical pendant la procédure judiciaire et celles de l'article 179 alinéa 2, portant congé d'éducation ouvrière, toutes les autres dispositions concernant la protection du membre du bureau syndical d'entreprise s'appliquent également aux membres du bureau syndical de base et des membres de la Fédération."
+  },
+  "181": {
+   "numero": "181",
+   "page": 52,
+   "texte": "Toute personne qui se propose d'ouvrir une entreprise de quelque nature que ce soit doit au préalable en faire la déclaration à l'Inspection du Travail et des Lois Sociales ou au Bureau de Contrôle du Travail du ressort.\n\nDoivent être déclarés dans les mêmes conditions :\n\n- les entreprises existantes qui n'ont pas encore été déclarées ;\n- la fermeture, le transfert, la mutation, la réouverture et plus généralement toute modification affectant l'entreprise.\n\nLes chefs d'entreprise ou d'établissement doivent produire tous les semestres, au Bureau de Placement, des renseignements sur la situation de la main-d'oeuvre qu'ils emploient.\n\nUn arrêté du Ministre du Travail et de la Prévoyance Sociale détermine les modalités de la déclaration prévue aux alinéas 1 et 2 du présent article."
+  },
+  "182": {
+   "numero": "182",
+   "page": 52,
+   "texte": "L'employeur doit tenir constamment à jour, au lieu d'exploitation un registre dit \"registre d'employeur\", dont le modèle est fixé par un arrêté du Ministre du Travail et de la Prévoyance Sociale pris après avis de la Commission Nationale Consultative du Travail.\n\nCe registre comprend 3 parties\n\n- la première partie comprend les renseignements concernant les personnes et les contrats de tous les travailleurs occupés dans l'entreprise ;\n\n../\n53.\n\n- la deuxième, toutes les indications concernant le travail effectué, le salaire et les congés ;\n\n- la troisième, est réservée aux visas, mises en demeure et observations apposées par l'Inspecteur du Travail et des Lois Sociales ou son délégué.\n\nLe registre d'employeur doit être tenu sans déplacement à la disposition de l'Inspection du Travail et des Lois Sociales et conservé pendant les cinq ans suivant la dernière mention qui y a été portée.\n\nCertaines entreprises ou catégories d'entreprises peuvent être exemptées de l'obligation de tenir ce registre en raison de leur situation, de leur faible importance ou de la nature de leur activité, par arrêté du Ministre du Travail et de la Prévoyance Sociale pris après avis de la Commission Nationale Consultative du Travail."
+  },
+  "183": {
+   "numero": "183",
+   "page": 53,
+   "texte": "Les dossiers des travailleurs, prévus à l'article 162, sont conservés par le Bureau de Placement du lieu de l'emploi."
+  },
+  "184": {
+   "numero": "184",
+   "page": 53,
+   "texte": "Les syndicats professionnels ont exclusivement pour objet l'étude et la défense des intérêts économiques industriels, commerciaux et agricoles."
+  },
+  "185": {
+   "numero": "185",
+   "page": 53,
+   "texte": "Les personnes exerçant la même profession, des métiers similaires ou des professions connexes concourant à l'établissement de produits déterminés, ou la même profession libérale, peuvent constituer librement un syndicat professionnel. Tout travailleur ou employeur peut adhérer librement à un syndicat de son choix dans le cadre de sa profession."
+  },
+  "186": {
+   "numero": "186",
+   "page": 53,
+   "texte": "Les fondateurs de tout syndicat professionnel doivent déposer les statuts et les noms de ceux qui, à un titre quelconque, sont chargés de son administration ou de sa direction.\n\nCe dépôt a lieu à la Mairie ou au siège de la circonscription administrative où le syndicat est établi, et copie des statuts est adressée à l'Inspecteur du Travail et des Lois Sociales, au Procureur de la République du ressort et au Ministre du Travail et de la Prévoyance Sociale.\n\nLes modifications apportées aux statuts et les changements survenus dans la composition de la direction ou de l'administration du syndicat doivent être portés, dans les mêmes conditions, à la connaissance des mêmes autorités.\n\n../\n. 54"
+  },
+  "187": {
+   "numero": "187",
+   "page": 54,
+   "texte": "Les membres chargés de l'administration ou de la direction d'un syndicat doivent être citoyens congolais, ou s'ils sont étrangers avoir séjourné au Congo au moins pendant 5 ans, jouir de leurs droits civils, ne pas avoir encouru de condamnations comportant la perte des droits civiques ni de condamnation à une peine correctionnelle, à l'exception toutefois :\n\n1. des condamnations pour délits d'imprudence hors le cas de délit de fuite concomitant ;\n2. des condamnations prononcées pour infractions (autres que les infractions qualifiées délits) à la législation sur les sociétés mais dont cependant la répression n'est pas subordonnée à la preuve de la mauvaise foi de leurs auteurs et qui ne sont passibles que d'une amende."
+  },
+  "188": {
+   "numero": "188",
+   "page": 54,
+   "texte": "Les femmes mariées exerçant une profession ou un métier peuvent, sans l'autorisation de leur mari, adhérer aux syndicats professionnels et participer à leur administration à leur direction dans les conditions fixés à l'article précédent."
+  },
+  "189": {
+   "numero": "189",
+   "page": 54,
+   "texte": "Les mineurs âgés de plus de seize ans peuvent adhérer aux syndicats."
+  },
+  "190": {
+   "numero": "190",
+   "page": 54,
+   "texte": "Peuvent continuer à faire partie d'un syndicat professionnel les personnes qui ont quitté l'exercice de leur fonction ou de leur profession, sous réserve d'avoir exercé celle-ci au moins un an."
+  },
+  "191": {
+   "numero": "191",
+   "page": 54,
+   "texte": "Tout membre d'un syndicat professionnel peut s'en retirer à tout instant nonobstant toute clause contraire sans préjudice du droit, pour le syndicat, de réclamer la cotisation afférente aux six mois qui suivent le retrait d'adhésion."
+  },
+  "192": {
+   "numero": "192",
+   "page": 54,
+   "texte": "En cas de dissolution volontaire, statutaire ou prononcée par la justice, les biens du syndicat sont dévolus conformément aux statuts ou, à défaut de dispositions statutaires suivant les règles déterminées par l'assemblée générale. En aucun cas, ils ne peuvent être répartis entre les membres adhérents."
+  },
+  "193": {
+   "numero": "193",
+   "page": 54,
+   "texte": "Les syndicats professionnels jouissent de la personnalité civile. Ils ont le droit d'ester en justice et d'acquérir, sans autorisation, à titre gratuit ou à titre onéreux, des biens, meubles et immeubles."
+  },
+  "194": {
+   "numero": "194",
+   "page": 54,
+   "texte": "Ils peuvent, devant toutes les juridictions, exercer tous les droits réservés à la partie civile, relativement aux faits portant un préjudice direct ou indirect à l'intérêt collectif de la profession qu'ils représentent."
+  },
+  "195": {
+   "numero": "195",
+   "page": 54,
+   "texte": "Ils peuvent affecter une partie de leurs ressources à la création de logements de travailleurs, à l'acquisition de\n\n../\n55\n\nterrains de culture ou de terrains d'éducation physique à l'usage de leurs membres."
+  },
+  "196": {
+   "numero": "196",
+   "page": 55,
+   "texte": "Ils peuvent créer, administrer ou subventionner des œuvres professionnelles telles que : institutions de prévoyance, caisses de solidarité, laboratoires, champs d'expérience, œuvres d'éducation scientifique, agricoles ou sociales, cours et publications intéressant la profession.\n\nLes immeubles et objets mobiliers nécessaires à leurs réunions, à leurs bibliothèques et à leurs cours d'instruction professionnels sont insaisissables."
+  },
+  "197": {
+   "numero": "197",
+   "page": 55,
+   "texte": "Ils peuvent subventionner des sociétés coopératives de production ou de consommation."
+  },
+  "198": {
+   "numero": "198",
+   "page": 55,
+   "texte": "Ils peuvent passer des contrats ou conventions avec tous autres syndicats, sociétés, entreprises ou personnes.\n\nLes conventions collectives du travail sont passées dans les conditions déterminées par le chapitre III du titre II."
+  },
+  "199": {
+   "numero": "199",
+   "page": 55,
+   "texte": "S'ils y sont autorisés par leurs statuts, et à condition de ne pas distribuer de bénéfices, même sous forme de ristournes, à leurs membres, les syndicats peuvent :\n\n1. Acheter pour le louer, prêter ou répartir entre leurs membres tout ce qui est nécessaire à l'exercice de leur profession, notamment matières premières, outils, instruments, machines, engrais, semences, plantes, animaux et matières alimentaires pour le bétail.\n2. Prêter leur entremise gratuite pour la vente des produits provenant exclusivement du travail personnel ou des exploitations des syndiqués ; faciliter cette vente par exposition, annonces, publications, groupements de commandes et d'expéditions, sans pouvoir l'opérer sous leur nom, et sous leur responsabilité."
+  },
+  "200": {
+   "numero": "200",
+   "page": 55,
+   "texte": "Ils peuvent être consultés sur tous les différends et toutes les questions se rattachant à leur spécialité.\n\nDans les affaires contentieuses, les avis du syndicat sont tenus à la disposition des parties qui peuvent en prendre communication et copie."
+  },
+  "201": {
+   "numero": "201",
+   "page": 55,
+   "texte": "Les syndicats peuvent déposer, dans les conditions déterminées par arrêté du Ministre du Travail et de la Prévoyance Sociale pris après avis de la Commission Nationale Consultative du Travail, leurs marques ou labels. Ils peuvent, dès lors, en revendiquer la propriété exclusive dans les conditions dudit arrêté. Ces marques ou labels peuvent être apposées sur tout produit ou objet de commerce pour en certifier l'origine et les conditions de fabrication. Ils peuvent être utilisés par tous les individus ou entreprises mettant en vente ces produits.\n\n../\n56\n\nEst nulle et de nul effet toute clause de contrat collectif, accord ou entente aux termes de laquelle l'usage de la marque syndicale par un employeur sera subordonné à l'obligation pour ledit employeur de ne conserver ou de ne prendre à son service que les adhérents du syndicat propriétaire de la marque."
+  },
+  "202": {
+   "numero": "202",
+   "page": 56,
+   "texte": "Les syndicats peuvent, en se conformant aux dispositions des lois en vigueur, constituer entre leurs membres des caisses spéciales de secours mutuels et de retraites."
+  },
+  "203": {
+   "numero": "203",
+   "page": 56,
+   "texte": "Les fonds de ces caisses spéciales sont insaisissables dans les limites déterminées par la loi."
+  },
+  "204": {
+   "numero": "204",
+   "page": 56,
+   "texte": "Toute personne qui se retire d'un syndicat conserve le droit d'être membre de sociétés de secours mutuels et de retraites pour la vieillesse à l'actif desquels elle a contribué par des cotisations ou versements de fonds."
+  },
+  "205": {
+   "numero": "205",
+   "page": 56,
+   "texte": "Les syndicats professionnels régulièrement constitués d'après les prescriptions de la présente loi peuvent librement se concerter pour l'étude et la défense de leurs intérêts économiques, industriels, commerciaux et agricoles.\n\nIls peuvent se constituer en union sous quelque forme que ce soit."
+  },
+  "206": {
+   "numero": "206",
+   "page": 56,
+   "texte": "Les dispositions des articles 184, 186, 187, 188 et 189 sont applicables aux unions de syndicats qui doivent, d'autre part, faire connaître dans les conditions prévues à l'article 186, le nom et le siège social des syndicats qui les composent. Leurs statuts doivent déterminer les règles selon lesquelles les syndicats adhérents à l'union sont représentés dans le conseil d'administration et dans les assemblées générales."
+  },
+  "207": {
+   "numero": "207",
+   "page": 56,
+   "texte": "Ces unions jouissent de tous les droits conférés aux syndicats professionnels par les chapitres II, III et IV du présent titre."
+  },
+  "208": {
+   "numero": "208",
+   "page": 56,
+   "texte": "Des locaux pourront être mis à la disposition des unions de syndicats pour l'exercice de leur activité, sur leur demande."
+  },
+  "209": {
+   "numero": "209",
+   "page": 56,
+   "texte": "Les associations professionnelles reconnues par arrêté du Ministre du Travail et de la Prévoyance Sociale sont assimilées aux syndicats professionnels en ce qui concerne l'application des articles 194, 197, 198, 201 et 202.\n\nElles peuvent :\n\n../\n57\n\n1. Acheter pour le louer, prêter ou répartir entre leurs membres tout ce qui est nécessaire à l'exercice de leur profession, notamment matières premières, outils, instruments, machines, engrais, semences, plantes, animaux et matières alimentaires pour le bétail ;\n2. Prêter leur entremise gratuite pour la vente des produits provenant exclusivement du travail personnel ou des exploitations des membres de l'association; faciliter cette vente par exposition, annonces, publications, groupements de commandes et d'expéditions, sans pouvoir l'opérer sous leur nom, et sous leur responsabilité."
+  },
+  "210": {
+   "numero": "210",
+   "page": 57,
+   "texte": "Il est interdit à tout employeur de prendre en considération l'appartenance à un syndicat ou l'exercice d'une activité syndicale pour arrêter ses décisions en ce qui concerne notamment l'embauchage, la conduite et la répartition du travail, la formation professionnelle, l'avancement, la rémunération et l'octroi d'avantages sociaux, les mesures de discipline et de congédiement.\n\nLe chef d'une entreprise ou ses représentants ne devront employer aucun moyen de pression en faveur ou à l'encontre d'une organisation syndicale quelconque.\n\nToute mesure prise par l'employeur, contrairement aux dispositions des alinéas précédents, sera considérée comme abusive et donnera lieu à des dommages-intérêts.\n\n# T I T R E VIII\nDU REGLEMENT DES DIFFERENDS DU TRAVAIL"
+  },
+  "211": {
+   "numero": "211",
+   "page": 57,
+   "texte": "Les tribunaux du travail connaissent des différends individuels pouvant s'élever entre le travailleur et l'employeur, ou l'apprenti et le maître, à l'occasion du contrat de travail ou du contrat d'apprentissage.\n\nCes tribunaux ont qualité pour se prononcer sur tous les différends individuels relatifs aux conventions collectives ou aux arrêtés tenant lieu. Leur compétence s'étend également au contentieux du régime de prévoyance sociale, aux différends nés entre travailleurs à l'occasion du travail et aux actions récursoires des entrepreneurs contre les sous-entrepreneurs aux cas prévus à l'article 70."
+  },
+  "212": {
+   "numero": "212",
+   "page": 57,
+   "texte": "Le tribunal compétent est celui du lieu du travail.\n\nToutefois, pour les litiges nés de la résiliation du contrat de travail, et nonobstant toute attribution conventionnelle de\n\n../\n58\n\njuridiction, le travailleur dont le lieu de recrutement est situé dans une autre localité que celle du lieu de l'emploi aura le choix entre le tribunal de ce lieu de recrutement et celui du travail."
+  },
+  "213": {
+   "numero": "213",
+   "page": 58,
+   "texte": "Les tribunaux du travail sont créés par décret sur proposition conjointe du Ministre de la Justice et du Ministre du Travail et de la Prévoyance Sociale après avis conforme de la Cour Suprême.\n\nLe décret fixe, pour chaque tribunal du travail, son siège, sa compétence territoriale et sa subdivision en sections professionnelles lorsque la structure du marché du travail le justifie."
+  },
+  "214": {
+   "numero": "214",
+   "page": 58,
+   "texte": "Les tribunaux du travail dépendent administrativement du Ministre de la Justice."
+  },
+  "215": {
+   "numero": "215",
+   "page": 58,
+   "texte": "Le tribunal du travail est composé :\n\n1. d'un Président, désigné par le Ministre de la Justice\n2. d'un assesseur employeur et d'un assesseur travailleur, pris parmi ceux figurant sur les listes établies en conformité avec l'article 216 ci-après. Le Président désigne pour chaque affaire, les assesseurs employeur et travailleur appartenant à la catégorie intéressée.\n\nLes assesseurs titulaires sont remplacés, en cas d'empêchement par des assesseurs suppléants dont le nombre est égal à celui des titulaires.\n\n3. d'un Greffier désigné par le Chef des Services Judiciaires."
+  },
+  "216": {
+   "numero": "216",
+   "page": 58,
+   "texte": "Les assesseurs et leurs suppléants sont nommés par arrêté conjoint du Ministre du Travail et de la Prévoyance Sociale et du Ministre de la Justice. Ils sont choisis sur des listes présentées par les organisations syndicales les plus représentatives, ou en cas de carence de celles-ci, par les Inspecteurs du Travail et des Lois Sociales, et comportant un nombre de noms double de celui des postes à pourvoir.\n\nLe mandat des assesseurs titulaires ou suppléants a une durée d'un an; il est renouvelable.\n\nLes assesseurs ou leurs suppléants doivent justifier de la possession de leurs droits civils et politiques.\n\nIls doivent, en outre, n'avoir subi aucune condamnation à une peine correctionnelle, à l'exception toutefois :\n\n1. des condamnations pour délits d'imprudence hors le cas de délit de fuite concomitant ;\n2. des condamnations prononcées pour infractions, autres que les infractions qualifiées délits, à la législation\n\n../\n59\n\nsur les sociétés, mais dont cependant la repression n'est pas subordonnée à la preuve de la mauvaise foi de leurs auteurs et qui ne sont passibles que d'une amende.\n\nSont déchus de leur mandat les assesseurs qui sont frappés de l'une des condamnations visées ci-dessus ou qui perdent leurs droits civils et politiques."
+  },
+  "217": {
+   "numero": "217",
+   "page": 59,
+   "texte": "Tout assesseur titulaire ou suppléant qui aura gravement manqué à ses devoirs dans l'exercice de ses fonctions sera appelé devant le tribunal du travail pour s'expliquer sur les faits qui lui sont reprochés.\n\nL'initiative de cet appel appartient au Président du Tribunal du Travail et au Procureur de la République.\n\nDans un délai d'un mois, à dater de la convocation, le procès-verbal de la séance de comparution est adressé par le Président du Tribunal du Travail au Procureur de la République.\n\nCe procès-verbal est transmis par le Procureur de la République avec son avis au Ministre de la Justice.\n\nPar arrêté motivé et conjoint du Ministre de la Justice et du Ministre du Travail et de la Prévoyance Sociale, les peines suivantes peuvent être prononcées :\n\n- la censure ;\n- la suspension pour un temps qui ne peut excéder six mois ;\n- la déchéance.\n\nTout assesseur contre lequel la déchéance a été prononcée ne peut être désigné à nouveau aux mêmes fonctions."
+  },
+  "218": {
+   "numero": "218",
+   "page": 59,
+   "texte": "Les assesseurs et leurs suppléants prêtent devant le Tribunal de Grande Instance du ressort, le serment suivant :\n\n\" Je jure de remplir mes devoirs avec zèle et intégrité\n\" et de garder le secret des délibérations\".\n\nToutefois en cas d'empêchement le serment peut être prêté par écrit."
+  },
+  "219": {
+   "numero": "219",
+   "page": 59,
+   "texte": "Les fonctions d'assesseurs titulaires ou suppléants des Tribunaux du Travail sont gratuites.\n\nToutefois, pourront être allouées aux assesseurs des indemnités de séjour et de déplacement, dont le montant, qui ne pourra être inférieur au montant des salaires et indemnités perdus, sera fixé par décret."
+  },
+  "220": {
+   "numero": "220",
+   "page": 59,
+   "texte": "La procédure devant les Tribunaux du Travail est gratuite à tous les degrés.\n\n../\n60\n\nEn outre, le travailleur bénéficie d'office de l'assistance judiciaire pour l'exécution des jugements rendus à son profit; lorsque le jugement est exécutoire et que le travailleur gagnant peut obtenir l'exécution amiable de la décision intervenue, il demande au Président de faire apposer la formule exécutoire sur la copie qui lui a été délivrée et de commettre un agent d'exécution pour poursuivre l'exécution forcée."
+  },
+  "221": {
+   "numero": "221",
+   "page": 60,
+   "texte": "L'action est introduite par déclaration orale ou écrite, faite au Greffier du Tribunal du Travail. Inscription en est faite sur un registre tenu spécialement à cet effet, un extrait de cette inscription est délivrée à la partie ayant introduit l'action."
+  },
+  "222": {
+   "numero": "222",
+   "page": 60,
+   "texte": "Dans les deux jours à dater de la réception de la demande, dimanche et jours fériés non compris, le Président cite les parties à comparaître dans un délai qui ne peut excéder douze jours, majoré, s'il y a lieu des délais de distance fixés dans les conditions prévues à l'article 239.\n\nLa citation doit contenir les nom, profession du demandeur, l'indication de l'objet de la demande, l'heure et le jour de la comparution.\n\nLa citation est faite à personne ou à domicile par voie d'agent administratif spécialement commis à cet effet. Elle peut valablement être faite par lettre-recommandée avec accusé de réception. En cas d'urgence, elle peut être faite par voie télégraphique; en cas de domicile non connu, la citation peut être faite à parquet."
+  },
+  "223": {
+   "numero": "223",
+   "page": 60,
+   "texte": "Les parties sont tenues de comparaître, en personne ou par mandataire, au jour et à l'heure fixés, devant le Tribunal du Travail. Elles peuvent se faire assister ou représenter soit par un travailleur ou un employeur appartenant à la même branche d'activité, soit par un avocat régulièrement inscrit au barreau ou un avocat défenseur, soit encore par un représentant des organisations syndicales auxquelles elles sont affiliées. Les employeurs peuvent, en outre, être représentés par un Directeur ou un employé de l'entreprise ou de l'établissement.\n\nSauf en ce qui concerne les avocats, le mandataire des parties doit être constitué par écrit."
+  },
+  "224": {
+   "numero": "224",
+   "page": 60,
+   "texte": "Si au jour fixé par la convocation, le demandeur touché à personne ou à domicile ne comparaît pas et ne justifie pas d'un cas de force majeure, la cause est rayée du rôle; elle ne peut être reprise qu'une seule fois et selon les formes imparties pour la demande primitive, à peine de déchéance.\n\nSi le défendeur ne comparaît pas, et ne justifie pas d'un cas de force majeure, ou s'il n'a pas présenté ses moyens sous forme de mémoire, défaut est donné contre lui et le Tribunal statue sur le mérite de la demande."
+  },
+  "225": {
+   "numero": "225",
+   "page": 60,
+   "texte": "Les assesseurs du Tribunal du Travail peuvent être recusés :\n\n../\n51\n\n1. Quand ils ont un intérêt personnel à la contestation ;\n2. Quand ils sont parents ou alliés de l'une des parties jusqu'au sixième degré ;\n3. Si, dans l'année qui a précédé la récusation il y a eu procès pénal ou civil entre eux et l'une des parties ou son conjoint ou allié en ligne directe ;\n4. S'ils ont donné un avis écrit sur la contestation ;\n5. S'ils sont employeurs ou travailleurs de l'une des parties en cause.\n\nLa récusation est formée avant tout débat. Le Président statue immédiatement, si la demande est rejetée, il est passé outre au débat; si elle est admise, l'affaire est renvoyée à la prochaine audience où doivent siéger le ou les assesseurs suppléants."
+  },
+  "226": {
+   "numero": "226",
+   "page": 61,
+   "texte": "Lorsque les parties comparaissent devant le Tribunal du Travail, il est procédé à une tentative de conciliation.\n\nEn cas d'accord, un procès-verbal rédigé séance tenante sur le registre des délibérations du Tribunal consacre le règlement à l'amiable du litige.\n\nUn extrait du procès-verbal de conciliation signé du Président et du Greffier vaut titre exécutoire."
+  },
+  "227": {
+   "numero": "227",
+   "page": 61,
+   "texte": "En cas de conciliation partielle, un extrait du procès-verbal signé du Président et du Greffier vaut titre exécutoire pour les parties sur lesquelles un accord est intervenu et procès-verbal de non-conciliation pour le surplus de la demande."
+  },
+  "228": {
+   "numero": "228",
+   "page": 61,
+   "texte": "En cas de non-conciliation ou pour la partie contestée de la demande, le Tribunal du Travail doit retenir l'affaire; il procède immédiatement à son examen, aucun renvoi ne peut être prononcé sauf accord des parties, et à quinzaine au maximum, mais le Tribunal peut toujours, par jugement motivé, prescrire toutes enquêtes, descentes sur les lieux et toutes mesures d'informations quelconques."
+  },
+  "229": {
+   "numero": "229",
+   "page": 61,
+   "texte": "Sauf au stade de la conciliation, l'audience est publique.\n\nLe Président dirige les débats, interroge et confronte les parties, fait comparaître les témoins cités à la diligence des parties ou par lui-même, dans les formes indiquées à l'article 222. Il procède à l'audition de toute autre personne dont il juge la déposition utile au règlement du différend, peut procéder ou faire procéder à tous constats ou expertises.\n\n.../\n62\n\nLa police de la salle d'audience et des débats appartient au Président qui est revêtu des pouvoirs attribués au Président du Tribunal d'Instance par les dispositions du Code de procédure civile."
+  },
+  "230": {
+   "numero": "230",
+   "page": 62,
+   "texte": "Les débats clos, le Tribunal délibère immédiatement en secret. Sauf mise en délibéré dont le délai maximum est de quinze jours, le jugement est rédigé sur l'heure et l'audience reprise pour sa lecture, il doit être motivé."
+  },
+  "231": {
+   "numero": "231",
+   "page": 62,
+   "texte": "La minute du jugement est transcrite par le Greffier sur le répertoire des jugements rendus. Elle est signée par le Président et le Greffier."
+  },
+  "232": {
+   "numero": "232",
+   "page": 62,
+   "texte": "Le jugement peut ordonner l'exécution immédiate, nonobstant opposition ou appel et par provision avec dispense de caution, jusqu'à une somme qui sera fixée par décret. Pour le surplus, l'exécution provisoire peut être ordonnée à charge de fournir caution. Copie du jugement, signée par le Président et le Greffier, doit être remise aux parties sur demande. Mention de cette délivrance, de sa date et de son heure est faite par le Greffier en marge du jugement."
+  },
+  "233": {
+   "numero": "233",
+   "page": 62,
+   "texte": "En cas de jugement par défaut, signification du jugement est faite, dans les formes de l'article 222, sans frais, à la partie défaillante, par le Greffier du Tribunal du Travail ou par un agent administratif commis spécialement à cet effet par le Président.\n\nSi, dans un délai de dix jours après signification, le défaillant ne fait pas opposition au jugement dans les formes prescrites à l'article 221, le jugement est exécutoire. Sur opposition, le Président convoque à nouveau les parties, comme il est dit à l'article 222; le nouveau jugement nonobstant tout défaut ou appel, est exécutoire."
+  },
+  "234": {
+   "numero": "234",
+   "page": 62,
+   "texte": "La femme mariée est autorisée à se concilier, à demander, à défendre devant le Tribunal du Travail."
+  },
+  "235": {
+   "numero": "235",
+   "page": 62,
+   "texte": "Les jugements du Tribunal du Travail sont définitifs et sans appel, sauf du chef de la compétence, lorsque le chiffre n'excède pas 25.000 francs CFA. Au-dessus de 25.000 francs CFA, les jugements sont susceptibles d'appel devant la Cour d'Appel."
+  },
+  "236": {
+   "numero": "236",
+   "page": 62,
+   "texte": "Le Tribunal du Travail connaît de toutes les demandes reconventionnelles ou en compensation qui, par leur nature, rentrent dans sa compétence. Lorsque chacune des demandes principales reconventionnelles ou en compensation sera dans les limites de sa compétence, en dernier ressort, il se prononcera sans qu'il y ait lieu à appel.\n63\n\nSi l'une de ces demandes n'est susceptible d'être jugée qu'à charge d'appel, le Tribunal ne se prononcera sur toutes qu'à charge d'appel. Néanmoins, il statuera en dernier ressort si seule la demande reconventionnelle en dommages-intérêts, fondée exclusivement sur la demande principale, dépasse sa compétence en dernier ressort. Il statue également sans appel, en cas de défaut du défendeur, si seules les demandes reconventionnelles formées par celui-ci dépassent le taux de sa compétence en dernier ressort, quels que soient la nature et le montant de cette demande.\n\nSi une demande reconventionnelle est reconnue non fondée et formée uniquement en vue de rendre le jugement susceptible d'appel, l'auteur de cette demande peut être condamné à des dommages-intérêts envers l'autre partie, même au cas où en appel le jugement en premier ressort n'a été confirmé que partiellement."
+  },
+  "237": {
+   "numero": "237",
+   "page": 63,
+   "texte": "Dans les quinze jours du prononcé du jugement, appel peut être interjeté dans les formes prévues à l'article 221.\n\nLe dossier d'appel est transmis, dans la huitaine de la déclaration d'appel, au Greffier en Chef de la Cour d'Appel, avec expédition du jugement, les lettres, mémoires et documents déposés par les parties en premières instances et en appel.\n\nL'appel est jugé sur pièces. Toutefois les parties peuvent demander à être entendues; en ce cas la représentation des parties obéit aux règles fixées par l'article 223.\n\nL'arrêt doit être rendu dans les deux mois de la transmission de la déclaration d'appel à la Cour. Les dispositions prévues à l'article 220 pour l'exécution des jugements sont applicables aux arrêts."
+  },
+  "238": {
+   "numero": "238",
+   "page": 63,
+   "texte": "Le pourvoi en cassation est recevable contre les arrêts et jugements rendus en dernier ressort.\n\nIl est introduit et jugé dans les formes et conditions prévues par les textes en vigueur relatifs à la procédure de cassation en matière civile."
+  },
+  "239": {
+   "numero": "239",
+   "page": 63,
+   "texte": "Des arrêtés du Ministre de la Justice fixent la contexture des registres et les délais de distance."
+  },
+  "240": {
+   "numero": "240",
+   "page": 63,
+   "texte": "Tout travailleur ou tout employeur pourra demander aux services de l'Inspection du Travail et des Lois Sociales de régler le différend à l'amiable.\n\nCette demande interrompt à sa date de réception par les services susvisés, le délai de prescription prévu à l'article 99. Cette interruption court jusqu'à la date du procès-verbal qui clôt la tentative de conciliation.\n\n../\n64\n\nL'Inspecteur du Travail et des Lois Sociales ou le Contrôleur du Travail vérifie si les parties sont disposées à se concilier immédiatement sur la base des normes fixées par la loi, la réglementation ou les conventions collectives et le contrat individuel.\n\nEn cas de conciliation, la formule exécutoire est apposée par ordonnance du Président du Tribunal du Travail prise à la requête de la partie la plus diligente sur le procès-verbal de conciliation établi par l'Inspecteur du Travail et des Lois Sociales ou par le Contrôleur du Travail.\n\nL'exécution est poursuivie comme pour un jugement du Tribunal du Travail.\n\nLe Président du Tribunal du Travail compétent est celui dans le ressort duquel le procès-verbal de conciliation a été signé."
+  },
+  "241": {
+   "numero": "241",
+   "page": 64,
+   "texte": "En l'absence ou en cas d'échec du règlement amiable du litige, l'action est introduite devant le Tribunal du Travail dans les formes prévues à l'article 221."
+  },
+  "242": {
+   "numero": "242",
+   "page": 64,
+   "texte": "Tout différend collectif qui n'a pu être réglé dans le cadre de la procédure de conciliation et d'arbitrage prévue par les conventions collectives est immédiatement notifié par écrit par la ou les parties intéressées à l'Inspecteur du Travail et des Lois Sociales ou au fonctionnaire responsable du bureau de contrôle du Travail du ressort.\n\nLes parties sont convoquées par l'Inspecteur du Travail et des Lois Sociales ou par le fonctionnaire responsable du bureau de contrôle du travail du ressort qui procède à la conciliation. Elles peuvent se substituer un représentant ayant qualité pour se concilier.\n\nSi l'une des parties ne comparaît pas ou ne se fait pas valablement représenter, l'Inspecteur du Travail et des Lois Sociales ou le fonctionnaire responsable du bureau de contrôle du travail du ressort la convoque à nouveau dans un délai qui ne peut excéder deux jours francs sans préjudice de sa condamnation à une sanction prononcée par la juridiction pénale sur procès-verbal dressé par l'autorité compétente ci-dessus désignée.\n\nLes accords de conciliation sont consignés dans un procès-verbal établi séance tenante et signé par les parties qui en reçoivent ampliation. Ils sont obligatoires et deviennent exécutoires au jour du dépôt prévu à l'article 247."
+  },
+  "243": {
+   "numero": "243",
+   "page": 64,
+   "texte": "Lorsque la tentative de conciliation n'a pas abouti, le procès-verbal de non-conciliation établi séance tenante précise les points sur lesquels le différend persiste, celui-ci est soumis à la procédure de recommandation.\n\nDans un délai de deux jours francs, l'Inspecteur du Travail et des Lois Sociales ou le fonctionnaire responsable du bureau de contrôle du travail du ressort, convoque à nouveau les parties pour désignation par leurs soins du Président de la Commission de Recommandation et de deux experts membres de ladite Commission.\n\n../\n65\n\nEn cas de désaccord des parties sur le choix des experts, ceux-ci sont désignés dans les 48 heures par le Ministre du Travail et de la Prévoyance Sociale.\n\nLe Président et les experts sont pris parmi les députés, les conseillers municipaux, de district et de région, les membres des bureaux des chambres de commerce, d'agriculture et d'industrie, les titulaires du mérite congolais; de la légion d'honneur ou du mérite social, des personnalités connues pour leur autorité morale et pour leur compétence en matière économique et sociale."
+  },
+  "244": {
+   "numero": "244",
+   "page": 65,
+   "texte": "L'Inspecteur du Travail et des Lois Sociales ou le Fonctionnaire responsable du bureau de contrôle du travail du ressort, est tenu de déférer le différend au Président de la Commission de Recommandation dès la désignation des deux experts. La Commission est saisie par la seule transmission du procès-verbal de non-conciliation. Elle ne peut statuer sur d'autres objets que ceux déterminés par le procès-verbal de non-conciliation ou ceux qui, résultant d'événements postérieurs à ce procès-verbal, sont la conséquence directe du différend en cours.\n\nLa Commission de Recommandation se prononce en droit sur les conflits relatifs à l'interprétation des lois, règlements, conventions collectives ou accords en vigueur.\n\nElle se prononce en équité sur les autres conflits, notamment lorsque le conflit porte sur les salaires ou les conditions de travail qui ne sont pas fixées par les dispositions des lois, règlements, conventions collectives ou accords en vigueur, et sur les conflits relatifs à la conclusion et à la révision des clauses des conventions et accords collectifs."
+  },
+  "245": {
+   "numero": "245",
+   "page": 65,
+   "texte": "La Commission de Recommandation a les plus larges pouvoirs pour s'informer de la situation économique des entreprises et de la situation sociale des travailleurs intéressés par le conflit.\n\nDans ce but elle peut, notamment, enquêter auprès des entreprises et des syndicats, réclamer aux parties tous documents ou renseignements d'ordre comptable et financier susceptibles de lui être utiles. Elle peut recourir aux offices de toute personne qualifiée susceptible de l'éclairer, tels les experts comptables agréés.\n\nLes experts sont tenus au secret professionnel quant aux documents à eux communiqués.\n\nSur leur demande les parties sont entendues par la Commission de Recommandation. Elles peuvent déposer tous mémoires qu'elles estiment de nature à éclairer la Commission.\n\nDans un délai de 10 jours, la Commission dresse un rapport motivé de ses investigations. Les conclusions de ce rapport établissent, sous forme de recommandation, un projet de règlement des points en litige.\n\n.../\n66"
+  },
+  "246": {
+   "numero": "246",
+   "page": 66,
+   "texte": "Le rapport et la recommandation sont immédiatement communiqués à l'Inspecteur du Travail et des Lois Sociales ou au fonctionnaire responsable du bureau de contrôle du travail du ressort, qui les transmet aux parties dans les 24 heures.\n\nA l'expiration du délai de 4 jours francs à compter de la notification de ces rapports et recommandations aux parties et si aucune de celles-ci n'a manifesté son opposition, la recommandation sous réserve du dépôt prévu à l'article ci-dessous acquiert force exécutoire.\n\nL'opposition, à peine de nullité, est formée dans les délais ci-dessus indiqués par lettre-recommandée adressée à l'Inspecteur du Travail et des Lois Sociales ou au fonctionnaire responsable du bureau de contrôle du travail du ressort. Le récépissé à l'expédition fera foi de la formation de l'opposition."
+  },
+  "247": {
+   "numero": "247",
+   "page": 66,
+   "texte": "Lorsqu'un accord de conciliation, une recommandation devenue exécutoire, porte sur l'interprétation des clauses d'une convention collective, sur les salaires ou sur les conditions de travail, cet accord ou cette recommandation produira les effets d'une convention collective du travail.\n\nSi l'accord ou la recommandation est intervenue en vue de régler un conflit survenu dans une branche d'activité ou une convention collective aura été étendue en application de l'article 58 du présent code, cet accord ou cette recommandation devra, à la demande des organisations syndicales signataires de la convention collective étendue, faire l'objet d'un arrêté d'extension pris conformément aux dispositions de l'article 58 précité ; cet arrêté pourra être rapporté dans les conditions prévues à l'article 59 du code.\n\nLa date d'application de l'accord de conciliation et de la recommandation, dans leur silence sur ce point, est celle de la notification du conflit à l'Inspecteur du Travail et des Lois Sociales.\n\nLes accords de conciliation et de recommandation, sont immédiatement insérés au Journal Officiel et affichés dans les bureaux des Inspecteurs du Travail et des Lois Sociales aux sièges des syndicats intéressés et au lieu de travail où ont né le conflit.\n\nLes minutes sont déposées aux greffes des Tribunaux au jour de leur rendu.\n\nLes frais occasionnés par la procédure de conciliation et de recommandation, notamment les frais de déplacement des experts, pertes de salaires ou traitements, frais d'expertises, sont supportés par le budget de l'Etat."
+  },
+  "248": {
+   "numero": "248",
+   "page": 66,
+   "texte": "Les recommandations qui ont acquis force exécutoire peuvent faire l'objet d'un recours devant la Cour Suprême, pour excès de pouvoir ou violation de la loi."
+  },
+  "249": {
+   "numero": "249",
+   "page": 66,
+   "texte": "Sont interdits tout lock-out ou toute grève avant épuisement des procédures fixées par la présente loi ou en violation des dispositions d'un accord de conciliation ou d'une\n\n../\n67\n\nrecommandation ayant acquis force exécutoire.\n\nLe lock-out ou la grève engagé en contravention des dispositions du présent code peut entraîner :\n\na) pour les employeurs le payement aux travailleurs des journées de salaires perdues de ce fait ;\nb) pour les travailleurs, la perte de salaires des journées de grève illégale ;\nc) pour les employeurs, par décision des Tribunaux de Droit Commun rendue à la requête du Ministre du Travail et de la Prévoyance Sociale, pendant une période minimum de deux ans, l'inéligibilité aux fonctions de membres des chambres de commerce, d'agriculture et d'industrie, l'interdiction de faire partie d'une Commission Nationale Consultative du Travail, de participer sous une forme quelconque à une entreprise de travaux ou un marché de fournitures pour le compte de l'Etat ou d'une collectivité publique.\n\nLa grève déclenchée après formation de l'opposition à la recommandation n'entraîne pas la rupture du contrat de travail.\n\n# T I T R E IX\n\n# P E N A L I T E S"
+  },
+  "250": {
+   "numero": "250",
+   "page": 67,
+   "texte": "Tout assesseur du Tribunal du Travail qui ne se sera pas rendu, à deux reprises successives et sans motif valable à son poste sur la citation qui lui aura été notifiée, pourra être déclaré, par le tribunal, incapable d'exercer les fonctions d'assesseur pendant la durée de son mandat."
+  },
+  "251": {
+   "numero": "251",
+   "page": 67,
+   "texte": "Seront punis d'une amende de 1.200 à 1.800 francs et en cas de récidive de 2.400 à 7.200 francs :\n\na) les auteurs d'infractions aux dispositions des articles 24, 39 (& 6), 71, 72, 74, 85, 87 (& 3), 88, 163 (& 2 et 3), 182 (avant dernier paragraphe);\nb) les auteurs d'infractions aux dispositions des arrêtés et décrets prévus par les articles 25, 75, 105, 181 et 182 (& 1er) ;\nc) les employeurs, fondés de pouvoirs ou leurs préposés, responsables du défaut d'affichage conforme aux dispositions de l'article 103.\n\nEn ce qui concerne les infractions à l'arrêté prévu à l'article 182 (& 1er), l'amende sera prononcée autant de fois qu'il y aura d'inscriptions omises ou erronnées."
+  },
+  "252": {
+   "numero": "252",
+   "page": 67,
+   "texte": "Seront punis d'une amende de 2.400 à 7.200 francs et en cas de récidive d'une amende de 7.200 à 20.000 francs.\n\n../\n58\n\na) les auteurs d'infractions aux dispositions des articles 9, 117 ( & 2), 146 et 147 ;\nb) les auteurs d'infractions aux dispositions des arrêtés et décrets prévus par les articles 118, 142 et 148 ;\nc) les personnes qui auront omis de faire la déclaration prévue à l'article 141."
+  },
+  "253": {
+   "numero": "253",
+   "page": 68,
+   "texte": "Les infractions aux dispositions des articles 184 à 187 inclus, 199, et de l'article 206, seront poursuivies contre les Directeurs ou Administrateurs des syndicats et punies d'une amende de 3.600 à 20.000 francs.\n\nAu cas de fausse déclaration relative aux statuts et aux noms et qualités des Administrateurs ou Directeurs, l'amende pourra être portée à 36.000 francs.\n\nLes peines prévues par la législation commerciale en vigueur contre les auteurs de contrefaçon, apposition, imitation ou usage frauduleux des marques de commerce sont applicables en matière de contrefaçon, apposition, imitation ou usage frauduleux des marques syndicales ou labels."
+  },
+  "254": {
+   "numero": "254",
+   "page": 68,
+   "texte": "Seront punis d'une amende de 3.600 à 20.000 francs et en cas de récidive d'une amende de 7.200 à 40.000 francs et d'un emprisonnement de 12 à 20 jours ou de l'une de ces deux peines seulement :\n\na) les auteurs d'infractions aux dispositions des articles 76, 77, 108, 109, 110 ( & 2), 113, 114, 132, 133, 140, 155 (e,4°);\nb) les auteurs d'infractions aux décrets et arrêtés prévus aux articles 28, 112, 116, 137 et 173.\n\nDans le cas d'infraction à l'article 76, s'il y a double récidive, l'emprisonnement sera obligatoirement prononcé.\n\nDans le cas d'infractions à l'article 116 les pénalités ne seront pas encourues si l'infraction a été l'effet d'une erreur portant sur l'âge des enfants, commise lors de l'établissement du carnet de travailleur."
+  },
+  "255": {
+   "numero": "255",
+   "page": 68,
+   "texte": "Seront punis d'une amende de 7.200 à 36.000 francs et, en cas de récidive d'une amende de 12.000 à 72.000 francs et d'un emprisonnement de 12 à 20 jours, ou de l'une de ces deux peines seulement :\n\na) les auteurs d'infractions aux dispositions des articles 10, 58 (en matière de salaires, primes et indemnités de toute nature) 100, 122, 134, 135 et 164 ;\nb) les auteurs d'infractions aux dispositions des décrets et arrêtés prévus par les articles 60, 83 et 101 ;\nc) toute personne qui aura employé un travailleur de nationalité étrangère démuni de carte de séjour ou de l'autorisation d'emploi pour une profession autre que celle de l'emploi réellement tenu ;\n\n../\n69\n\nd) toute personne qui aura embauché un travailleur étranger dont le contrat avec un précédent employeur n'était pas, soit expiré; soit résilié par décision judiciaire, à moins que le travailleur n'ait été autorisé par le Ministre du Travail et de la Prévoyance Sociale; cette autorisation réservant les droits du précédent employeur vis-à-vis du travailleur et du nouvel employeur."
+  },
+  "256": {
+   "numero": "256",
+   "page": 69,
+   "texte": "Sera puni d'une amende de 12.000 à 72.000 francs et d'un emprisonnement de 12 jours à 2 mois ou de l'une de ces deux peines seulement, quiconque aura porté ou tenté de porter atteinte soit à la libre désignation des membres du bureau syndical, soit à l'exercice régulier de leurs fonctions.\n\nEn cas de récidive dans le délai d'une année, l'emprisonnement sera toujours prononcé. Les infractions pourront être constatées, soit par l'Inspection du Travail et des Lois Sociales, soit par les officiers de police judiciaire."
+  },
+  "257": {
+   "numero": "257",
+   "page": 69,
+   "texte": "Seront punis d'une amende de 18.000 à 90.000 francs et d'un emprisonnement de 1 à 6 mois ou de l'une de ces deux peines seulement :\n\na) les auteurs d'infractions aux dispositions des articles 4 sur l'interdiction du travail forcé, 73 sur l'interdiction du \"marchandage\", 87 (& 2) sur le paiement du salaire en alcool ou boisson alcoolisée, 103, sauf en matière d'affichage, 104 et 166 ;\nb) les personnes qui auront fait sciemment une fausse déclaration d'accident du travail ou de maladie professionnelle ;\nc) toute personne, qui, par violence, menace, tromperie, dole ou promesses, aura contrait ou tenté de contraindre un travailleur à s'embaucher contre son gré, ou qui, par les mêmes moyens, aura tenté de l'empêcher ou l'aura empêché de s'embaucher ou de remplir les obligations imposées par son contrat ;\nd) toute personne qui, en faisant usage d'un contrat fictif ou d'un carnet de travailleur contenant des indications inexactes, se sera fait embaucher ou se sera substitué volontairement à un autre travailleur ;\ne) tout employeur, fondé de pouvoirs ou préposé, qui aura porté sciemment sur le carnet du travailleur, le registre d'employeur ou tout autre document, des attestations mensongères relatives à la durée et aux conditions du travail accompli par le travailleur, ainsi que tout travailleur qui aura sciemment fait usage de ces attestations ;\nf) tout employeur, fondé de pouvoirs ou préposé, qui aura sciemment engagé, tenté d'engager ou conserver à son service un travailleur encore lié à un autre employeur par contrat de travail, un apprenti encore lié par contrat d'apprentissage ou un stagiaire en cours de formation dans un centre de formation professionnelle, indépendamment du droit à dommages-intérêts qui pourra être reconnu à la partie lésée;\n\n./\n70.\n\ng) toute personne qui aura exigé ou accepté du travail, une rémunération quelconque à titre d'intermédiaire le règlement ou le paiement des salaires, indemnités, allocations et frais de toute nature.\n\nEn cas de récidive, l'amende sera de 36.000 à 360.000 francs et l'emprisonnement de 2 à 12 mois."
+  },
+  "258": {
+   "numero": "258",
+   "page": 70,
+   "texte": "Sera punie d'une amende de 72.000 à 360.000 francs et d'un emprisonnement de 2 à 6 mois ou de l'une de ces deux peines seulement, toute personne qui s'est opposée ou a tenté de s'opposer à l'exécution des obligations ou à l'exercice des pouvoirs qui incombent aux fonctionnaires du corps de l'Inspection du Travail et des Lois Sociales et aux Chefs de circonscriptions administratives agissant comme suppléant de l'Inspecteur du Travail et des Lois Sociales.\n\nEn cas de récidive l'emprisonnement de 2 à 6 mois est obligatoirement prononcé.\n\nLes dispositions du code pénal qui prévoient et répriment les actes de résistance, les outrages et les violentes contre les officiers de police judiciaire sont, en outre, applicables à ceux qui se rendent coupables de faits de même nature à l'égard des Inspecteurs du Travail et des Lois Sociales ou de leurs suppléants."
+  },
+  "259": {
+   "numero": "259",
+   "page": 70,
+   "texte": "Sera puni des peines prévues par le code pénal en matière d'abus de confiance, tout employeur qui aura retenu ou utilisé dans son intérêt personnel ou pour les besoins de son entreprise les sommes ou titres remis en cautionnement."
+  },
+  "260": {
+   "numero": "260",
+   "page": 70,
+   "texte": "Les dispositions du code pénal en matière de sursis sont applicables à tout employeur pour les infractions prévues et réprimées au présent titre.\n\nLorsqu'une amende est prononcée en vertu du présent titre, elle est encourue autant de fois qu'il y a eu d'infractions, sans que cependant le montant total des amendes infligées puisse excéder cinquante fois les taux maxima prévus ci-dessus.\n\nCette règle s'applique notamment au cas où plusieurs travailleurs auraient été employés dans des conditions contraires à la présente loi.\n\nPour l'application des articles 251, 252, 253, 254, 255, 256, il y a récidive lorsque, dans les 12 mois antérieurs au fait poursuivi, le contrevenant a déjà subi une condamnation pour un fait identique."
+  },
+  "261": {
+   "numero": "261",
+   "page": 70,
+   "texte": "Les chefs d'entreprises sont civilement responsables des condamnations prononcées contre leurs fondés de pouvoirs ou préposés.\n\n../\n71\n\n# T I T R E X\nDISPOSITIONS TRANSITOIRES"
+  },
+  "262": {
+   "numero": "262",
+   "page": 71,
+   "texte": "Les dispositions de la présente loi sont de plein droit applicables aux contrats individuels en cours.\n\nElles ne peuvent constituer une cause de rupture de ces contrats.\n\nToute clause d'un contrat en cours qui ne serait pas conforme aux dispositions de la présente loi, ou d'un décret ou arrêté pris pour son application, sera modifiée dans un délai de six mois à compter de la publication de la présente loi ou du décret ou arrêté en cause.\n\nAu cas de refus de l'une des parties, la juridiction compétente pourra ordonner, sous peine d'astreinte, de procéder aux modifications qui seront jugées nécessaires."
+  },
+  "263": {
+   "numero": "263",
+   "page": 71,
+   "texte": "En celles de ces dispositions qui ne sont pas contraires à la présente loi, la réglementation existante prise en application des lois du 15 décembre 1952 et 10/64 du 25 Juin 1964 demeurera en vigueur jusqu'à la mise en place des textes prévus par le présent code."
+  },
+  "264": {
+   "numero": "264",
+   "page": 71,
+   "texte": "Sont abrogées toutes dispositions contraires à la présente loi."
+  },
+  "265": {
+   "numero": "265",
+   "page": 71,
+   "texte": "La présente loi sera exécutée comme loi de l'Etat./-\n\nBRAZZAVILLE, LE 15 MARS 1975\n\nLE PRESIDENT DE LA REPUBLIQUE,\nCHEF DE L'ETAT,\nPRESIDENT DU CONSEIL D'ETAT,\n\n![img-0.jpeg](img-0.jpeg)\n\nLe Commandant M. NGOUABI"
+  }
+ }
+}

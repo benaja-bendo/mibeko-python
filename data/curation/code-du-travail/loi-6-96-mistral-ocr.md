@@ -1,0 +1,1153 @@
+[[MIBEKO_PAGE:1]]
+PARLEMENT
+
+REPUBLIQUE DU CONGO
+
+Unité - Travail - Progrès
+
+Loi n° 6 - 96 du 6 Mars 1996
+Modifiant et complétant certaines dispositions de
+la loi n°45/75 du 15 Mars 1975 instituant un Code
+de Travail de la République Populaire du Congo
+
+L'Assemblée Nationale et le Sénat ont délibéré et adopté;
+
+Le Président de la République promulgue la loi dont la teneur suit:
+
+Article 1er : Les dispositions suivantes de la loi n° 45/75 du 15 mars 1975 instituant un Code du Travail
+de la République Populaire du Congo sont modifiées et/ou complétées ainsi qu'il suit:
+
+# TITRE Premier
+
+# DISPOSITIONS GENERALES
+
+Article 2 nouveau : Est considéré comme travailleur au sens du présent Code, quels que soient son
+sexe et sa nationalité, toute personne qui s'est engagée à mettre son activité professionnelle, moyennant
+rémunération, sous la direction et l'autorité d'une autre personne, physique ou morale, publique ou
+privée. Pour la détermination de la qualité de travailleur, il ne sera tenu compte ni du statut juridique
+de l'employeur ni de celui de l'employé.
+
+Les personnes nommées dans un emploi permanent d'une administration publique ne sont pas
+soumises au présent code.
+
+Toutefois, les agents contractuels de la Fonction Publique seront soumis, en ce qui concerne
+l'exercice du droit de grève, aux dispositions législatives spécifiques, applicables à l'Administration
+Publique.
+
+Les travailleurs continuent à bénéficier des avantages qui leurs ont été consentis, lorsque ceux-
+ci sont supérieurs à ceux que leur reconnaît le présent Code dont les dispositions ne s'opposent pas,
+par ailleurs, aux dispositions plus favorables qui peuvent être consenties par des conventions ou
+accords collectifs ou par des contrats particuliers.
+
+Article 4 nouveau : Le travail forcé ou obligatoire est interdit de façon absolue:
+
+Le terme "travail forcé ou obligatoire" désigne tout travail ou service exigé d'un individu sous
+la menace d'une peine quelconque ou pour lequel ledit individu ne s'est pas offert de plein gré.
+
+...//...
+[[MIBEKO_PAGE:2]]
+- 2 -
+
+Le terme "travail forcé" ne s'applique pas au travail ou service exigé en cas de guerre, de sinistre, de menace de sinistre, de désastre naturel ou d'épidémie et de façon générale dans toutes circonstances susceptibles de mettre en danger ou mettant en danger la vie d'autrui ou les conditions normales d'existence de l'ensemble ou d'une partie de la population.
+
+Le terme "travail obligatoire" ne s'applique pas à tout travail décidé et exécuté de plein gré par une collectivité et visant à des tâches d'intérêt direct pour cette collectivité tels que l'établissement ou l'entretien des voies de communication, l'assainissement et la propreté des lieux d'habitation, le ravitaillement en eau, l'aménagement du sol, les constructions à des fins sociales, culturelles ou économiques.
+
+## TITRE II
+DU CONTRAT DU TRAVAIL
+
+### CHAPITRE II: DU CONTRAT DE TRAVAIL INDIVIDUEL
+
+#### Section 3 : De la conclusion et de l'exécution du Contrat .
+
+**Paragraphe Premier : Du contrat à durée déterminée ou indéterminée .**
+
+**Article 32 nouveau :** On ne peut engager ses services qu'à temps ou pour un ouvrage déterminé.
+Lorsque le contrat est conclu pour une durée déterminée, celle-ci ne peut excéder deux (2) ans.
+
+Si le contrat arrivé à terme se poursuit par la volonté même tacite des parties, cette prolongation lui confère le caractère de contrat à durée indéterminée, nonobstant toute clause prohibant la tacite reconduction.
+
+**Article 32-2 :** Sont considérés comme contrats de travail à durée déterminée, sans que la présente liste soit limitative:
+
+1.- le contrat passé pour l'exécution d'un ouvrage ou d'un chantier;
+2.- le contrat conclu pour faire face à un surcroît exceptionnel et temporaire de travail ou des travaux urgents;
+3.- le contrat conclu pour les cas d'absence temporaire ou de suspension du contrat de travail d'un salarié ne résultant pas d'un conflit collectif du travail;
+4.- le contrat conclu en cas de rupture anticipée d'un contrat de travail à durée déterminée du fait du salarié;
+5.- le contrat conclu en cas de survenance de la fin d'un contrat de travail à durée déterminée dans l'attente de l'entrée en service effective du travailleur permanent appelé à remplacer celui dont le contrat a pris fin;
+6.- le contrat conclu au titre des dispositions législatives et réglementaires destinées à favoriser l'embauche de certaines catégories de demandeurs d'emploi;
+7.- Le contrat passé lorsque l'employeur s'engage, pour une durée et dans les conditions qui sont fixées par décret, à assurer un complément de formation professionnelle à certaines catégories de personnes. Ce contrat doit comporter un terme précis fixé dès sa conclusion;
+
+...//...
+[[MIBEKO_PAGE:3]]
+- 3 -
+
+8.- le contrat conclu en vue de pourvoir aux emplois pour lesquels il est d'usage constant de ne pas recourir aux contrats à durée déterminée en raison de la nature de l'activité exercée et du caractère par nature temporaire de ces emplois.
+
+Les secteurs d'activité dans lesquels ces contrats peuvent être conclus sont déterminés par décret.
+
+Article 32-3: Le contrat de travail à durée déterminée doit être écrit ; à défaut, il est présumé conclu pour une durée indéterminée. Il doit comporter les indications suivantes:
+
+- la définition précise de son projet;
+- lorsqu'il est conclu dans le cas visé au 3e alinéa de l'article 32-2, l'identité et la qualification du salarié remplacé;
+- lorsqu'il comporte un terme précis, la date d'échéance du terme et, le cas échéant, une clause prévoyant le report du terme, sans que ce report ait pour effet de proroger le contrat au delà de deux (2) ans.
+- lorsqu'il ne comporte pas de terme précis, la durée pour laquelle il est conclu;
+- la désignation du poste de travail ou de l'emploi occupé;
+- la durée de la période d'essai éventuellement prévue;
+- les modalités de paiement et les éléments de la rémunération.
+
+Article 32-4: le contrat de travail à durée déterminée peut comporter une période d'essai. A défaut d'usage ou de dispositions conventionnelles prévoyant des durées moindres, cette période d'essai est déterminée comme suit :
+
+- 15 jours maximum pour les contrats dont la durée est inférieure ou égale à 6 mois;
+- 1 mois pour les autres cas.
+
+Article 32-5: Le contrat de travail à durée déterminée ne peut être renouvelé qu'une fois pour une durée inférieure ou égale à celle de la période initiale. Dans tous les cas, cette durée ne peut excéder deux (2) ans, renouvellement compris.
+
+Dans les cas prévus aux alinéas 2 et 5 de l'article 32-2, la durée du contrat ne pourra excéder six (6) mois, renouvellement compris.
+
+Article 32-6: Lorsque le contrat comporte une clause prévoyant un terme, il ne peut être reporté que pour une durée au plus égale au tiers (1/3) de la période initiale. Le report de ce terme doit faire l'objet d'un avenant.
+
+### Section 3: De la résiliation du Contrat individuel de travail
+
+Paragraphe premier : Du contrat à durée déterminée.
+
+Article 37 nouveau : Le contrat de travail à durée déterminée prend fin à l'expiration du terme fixé.
+
+Article 37-2 : la résolution peut être demandée par l'une des parties lorsque l'autre n'exécute pas ses obligations.
+
+...//...
+[[MIBEKO_PAGE:4]]
+- 4 -
+
+Article 37-3: Sauf accord des parties, le contrat de travail à durée déterminée ne peut être rompu avant l'échéance du terme qu'en cas de faute lourde ou de force majeure.
+
+Article 37-4: En cas de rupture anticipée du fait de l'employeur, le salarié percevra, sous réserve de l'appréciation de la juridiction compétente, à titre d'indemnité, les rémunérations et les avantages de toute nature qu'il aurait recueillis si le contrat avait été exécuté jusqu'à la date prévue par les parties.
+
+Article 37-5: La rupture du fait salarié ouvre droit au profit de l'employeur à des dommages intérêts correspondant au préjudice subi.
+
+Toutefois, il appartient à l'employeur d'apporter la preuve du préjudice. Dans ce cas, il peut conclure immédiatement un nouveau contrat de travail à durée déterminée pour pourvoir le poste abandonné.
+
+### Paragraphe 3: Du contrat à durée indéterminée
+
+Article 39 nouveau: Le contrat de travail à durée indéterminée peut toujours cesser par la volonté de l'une des parties.
+
+Cette résiliation est subordonnée à un préavis donné par la partie qui prend l'initiative de la rupture, le préavis ne devant en aucun cas se confondre avec la période de congé.
+
+En l'absence de convention collective, un arrêté du Ministre chargé du travail pris après avis de la commission nationale consultative du travail, détermine les conditions et la durée du préavis, compte tenu notamment de la durée du contrat et des catégories professionnelles.
+
+Toute rupture doit être notifiée par écrit, la lettre de notification indique expressément le motif.
+
+En cas de licenciement individuel ou collectif motivé par une diminution de l'activité de l'établissement ou une réorganisation intérieure, l'employeur doit saisir par écrit les délégués du personnel en vue de recueillir leurs suggestions sur les mesures de licenciement qu'il a l'intention de prendre. Pour ce faire il doit mettre tous les documents et renseignements nécessaires pour l'analyse de la situation de l'entreprise. L'ordre des licenciements est établi en tenant compte prioritairement de la qualification professionnelle, de l'ancienneté des travailleurs ensuite et enfin de leur charge de famille.
+
+Seront licenciés en premiers après autorisation de la commission des litiges présidée par l'inspecteur du travail, les salariés présentant les moindres aptitudes professionnelles pour les emplois maintenus, et en cas d'égalité d'aptitudes professionnelles, les salariés moins anciens dans l'établissement, l'ancienneté étant majorée d'un an pour le salarié marié et d'un an pour chaque enfant à charge, aux termes de la réglementation sur les prestations familiales.
+
+Le salarié ainsi licencié conserve pendant un an la priorité d'embauche dans la même catégorie d'emploi. Il est tenu de communiquer à son employeur tout changement d'adresse survenu après son départ de l'établissement.
+
+.../...
+[[MIBEKO_PAGE:5]]
+- 5 -
+
+Les décisions de la commission des litiges sont susceptibles de recours, soit devant le Ministre du travail, soit devant la juridiction compétente.
+
+En cas de rupture par consentement mutuel seul le consentement licite du salarié est requis. Celui-ci doit être exprimé par écrit ou par d'autres moyens. Dans ce cas le salarié bénéficie d'une prime de départ dont le montant est laissé à la discrétion des parties et déterminé en tenant compte des us et coutumes en la matière, en sus des indemnités légales ou conventionnelles consécutives à la rupture du contrat.
+
+Des arrêtés du Ministre du travail fixeront les attributions et la composition de la commission des litiges ainsi que les modalités et délais de traitement des dossiers de licenciement individuel ou collectif pour cause économique ou structurelle et de rupture par consentement mutuel.
+
+Article 39-2: Les dispositions de l'article 39 nouveau ci-dessus ne s'appliquent pas en cas de:
+
+- règlement judiciaire ou de faillite de l'entreprise;
+- liquidation des biens;
+- cessation d'activité pour fin des travaux, lorsque les salariés sont liés à l'employeur par des contrats de travail conclus pour la durée du chantier ou de l'ouvrage.
+
+Article 39-3: Dans les cas prévus à l'article 39-2 ci-dessus, l'employeur ou le syndic doit réunir les délégués du personnel pour les informer du calendrier prévisionnel des licenciements envisagés.
+
+Par ailleurs, toute notification de licenciement n'est admise qu'après déclaration préalable de fermeture d'entreprise adressée à l'Inspection du Travail, dans les conditions fixées à l'article 181 du présent code.
+
+Article 41 nouveau: Toute rupture du contrat à durée indéterminée sans préavis ou sans que le délai de préavis ait été intégralement observé emporte obligation pour la partie responsable de verser à l'autre partie une indemnité dite indemnité compensatrice de préavis dont le montant correspond à la rémunération et aux avantages de toute nature dont aurait bénéficié le travailleur durant le délai de préavis qui n'aura pas été effectivement respecté.
+
+Toutefois le travailleur congédié qui trouve un autre emploi durant la période de préavis peut quitter son dernier employeur sans lui être redevable d'une quelconque indemnité, sous la seule réserve de le prévenir de son départ définitif 2 jours ouvrables auparavant.
+
+Cependant la rupture de contrat peut intervenir sans préavis en cas de faute lourde.
+
+Dans ce cas, le licenciement ne prend effet qu'après que le travailleur ait présenté sa défense auprès de l'employeur avec la faculté de se faire assister par une personne de son choix. Pendant le délai nécessaire au travailleur pour présenter sa défense, délai ne pouvant excéder 30 jours, les relations de travail sont suspendues.
+
+...//...
+[[MIBEKO_PAGE:6]]
+6 -
+
+# **Paragraphe 4 : Des dispositions communes ou particulières à la résiliation des contrats individuels de travail**
+
+**Article 42 nouveau:** Toute rupture abusive du contrat de travail donne lieu à la réintégration.
+
+La juridiction compétente constate l'abus par une enquête sur les causes et les circonstances de la résiliation du contrat.
+
+Sont réputés abusifs les licenciements effectués sans motif légitime ainsi que les licenciements motivés par les opinions du travailleur, son activité syndicale, son appartenance ou sa non appartenance à un groupe politique, religieux ou philosophique, à un syndicat déterminé. De tels licenciements donnent lieu à la réintégration.
+
+En cas de contestation, la preuve de l'existence d'un motif légitime de licenciement incombe à l'employeur.
+
+La décision de la juridiction compétente indique expressément le motif allégué par la partie qui aura rompu le contrat.
+
+En cas de refus de réintégration, le montant des dommages-intérêts est fixé en tenant compte de tous les éléments qui peuvent justifier l'existence et déterminer l'étendue du préjudice causé et notamment :
+
+a) lorsque la responsabilité incombe au travailleur du préjudice subi par l'employeur en raison de l'inexécution du contrat ;
+
+b) lorsque la responsabilité incombe à l'employeur des usages, de la nature des services engagés, de l'ancienneté des services, de l'âge du travailleur et des droits acquis à quelque titre que ce soit.
+
+Ces dommages-intérêts ne se confondent ni avec l'indemnité pour inobservation de préavis, ni avec l'indemnité de licenciement éventuellement prévue par le contrat ou la Convention Collective.
+
+Sont réputés irréguliers, tous licenciements fondés sur un motif légitime autre que le motif économique ou structurel et exécuté en dehors des procédures légales en vigueur, notamment celles prescrites aux articles 41 et 176 du présent Code du Travail.
+
+Dans ce cas, la juridiction compétente constate l'irrégularité de la procédure et décide soit de la reprise de celle-ci, soit du paiement en faveur du salarié des dommages-intérêts.
+
+# **Section IV : De la suspension du contrat individuel de travail**
+
+**Article 47 nouveau:** Le contrat de travail est suspendu:
+
+a) - En cas de fermeture de l'établissement par suite du départ de l'employeur sous les drapeaux ou pour une période obligatoire d'instruction militaire;
+
+b) - Pendant la durée du service militaire du travailleur et pendant les périodes obligatoires d'instruction militaire auxquelles il est astreint;
+
+.../...
+[[MIBEKO_PAGE:7]]
+- 7 -
+
+c) - Pendant la durée de l'absence du travailleur, en cas de maladie dûment constatée par un médecin agréé, durée limitée à six (6) mois. Ce délai est prorogé jusqu'au remplacement du travailleur;
+
+d) - Pendant la période d'indisponibilité résultant d'un accident de travail ou d'une maladie professionnelle;
+
+e) - Pendant la durée de la détention préventive du travailleur, durée limitée à six (6) mois;
+
+f) - Pendant les périodes de repos des femmes en couches (article 113 du présent code de travail);
+
+g) - Pendant la grève ou le lock-out déclenché dans le respect des lois et règlements en vigueur;
+
+h) - Pendant l'exercice des fonctions syndicales ou électives impliquant une occupation à temps plein;
+
+i) - En cas de réquisition d'intérêt national;
+
+j) - En cas de mise en chômage économique ou technique;
+
+k) - En cas de mise en disponibilité du travailleur;
+
+l) - En cas de mise à pied du travailleur pour raison disciplinaire ou du salarié protégé comme mesure conservatoire (article 176 du présent code de travail).
+
+## Section V : Du chômage économique et technique
+
+### Paragraphe premier: Du chômage économique.
+
+Article 47-2: Le chômage économique est une mesure de suspension des contrats individuels de travail à l'initiative de l'employeur pour motif d'ordre économique;
+
+Article 47-3: Tout employeur désireux de mettre une partie ou la totalité de son personnel en chômage économique est tenu d'adresser au Directeur Régional du Travail du ressort un dossier économique et financier accompagné de l'avis écrit des partenaires sociaux au sein de l'entreprise.
+
+Article 47-4: Le Directeur Régional du Travail doit convoquer la Commission des Litiges au plus tard dans les quinze (15) jours qui suivent le dépôt de la demande d'autorisation du chômage économique; au-delà, l'autorisation est réputée avoir été accordée.
+
+Article 47-5: La commission des Litiges constate la réalité des *fins* invoqués et autorise ou refuse la mesure sollicitée.
+
+Article 47-6: Si la Commission des Litiges autorise la mesure, celle-ci ne peut s'imposer aux travailleurs que *sont* réservés de leur accord individuellement exprimé préalablement à l'avis de la *commission*.
+
+En cas de refus du travailleur, la rupture du contrat de travail qui peut en résulter est du fait de l'employeur.
+
+Article 47-7: La durée du chômage économique est de trois (3) mois renouvelables une fois.
+
+Article 47-8: Le chômage économique prononcé sans l'autorisation de la Commission des Litiges ou malgré le refus de celle-ci est nul.
+
+.../...
+[[MIBEKO_PAGE:8]]
+- 8 -
+
+## Paragraphe II: Du chômage technique
+
+Article 47-9: Le chômage technique est une mesure de suspension des contrats individuels de travail due à l'impossibilité matérielle dans laquelle se trouve l'employeur de fournir du travail dans tout ou partie de l'entreprise.
+
+Le chômage technique peut résulter notamment d'un événement de force majeure ou du fait du prince, des intempéries à caractère exceptionnel, des difficultés d'approvisionnement en matières premières et en énergie, d'un sinistre, d'un incendie, ou de toutes circonstances à caractère exceptionnel.
+
+Article 47-10: L'employeur qui désire mettre son personnel en chômage technique est tenu de saisir immédiatement, après avis des partenaires sociaux au sein de l'entreprise, le Directeur Régional du Travail du ressort, qui, après avoir vérifié la réalité des faits ou causes justificatives de la suspension, convoque la commission des litiges dans un délai de dix(10) jours maximum.
+
+Article 47-11: La période de chômage technique ne peut excéder six (6) mois renouvellement compris.
+
+## Paragraphe III : Dispositions communes
+
+Article 47-12: Pendant les périodes de chômage économique ou technique, l'employeur ne peut recourir à la réduction de l'horaire hebdomadaire du travail, aux heures supplémentaires, pour les travailleurs restant dans l'entreprise et à l'embauche des nouveaux travailleurs.
+
+Toutefois, ces périodes doivent être considérées comme temps de travail effectif pour l'appréciation notamment du droit au préavis et du montant de l'indemnité de licenciement.
+
+Article 47-13: Le travailleur mis en chômage économique ou technique perçoit de son employeur une indemnité mensuelle égale au tiers (1/3) de son salaire catégoriel plus tous les accessoires de salaire non liés à la prestation effective du travail.
+
+Il bénéficie en outre des frais médicaux et pharmaceutiques et des autres prestations de sécurité sociale prévues par la convention collective en vigueur.
+
+Article 47-14: Le travailleur mis en chômage économique ou technique peut au cas où il trouve un nouvel emploi quitter son dernier employeur sans lui être redevable d'aucune indemnité.
+
+Article 47-15: Lorsque la mesure du chômage économique ou technique aboutit à un licenciement, la base de calcul de l'indemnité due par l'employeur est le salaire du travailleur avant la mesure du chômage économique ou technique. Il en est de même du calcul des primes dues pendant la durée de la mesure.
+
+Article 47-16 nouveau : Les décisions de la commission des litiges en matière de chômage économique ou technique peuvent être contestées conformément à l'article 39 alinéa 8 du présent code.
+
+...//...
+[[MIBEKO_PAGE:9]]
+- 9 -
+
+# CHAPITRE V: (nouveau) DU TRAVAIL TEMPORAIRE.
+
+Article 73 nouveau: Est au sens de la présente section, un entrepreneur de travail temporaire ou d'intérim, toute personne physique ou morale dont l'activité exclusive est de mettre à la disposition provisoire d'utilisateurs, des salariés qu'en fonction d'une qualification connue. Elle embauche et rémunère à cet effet.
+
+Il ne peut être fait appel aux salariés mentionnés à l'alinéa précédent que pour des missions non durables accomplies pour le compte d'un utilisateur dans les seuls cas prévus aux alinéas 1° 3° 5° 6° de l'article 32-3.
+
+Article 73-2: L'activité d'entrepreneur de travail temporaire ne peut s'exercer que dans le respect des lois et règlements en vigueur sur l'exercice des professions commerciales et des dispositions de l'article 181 du présent code.
+
+Les personnes autorisées devront remplir certaines conditions fixées par décret.
+
+Article 73-3: Lorsqu'un entrepreneur de travail temporaire met un salarié à la disposition d'utilisateur, un contrat de mise à disposition liant l'utilisateur à l'entrepreneur de travail temporaire doit être conclu par écrit au plus tard dans les deux jours ouvrables suivant la mise à disposition.
+
+Ce contrat établi pour chaque salarié doit :
+
+1°/ mentionner le motif pour lequel il est fait appel au salarié temporaire; cette mention doit être assortie de justifications précises qui comportent le nom et la qualification du salarié à remplacer;
+
+2°/ fixer le terme de la mission;
+
+3°/ comporter le cas échéant, la clause prévoyant la possibilité de modifier le terme de mission;
+
+4°/ préciser les caractéristiques particulières du poste de travail à pourvoir, la qualification professionnelle exigée, le lieu de la mission et l'horaire;
+
+5°/ mentionner la nature des équipements de protection individuelle que le salarié doit utiliser, et le cas échéant, préciser si ceux-ci sont fournis par l'entreprise de travail temporaire;
+
+6°/ indiquer le montant de la rémunération avec ses différentes composantes, y compris, s'il en existe, les primes et accessoires de salaire, que percevrait dans l'entreprise utilisatrice après période d'essai un salarié de qualification équivalente occupant le même poste de travail.
+
+Toute clause tendant à interdir l'embauchage du salarié temporaire à l'issue de sa mission est prohibée et réputée non écrite.
+
+Article 73-4: Le contrat liant l'entrepreneur de travail temporaire à chacun des salariés mis à la disposition provisoire d'un utilisateur doit être établi par écrit et adressé au salarié au plus tard dans les deux (2) jours ouvrables suivant sa mise à disposition.
+
+Il doit comporter:
+
+1°/ la reproduction des clauses et mentions énumérées à l'article 73-3 ;
+2°/ la qualification du salarié ;
+
+...//...
+[[MIBEKO_PAGE:10]]
+- 10 -
+
+3°/ les modalités de la rémunération due au salarié y compris celles de l'indemnité destinée à compenser la précarité de sa situation;
+
+4°/ la période d'essai éventuelle;
+
+5°/ une clause de rapatriement du salarié à la charge de l'entrepreneur de travail temporaire si la mission s'effectue hors du territoire national; elle doit préciser les garanties sociales notamment le montant de la rémunération, les conditions de transport et d'hébergement, le lieu d'exécution du contrat etc. Cette clause devient caduque en cas de rupture du contrat à l'initiative du salarié ;
+
+6°/ le numéro d'affiliation à la Caisse Nationale de Sécurité Sociale de l'entreprise de travail temporaire.
+
+Dans le cas où le salarié lié par un contrat de travail temporaire exerce une profession médicale ou paramédicale réglementée, l'entreprise de travail temporaire doit vérifier que ce salarié est régulièrement autorisé à exercer sa profession.
+
+La durée totale de contrat, renouvellement compris, ne peut excéder 24 mois.
+
+Article 73-5 : La rémunération que perçoit le salarié lié par un contrat de travail temporaire ne peut être inférieure, selon les conventions collectives de la branche d'activités de l'utilisateur, à celle définie au point 6 de l'article 73-3.
+
+Article 73-6 : Pendant la durée de la mission, l'utilisateur est responsable des conditions d'exécution du travail telles qu'elles sont déterminées par les mesures législatives, réglementaires et conventionnelles qui sont applicables au lieu de travail.
+
+Pour l'application de l'alinéa précédent, les conditions d'exécution du travail comprennent limitativement ce qui a trait à la durée de travail, au travail de nuit, au repos hebdomadaire et des jours fériés, à l'hygiène et à la sécurité, au travail des femmes, des enfants et des jeunes travailleurs.
+
+Les obligations afférentes à la médecine du travail sont, selon les modalités fixées par décret, à la charge de l'entrepreneur de travail temporaire. La médecine du travail est assurée par des services médicaux, faisant l'objet d'un agrément spécifique
+
+Lorsque l'activité exercée par le salarié temporaire nécessite une surveillance médicale spéciale au sens de la réglementation relative à la médecine du travail, les obligations correspondantes sont à la charge de l'utilisateur.
+
+Les équipements de protection individuelle sont fournis par l'utilisateur. Toutefois, certains équipements de protection personnalisés, définis par voie de convention ou d'accord collectif, peuvent être fournis par l'entrepreneur de travail temporaire. Les salariés temporaires ne doivent pas supporter la charge financière des équipements de protection individuelle.
+
+L'entreprise de travail temporaire est responsable des dommages pouvant être causés à l'utilisateur par le travailleur temporaire pendant sa mission.
+
+...//...
+[[MIBEKO_PAGE:11]]
+- 11 -
+
+Article 73-7: L'entrepreneur de travail temporaire qui permet le contrat de travail du salarié temporaire avant le terme prévu au contrat doit proposer au qui-ci, sauf si la rupture résulte d'une faute lourde du salarié ou de la force majeure, un nouveau contrat de travail prenant effet dans un délai maximum de trois jours ouvrables.
+
+Le nouveau contrat ne peut comporter de modifications substantielles en ce qui concerne la qualification, la rémunération, l'horaire du travail et le temps de transport.
+
+A défaut si le nouveau contrat est d'une durée inférieure à celle restant à courir, l'entrepreneur de travail temporaire doit assurer au salarié une rémunération équivalente à celle qu'il aurait perçue jusqu'au terme du premier contrat.
+
+Toutefois, lorsque la durée restant à courir est supérieure à quatre semaines, les obligations visées aux alinéas précédents peuvent être satisfaites au moyen de trois contrats successifs au plus.
+
+La résiliation du contrat à l'initiative du salarié ouvre droit à des dommages-intérêts correspondant au préjudice subi conformément à l'article 37-5 du présent Code du Travail.
+
+Le transporteur de travail temporaire est tenu, à tout moment, de justifier d'une caution déposée dans un établissement financier et assurant, en cas de défaillance de sa part, le paiement:
+
+- des salaires et accessoires;
+- des indemnités résultant de la présente section
+- des cotisations obligatoires dues à des organismes de sécurité sociale;
+- le cas échéant, des remboursements qui peuvent incomber aux employeurs à l'égard de ces organismes et institutions.
+
+En cas d'insuffisance de la caution, l'utilisateur est substitué à l'entrepreneur de travail temporaire pour le paiement des sommes dues aux salariés et aux organismes de sécurité sociale et des institutions sociales dont relèvent ces salariés, pour la durée de mission accomplie dans son entreprise.
+
+Les entreprises de travail temporaire sont issues de fournir aux entreprises utilisatrices, sur leur demande, une attestation des organismes de sécurité sociale précisant leur situation au regard du recouvrement des cotisations dues à ces organismes.
+
+Les conditions d'application de cet article, notamment celles relatives à la défaillance de l'entrepreneur de travail temporaire, à la mise en jeu de la garantie financière, à la subrogation des organismes assurant cette caution dans les droits et actions des salariés, des organismes de sécurité sociale et des institutions sociales, à la substitution de l'utilisateur à l'entrepreneur de travail temporaire ainsi que les modèles des attestations prévus ci-dessus sont fixés par arrêté du Ministre du travail.
+
+.../...
+[[MIBEKO_PAGE:12]]
+- 12 -
+
+Article 73-9: La caution visée à l'article précédent est calculée en pourcentage du capital d'ouverture. Elle fera l'objet d'un réexamen chaque année en fonction de l'évolution du chiffre d'affaires.
+
+Un décret pris après avis de la Commission Nationale Consultative du Travail déterminera les règles applicables à la caution exigée des entreprises de travail temporaire ainsi qu'à la substitution de l'utilisateur de travail temporaire en cas de défaillance de celui-ci.
+
+Article 73-10: L'entreprise de travail temporaire doit être en possession, pour chacun de ses établissements, d'une attestation délivrée par le garant, indiquant notamment le nom et l'adresse de celui-ci, le montant, la date de prise d'effet et la date d'expiration de la garantie accordée. Cette attestation de garantie est tenue à la disposition de l'inspecteur du travail compétent et des agents de contrôle des organismes de sécurité sociale et autres institutions sociales.
+
+L'entreprise de travail temporaire adresse dans les dix jours après l'obtention ou le renouvellement de la garantie financière, une copie de cette attestation à la Direction Régionale du Travail ainsi qu'à la Caisse Nationale de Sécurité Sociale pour chacun des établissements concernés.
+
+Article 73-11: Les entrepreneurs de travail temporaire sont tenus de faire figurer sur tous les documents concernant leur entreprise, notamment sur les contrats de mise à disposition le nom et l'adresse de leur garant ainsi que les références de l'article 73-8.
+
+Ces mêmes indications ainsi que les dates de prise d'effet et d'échéance de la garantie doivent être affichées de manière visible dans les locaux de leurs établissements.
+
+Article 73-12: La déclaration prévue à l'article 73-2 doit comporter les mentions suivantes:
+
+a) l'indication de l'opération qui est envisagée: création d'une entreprise de travail temporaire, ouverture d'une succursale, d'une agence ou d'un bureau annexe, déplacement du siège ou cessation d'activité;
+b) le nom, le siège et le caractère juridique de l'entreprise ainsi que, le cas échéant, la localisation de la succursale ou de l'agence ou du bureau annexe;
+c) la date d'effet de l'opération envisagée;
+d) les nom, prénom, domicile et nationalité du ou des dirigeants de l'entreprise, de la succursale, de l'agence ou du bureau annexe concernés;
+e) la désignation de l'organisme auquel l'entrepreneur de travail temporaire verse les cotisations de Sécurité Sociale ainsi que son numéro d'employeur;
+f) les domaines géographique et professionnel dans lesquels l'entreprise entend mettre des travailleurs temporaires à la disposition d'utilisateurs;
+g) le nombre de salariés permanents que l'entreprise emploie ou envisage d'employer pour assurer le fonctionnement de ses propres services.
+
+La déclaration, datée et signée par le chef d'entreprise, est adressée en deux exemplaires, sous pli recommandé, à l'inspecteur du travail dont relève le siège de l'entreprise.
+
+...//...
+[[MIBEKO_PAGE:13]]
+- 13 -
+
+Elle est adressée dans les mêmes conditions à l'inspecteur du travail dont relève la succursale, l'agence ou le bureau annexe dont l'ouverture est prévue.
+
+Article 73-13: l'inspecteur du travail, après s'être assuré de la conformité de la déclaration avec les prescriptions de l'article 73 nouveau ci-dessus, en retourne un exemplaire revêtu de son visa à l'expéditeur dans les quinze (15) jours qui suivent sa réception.
+
+L'entrée en activité de l'entreprise, de la succursale, de l'agence ou du bureau annexe ne peut précéder la réception du document mentionné à l'alinéa précédent ou l'expiration du délai prévu par cet alinéa.
+
+Article 73-14: Les entrepreneurs de travail temporaire sont tenus de fournir à l'autorité administrative ainsi qu'à l'inspection du travail le relevé des contrats de travail définis à l'article 73-4 qu'ils ont conclu avec leurs salariés;
+
+Un arrêté du Ministre de Travail précise la nature des éléments d'information se rapportant aux contrats que doit comprendre le relevé ainsi que la périodicité et les modalités de présentation de celui-ci.
+
+Article 73-15: pour l'application de l'article 73-13, l'entrepreneur de travail temporaire est tenu d'adresser dans les huit premiers jours de chaque mois, au Directeur Régional du Travail ainsi qu'à la direction de l'office national de l'emploi et de la main d'œuvre dont relèvent son entreprise ou les succursales, agences ou bureaux annexes de celles-ci, le relevé des contrats de travail conclus durant le ou les mois précédents et ayant pris fin ou en cours d'exécution durant le mois précédent.
+
+Ce relevé, qui doit être conforme à un modèle fixé par arrêté du Ministre chargé du travail, comporte pour chaque entreprise:
+
+1° - la raison sociale, l'adresse et l'activité principale de celle-ci;
+
+2°- pour chaque salarié mis à la disposition de l'entreprise, les nom, prénom, sexe, date de naissance, code postal de la commune de résidence, nationalité qualification professionnelle prévue dans le contrat de mission et, pour chaque mission accomplie par le salarié au cours du mois considéré, la date de début et la date de fin de cette mission si celle-ci s'est achevée au cours dudit mois ou par chaque mission en cours d'exécution au cours du mois considéré, la date du début de cette mission.
+
+Une liste distincte est établie pour chaque entreprise utilisatrice; au sein de cette liste, un ou plusieurs feuillets distincts sont établis pour chaque région où des salariés sont domiciliés.
+
+Sur demande du Directeur Régional du travail, l'entrepreneur de travail temporaire est tenu de fournir l'adresse du ou des salariés mentionnés à l'alinéa ci-dessus.
+
+...//...
+[[MIBEKO_PAGE:14]]
+- 14 -
+
+Article 73-16: Lorsqu'un entrepreneur de travail temporaire exerce son activité sans avoir fait les déclarations prévues à l'article 73-2, sans avoir obtenu la garantie financière prévue à l'article 73-8 et qu'il en résulte un risque sérieux de préjudice pour le salarié temporaire, le Président du Tribunal de Grande Instance, saisi par l'inspecteur du travail après que celui-ci ait adressé à l'entrepreneur de travail temporaire un procès verbal resté infructueux, peut ordonner la fermeture de l'entreprise pour une durée qui ne peut excéder deux mois.
+
+Lorsque ces mesures entraînent le licenciement du personnel permanent, celui-ci a droit à l'indemnité de préavis et à l'indemnité de licenciement.
+
+Article 73-17: Pour l'application aux entreprises utilisatrices des dispositions législatives ou réglementaires qui se réfèrent à une condition d'effectif du personnel, à l'exception de celles qui concernent la tarification des risques d'accident et de maladie professionnelle, cet effectif est calculé en ajoutant au nombre des salariés permanents le nombre moyen par jour ouvrable des salariés sous contrat de travail temporaire mis à leur disposition au cours de l'exercice.
+
+Article 73-18: La durée minimum de présence dans l'entreprise de travail temporaire des salariés non permanents s'apprécie en totalisant les périodes pendant lesquelles lesdits salariés ont été liés à leur employeur par des contrats de travail temporaire;
+
+Article 73-19: L'effectif des salariés employés par les entreprises de travail temporaire est calculé en ajoutant au nombre des salariés permanents le nombre moyen par jour ouvrable des salariés qui ont été liés par un contrat de travail temporaire au cours de l'exercice.
+
+### TITRE III
+DU SALAIRE
+
+#### CHAPITRE II : DU PAIEMENT DU SALAIRE
+
+##### Section 2 : des privilèges et des garanties de la créance de salaire
+
+Article 91 nouveau : Au sens des dispositions du présent titre, le salaire s'entend, du salaire de base, de l'allocation de congé, des primes, des indemnités de toute nature à l'exception de l'indemnité de licenciement.
+
+Article 92 nouveau : A due concurrence de la fraction insaisissable du salaire, telle qu'elle résulte des dispositions de l'article 101 du Code de Travail, les créances de salaire du travailleur, ainsi que les indemnités de licenciement et les dommages-intérêts pour rupture abusive du contrat de travail, bénéficient d'un privilège préférable à tous les autres privilèges généraux ou spéciaux, lequel s'exerce sur les biens meubles et immeubles de l'employeur débiteur.
+
+...//...
+[[MIBEKO_PAGE:15]]
+- 15 -
+
+# TITRE V
+
+# DE L'HYGIENE ET DE LA SECURITE, DU SERVICE MEDICAL
+
+# CHAPITRE Premier : DE L'HYGIENE ET DE LA SECURITE
+
+Article 131 nouveau : Il est institué auprès du Ministère chargé du travail une commission nationale technique d'hygiène, de sécurité et de prévention des risques professionnels pour l'étude des questions intéressant l'hygiène, la sécurité des travailleurs et la prévention des risques professionnels. Cette commission comprendra un nombre égal des représentants des employeurs et des travailleurs à côté des fonctionnaires et experts qualifiés.
+
+Un décret fixe la composition et le fonctionnement de la commission.
+
+Article 131-2: Il pourra être créé au plan national un fonds pour la promotion des actions en matière d'hygiène, de sécurité et de prévention des risques professionnels.
+
+Article 132-2 nouveau: Toute implantation ou tout réaménagement d'entreprises, d'ateliers, de chantiers camps des travailleurs, d'entrepôts de machines ou équipements de production devra être soumis à l'avis technique préalable de l'inspecteur du travail du ressort territorial.
+
+Des modalités d'application de cette disposition pourront être précisées en temps que de besoin.
+
+Article 132-3: La direction de l'entreprise, au niveau le plus élevé doit considérer la promotion de la sécurité et l'amélioration des conditions de travail comme une partie essentielle de ses fonctions.
+
+Tout employeur est tenu d'adopter une politique de prévention des risques professionnels intégrée à la politique économique et financière de l'entreprise. Il doit prendre toutes les dispositions ou mesures nécessaires ou utiles tendant à assurer la prévention des risques professionnels.
+
+Ces dispositions ou mesures portent notamment sur la localisation, l'implantation de l'entreprise, l'acquisition et l'installation des équipements ou de matériels, l'aménagement du milieu du travail et l'organisation du travail.
+
+Des arrêtés du Ministre du travail préciseront en tant que de besoin les dites dispositions selon les branches professionnelles.
+
+Article 132-4 : A chaque poste de travail est établie et affichée une instruction relative à la prévention des risques professionnels. Tout travailleur est tenu informé par l'employeur de cette instruction à son embauche. L'inspecteur du travail peut autoriser des dispenses d'établissement de l'instruction visée ci-dessus pour certains postes de travail jugés à risques mineurs.
+
+Article 132-5 : Les maîtres d'ouvrages entreprenant la construction ou l'aménagement de bâtiments destinés à l'exercice d'une activité industrielle, commerciale ou agricole sont tenus de se conformer aux règles édictées en vue de satisfaire aux dispositions législatives et réglementaires prévues dans l'intérêt de la sécurité et de la santé au travail.
+
+...//...
+[[MIBEKO_PAGE:16]]
+- 16 -
+
+Article 141-2 nouveau : Il est prescrit à tout employeur de tenir à la disposition de l'inspecteur du travail les régistres des accidents de travail, des maladies professionnelles et à caractère professionnel ainsi que le registre de sécurité. Des arrêtés du Ministre du travail détermineront la contexture des dits régistres.
+
+Article 141-3 : L'employeur assure l'information et l'éducation des travailleurs et des membres des comités d'hygiène et de sécurité en matière de sécurité et de prévention des risques professionnels inhérents à la profession ou à l'activité de l'entreprise.
+
+# CHAPITRE II : DU SERVICE MEDICAL
+
+Article 143 nouveau : Ne compte pour l'application des prescriptions de l'article 142 que le personnel médical ayant fait l'objet d'une décision d'agrément du Ministre du Travail.
+
+Article 145- paragraphe 1 nouveau : Dans chaque exploitation, une visite médicale des travailleurs se déclarant malades est faite chaque matin après l'appel, les femmes légitimes et les enfants, s'ils le demandent, peuvent se présenter à cette visite pour y être examinés et, le cas échéant, recevoir les soins et les traitements nécessaires. Il est tenu à cet effet un registre de visites médicales dont la contexture sera précisée par un arrêté du Ministre du Travail.
+
+Les résultats de cette visite sont consignés sur un registre spécial dont le modèle est fixé par arrêté du Ministre du Travail, après avis de la Commission Nationale Technique d'Hygiène, de Sécurité et de Prévention des Risques Professionnels.
+
+# TITRE VI
+
+# DES ORGANISMES ET MOYENS D'EXECUTION
+
+# CHAPITRE Premier : DE L'ADMINISTRATION DU TRAVAIL
+
+# Section I : du corps de l'inspection du travail et des lois sociales
+
+Article 154-1 : Les inspecteurs du travail et des lois sociales ainsi que les fonctionnaires responsables d'un bureau de contrôle du travail, peuvent constater par procès-verbal faisant foi jusqu'à preuve du contraire et ce, après mise en demeure, les infractions à la législation et à la réglementation du travail et transmettre ledit procès-verbal aux autorités judiciaires pour application des peines prévues au titre IX relatif aux pénalités.
+
+Article 154-2 : L'inspecteur du Travail qui constate l'infraction dans l'entreprise doit sur le champ en aviser l'employeur ou son représentant. Inscription en est faite dans un registre spécial.
+
+L'employeur est, dans tous les cas mis en demeure de se conformer aux prescriptions légales et réglementaires. Si l'infraction persiste à l'expiration de la mise en demeure, l'inspecteur du Travail rédige un rapport circonstancié à l'attention du Directeur Régional qui dresse procès-verbal.
+
+...//...
+[[MIBEKO_PAGE:17]]
+- 17 -
+
+Un arrêté du Ministre du Travail déterminera la forme et le contenu de la mise en demeure et du procès-verbal de constatation d'infraction.
+
+Tout procès-verbal doit être notifié par la remise d'une copie à la partie intéressée ou à son représentant. Cette remise doit être effectuée dans les quinze ( 15 ) jours suivant la constatation de l'infraction soit par lettre recommandée avec accusé de réception, soit de la main à la main contre récépissé daté et signé par l'employeur ou son représentant.
+
+Article 154-3 : En cas de double recidive, le Directeur Régional du Travail relève dans le procès-verbal les antécédents et produit toutes pièces utiles. Il s'agit notamment des récépissés.
+
+Les sanctions privatives de liberté sont prononcées en cas de double recidive. Le parquet doit informer le Ministère du travail de la décision prise dans un délai de 30 jours à compter de la date du jugement.
+
+Article 154-4 : Lorsque l'employeur est mis en demeure par l'Inspecteur du Travail et des lois sociales, il dispose de huit (8) jours pour adresser une réclamation auprès du Directeur Général du travail. Cette réclamation est suspensive. Notification de la décision du Directeur Général du Travail est faite à la partie intéressée dans un délai de 10 jours à compter de la réception de la réclamation. Passé ce délai, le silence du Directeur Général du Travail vaut confirmation de la mise en demeure.
+
+Article 154-5 : Les décisions du Directeur Régional du Travail et du Directeur Général du Travail sont susceptibles d'annulation pour excès ou abus de pouvoir conformément aux principes ordinaires du contentieux administratif.
+
+Article 154-6 : En ce qui concerne les sanctions privatives de liberté, l'employeur dispose de toutes les voies de recours judiciaires traditionnelles en contestation des décisions rendues au 1er degré.
+
+Article 156-2 nouveau : le Médecin-Inspecteur du Travail est l'Auxiliaire de l'Inspecteur du Travail dans le contrôle des prescriptions légales ou réglementaires relatives à l'hygiène sanitaire et à la médecine du travail dans les entreprises.
+
+Les dispositions des articles 152, 153, 155, 157, et 158 paragraphes 2 et 3 s'appliquent aussi au Médecin-Inspecteur du Travail.
+
+### CHAPITRE III: DE LA COMMISSION NATIONALE CONSULTATIVE DE TRAVAIL.
+
+Article 170 nouveau : La Commission Nationale Consultative du Travail, présidée par le Ministre du Travail, est un organe tripartite composé en nombre égal d'employeurs, de travailleurs et de représentants de l'Administration Publique.
+
+Les employeurs et les travailleurs sont désignés par les organisations professionnelles les plus représentatives.
+
+...//...
+[[MIBEKO_PAGE:18]]
+- 18 -
+
+Les représentants de l'Administration publique sont désignés par leurs chefs hiérarchiques respectifs.
+
+La commission peut, à la demande de son président ou la majorité de ses membres, s'adjoindre à titre consultatif des fonctionnaires ou personnalités qualifiées en matière économique, médicale, sociale et ethnographique.
+
+Le secrétariat de la commission est assuré par la Direction Générale du Travail.
+
+Un décret fixe les conditions d'organisation et de fonctionnement de la Commission Nationale Consultative du Travail, ainsi que le nombre des membres la composant.
+
+## CHAPITRE V NOUVEAU : DES DELEGUES DU PERSONNEL
+
+Article 173 (nouveau) : Des délégués du personnel sont obligatoirement élus dans les entreprises ou établissements installés en République du Congo où sont groupés au moins sept (7) travailleurs reconnus comme tels au sens de l'article 2 du Code de travail.
+
+La représentation des travailleurs au sein de l'entreprise ou de l'établissement est assurée par les délégués du personnel.
+
+Un arrêté du Ministre du Travail, pris après avis de la Commission Nationale Consultative du travail fixe:
+
+1°) - Le nombre de délégués à élire et leur répartition en collèges;
+2°) - La durée considérée comme temps de travail dont disposent les délégués du personnel pour l'accomplissement de leurs fonctions, ainsi que les moyens mis à leur disposition ;
+3°) - Les conditions dans lesquelles ils seront reçus par l'employeur ou son représentant ;
+4°) - Les conditions de révocation du délégué par le collège des travailleurs qui l'a élu.
+
+Article 173-2 : Les délégués sont élus au sein de chaque établissement sur les listes établies par les organisations syndicales, s'il en existe, ou à défaut par les membres du personnel eux-mêmes.
+
+Il existe au moins deux collèges électoraux au sein de l'établissement, l'un groupant les ouvriers et employés, l'autre groupant les ingénieurs, les chefs de service, techniciens, agents de maîtrise et assimilés.
+
+Lorsque l'importance de l'établissement le justifie, le nombre des collèges peut être augmenté afin de permettre séparément la représentation des ouvriers, des employés, des agents de maîtrise ou assimilés ainsi que des ingénieurs et chefs de service.
+
+Le nombre de collèges électoraux et la répartition des sièges entre les différentes catégories font l'objet d'un accord entre le chef d'établissement et les organisations syndicales intéressées.
+
+Dans le cas où cet accord est reconnu impossible, l'inspecteur du travail ou son représentant légal décide du nombre de collèges et la répartition des sièges entre les différentes catégories.
+
+...//...
+[[MIBEKO_PAGE:19]]
+- 19 -
+
+Article 173-3 : L'Inspecteur du travail et des lois sociales peut, à la demande du chef d'établissement ou des organisations syndicales ou à défaut des membres du personnel, autoriser des dérogations aux conditions d'ancienneté dans l'établissement prévues à l'article 174 nouveau dans le cas où leur application aurait pour effet de réduire à moins du quart de l'effectif le nombre des salariés remplissant ces conditions dans chaque collège.
+
+Article 173-4 : L'élection des délégués du personnel a lieu chaque année au mois de décembre pour le mandat de l'année suivante.
+
+Article 173-5 : Le vote a lieu dans l'établissement. Le jour, le lieu, les heures d'ouverture ou de fermeture du scrutin sont fixés par le chef de l'établissement ou son représentant en accord avec les organisations syndicales.
+
+Ces indications sont annoncées 15 jours au moins avant la date du scrutin par un avis affiché par les soins du chef d'établissement ou de son représentant aux emplacements habituellement réservés pour les avis donnés au personnel.
+
+En cas de carence constatée du chef d'entreprise, l'Inspecteur du travail organise les élections en fixant le lieu, le jour, les heures d'ouverture et de fermeture du scrutin.
+
+Les listes des candidats établies par les organisations syndicales de l'établissement sont affichées par les soins du chef d'établissement ou de son représentant dix (10) jours au moins avant la date du scrutin aux mêmes emplacements que l'avis de scrutin. Ces listes doivent faire connaître les noms, prénoms, âges et durée des services des candidats ainsi que les syndicats qui les représentent et éventuellement les dérogations accordées par l'Inspecteur du travail en application de l'article 173-3 ci dessus.
+
+Article 173-6 : Toutefois, l'Inspecteur du travail ou son représentant légale peut autoriser le vote des candidats non présentés par les organisations syndicales.
+
+Article 173-7 : Les travailleurs dont l'occupation hors de l'établissement empêche de prendre part au scrutin, ceux en congé et ceux dont le contrat de travail est suspendu pour l'une des causes énumérées à l'article 47 nouveau du code du travail peuvent voter par procuration.
+
+Article 173-8 : L'élection a lieu au scrutin secret et sous enveloppe. Il est procédé aux votes des membres titulaires et suppléants en même temps à la représentation proportionnelle.
+
+Article 173-9 : Chaque liste est établie par les organisations syndicales les plus représentatives, séparément ou en commun.
+
+Les listes électorales ne peuvent comprendre un nombre de candidats supérieur à celui de siège.
+
+Le panachage est interdit. Seuls sont valables les votes allant à l'une des listes en présence.
+
+Il n'est pas tenu compte des bulletins blancs ou nuls.
+
+.../...
+[[MIBEKO_PAGE:20]]
+- 20 -
+
+**Article 173-10 :** Si le nombre de votants, déduction faite des bulletins blancs ou nuls est inférieur à la moitié des électeurs inscrits, il est procédé dans un délai de deux semaines à un autre scrutin pour lequel les électeurs peuvent voter pour des listes autres que celles présentées par les organisations syndicales.
+
+**Article 173-11 :** Il est attribué à chaque liste autant des sièges que le nombre de voix recueilli par elle. Elle contient autant de fois le quotient électoral, celui-ci étant égal au nombre total des suffrages valablement exprimés par les électeurs du collège divisé par le nombre de sièges à pourvoir.
+
+**Article 173-12 :** Au cas où il n'aurait pu être pourvu à aucun siège ou s'il reste des sièges à pourvoir, les sièges restants sont attribués sur la base de la plus forte moyenne.
+
+A cet effet, le nombre de voix obtenu pour chaque liste est divisé par le nombre, augmenté d'une unité, des sièges attribués à la liste des moyennes ainsi obtenues.
+
+Le premier siège non pourvu est attribué à la liste ayant la plus forte moyenne. Il est procédé successivement à la même opération pour chacun des sièges non pourvus jusqu'au dernier.
+
+Dans le cas où deux listes ont la même moyenne ou s'il ne reste qu'un siège à pourvoir, ledit siège est attribué à la liste qui a le plus grand nombre de voix.
+
+Si deux listes ont également recueilli le même nombre de voix, le siège est attribué au plus âgé des deux candidats susceptibles d'être élus.
+
+**Article 173-13 :** Le chef d'établissement ou son représentant est chargé de l'organisation et du déroulement des élections, notamment de la constitution du bureau de vote, de la rédaction du procès verbal du vote secret sous enveloppe.
+
+Il préside le bureau de vote là où il est assisté d'un représentant non candidat de chacune des listes en présence. Ces représentants des listes prennent place au bureau, assistent au vote et au dépouillement du scrutin et signent le procès-verbal avec le représentant de l'employeur.
+
+Le chef d'établissement ou son représentant est tenu d'établir en plusieurs exemplaires le procès-verbal des élections des délégués du personnel, procès-verbal dont le premier exemplaire est adressé à l'inspecteur du travail du ressort sous quatre (4) jours (par lettre recommandée avec accusé de réception), le second est affiché et le troisième est conservé dans les archives de l'établissement et les autres aux différents syndicats.
+
+**Article 173-14 :** La mission incombant au chef d'établissement en matière d'organisation des élections des délégués du personnel peut, sur sa demande et en cas d'empêchement, être confiée à une autre autorité par l'inspecteur du travail.
+
+**Article 174 nouveau :** Sont électeurs les travailleurs des deux sexes ayant au moins six mois d'ancienneté dans l'entreprise et n'ayant jamais été déchus de leurs droits civiques par décision de justice.
+[[MIBEKO_PAGE:21]]
+- 21 -
+
+Sont éligibles les travailleurs n'ayant jamais fait l'objet d'une condamnation pénale et qui ont travaillé dans l'entreprise sans interruption depuis douze (12) mois au moins.
+
+Ne sont éligibles pour une catégorie de personnel que les travailleurs inscrits comme électeurs dans cette même catégorie.
+
+Les contestations relatives à l'électorat, l'éligibilité des délégués du personnel ainsi qu'à la régularité des opérations électorales sont de la compétence du tribunal d'instance.
+
+Pour être recevable, la contestation doit être introduite dans les trois jours qui suivent la publication de la liste électorale, si elle porte sur l'électorat ou l'éligibilité; dans les quinze (15) jours qui suivent la proclamation des résultats, si elle porte sur la régularité des opérations électorales.
+
+Le Tribunal d'instance se prononce dans les trente (30) jours qui suivent sa saisine.
+
+Article 175 nouveau : Chaque délégué a un suppléant élu dans les mêmes conditions, qui le remplace en cas d'absence motivée, de décès, démission, revocation, changement de catégorie professionnelle entraînant un changement de collège, résiliation du contrat de travail ou perte des conditions requises pour l'éligibilité.
+
+Article 176 nouveau : Tout licenciement d'un délégué du personnel envisagé par l'employeur ou son représentant doit être soumis à l'autorisation de la commission de litiges prévue à l'article 39 (nouveau).
+
+Toutefois, en cas de faute présumée lourde par l'employeur, celui-ci peut prononcer immédiatement la mise à pied conservatoire du délégué du personnel en attendant la décision définitive de la commission de litiges. Cette mise à pied n'entraîne pas suspension du paiement du salaire de base.
+
+Tout délégué du personnel s'estimant abusivement licencié peut saisir immédiatement le tribunal du Travail qui cite sans délais les parties à comparaître.
+
+Pendant la procédure judiciaire devant le tribunal, le délégué du personnel conserve son salaire de base jusqu'au prononcé du jugement sauf s'il a été licencié après autorisation de la commission des litiges
+
+En cas de licenciement reconnu abusif, le juge de fond ordonne à compter du prononcé de jugement, soit la réintégration du délégué du personnel dans ses fonctions au sein de l'entreprise, soit le versement de dommages-intérêts dont le montant ne saurait être inférieur à douze (12) mois de salaire de base, versement pouvant se faire à échéance mensuelle sauf si l'intéressé exerce une activité lucrative pendant la même période.
+
+En cas de licitement irrégulier le tribunal décide soit la reprise de la procédure soit le paiement des dommages et intérêts correspondant au préjudice subi.
+
+...//...
+[[MIBEKO_PAGE:22]]
+22
+
+Toutes les garanties ci-dessus sont applicables:
+
+- aux anciens délégués du personnel pendant une durée de six (6) mois à partir de l'expiration du mandat;
+- aux candidats aux fonctions de délégués du personnel pendant la durée comprise entre la date de remise des listes de candidature au chef d'entreprise ou d'établissement et celle du scrutin;
+- aux candidats non déclarés élus pendant les trois mois qui suivent la date du scrutin;
+
+Les formes de contestation des décisions de la commission de litiges sont celles énumérées à l'article 39 alinéa 8 du présent code.
+
+Article 177 nouveau : Les délégués du personnel ont pour mission
+
+- de présenter aux employeurs toutes les réclamations individuelles ou collectives qui n'auraient pas été directement satisfaites concernant les conditions de travail et la protection des travailleurs, l'application des conventions collectives, des classifications professionnelles et des salaires;
+
+- de donner leur préalable avis pour tout licenciement collectif ou individuel motivé par une diminution d'activité de l'établissement ou par une réorganisation intérieure et selon la procédure fixée par l'article 39 du présent Code;
+
+- de saisir l'Inspection du Travail et des lois sociales de toute plainte ou réclamation concernant l'application des prescriptions légales ou réglementaires dont elle est chargée d'assurer le contrôle;
+
+- de veiller à l'application des prescriptions relatives à l'hygiène et à la santé des travailleurs et à la sécurité sociale et de proposer toutes mesures utiles à ce sujet;
+
+- de communiquer à l'employeur toutes suggestions utiles tendant à l'amélioration de l'organisation et du rendement de l'entreprise.
+
+Article 179 nouveau : Pour l'accomplissement de leur mission, les délégués du personnel disposent de 20 heures par mois considérées et rémunérées comme temps de travail.
+
+En outre, les délégués du personnel tant titulaires que suppléants bénéficient chaque année d'un congé payé d'éducation ouvrière de 10 jours ouvrables.
+
+Un arrêté du Ministre du travail pris après avis de la Commission Nationale Consultative du travail, ainsi qu'il fixe les conditions d'attribution du congé d'éducation ouvrière, pourra limiter le nombre de délégués de personnel pouvant bénéficier des dispositions ci-dessus dans les entreprises à faibles effectifs.
+
+Article 180 nouveau : Hormis les dispositions de l'article 176 4e paragraphe sur la conservation du salaire du délégué du personnel pendant la procédure judiciaire toutes les autres dispositions concernant la protection du délégué du personnel et celles concernant le congé d'éducation ouvrière s'appliquent également aux délégués syndicaux.
+
+...//...
+[[MIBEKO_PAGE:23]]
+- 23 -
+
+# TITRE VII :
+DES SYNDICATS PROFESSIONNELS
+
+# CHAPITRE I : DE L'OBJET DES SYNDICATS PROFESSIONNELS
+ET DE LEUR CONSTITUTION
+
+Article 184 nouveau : Les syndicats professionnels ont exclusivement pour objet l'étude
+et la défense des droits et des intérêts matériels et moraux tant collectifs qu' individuels de
+leurs membres.
+
+Article 186 nouveau : Les fondateurs de tout syndicat professionnel doivent déposer les
+statuts et la liste des personnes qui, à un titre quelconque, sont chargées de son administra-
+tion ou de sa Direction.
+
+Le dépôt a lieu, contre simple accusé de réception à l'inspection du travail du ressort.
+
+Les statuts de tout syndicat doivent notamment indiquer ou prévoir les informations
+suivantes:
+
+- la dénomination du syndicat et l'adresse de son siège
+- l'objet en vue duquel le syndicat est créé;
+- le mode selon lequel les statuts seront établis et modifiés;
+- le mode de désignation et de destitution des membres dirigeants.
+
+Dans le délai de quinze (15) jours suivant ce dépôt; un rapport d'enquête de
+l'inspecteur de travail précisant les circonstances et conditions de constitution du syndicat,
+notamment la date, le lieu du congrès constitutif et des origines professionnelles des
+membres est transmis par voie hiérarchique au Ministère du travail.
+
+Au vu du rapport de l'Inspecteur du travail et dans un délai de trente (30) jours, le
+Ministre du travail délivre ou non le récépissé valant reconnaissance de l'existence du
+syndicat.
+
+Notification en est faite aux intéressés et au Ministre de l'Intérieur.
+
+Si le Ministre du Travail refuse de délivrer le récépissé de reconnaissance du syndicat,
+il doit en aviser les demandeurs dans les 20 jours suivants par écrit, en motivant son refus.
+
+La décision de refus du Ministre du Travail est susceptible de recours, conformément
+à la procédure du code de procédure civile, administrative et financière.
+
+Les modifications apportées aux statuts et les changements survenus dans la compo-
+sition de la Direction ou de l'administration du syndicat doivent être portés dans les mêmes
+conditions, à la connaissance des mêmes autorités et vérifiés dans les mêmes conditions.
+
+Dans le premier trimestre suivant la fin de chaque exercice, les dirigeants statutairement
+compétents de tout syndicat doivent communiquer au Ministre du travail un rapport annuel
+faisant apparaître notamment les statistiques de ses effectifs et le montant des cotisations
+encaissées.
+
+...//...
+[[MIBEKO_PAGE:24]]
+- 24 -
+
+Article 190 nouveau : Peuvent continuer à faire partie d'un syndicat professionnel, les personnes qui ont quitté l'exercice de leur fonction ou de leur profession, sous réserve:
+
+- a)- d'avoir exercé celle-ci pendant au moins un an;
+- b)- de se consacrer à des fonctions syndicales.
+
+Cependant, tout travailleur en chômage qui n'aurait pas adhéré à un syndicat avant sa perte d'emploi ne pourra être admis à se syndiquer que lorsqu'il aura retrouvé un autre emploi.
+
+## CHAPITRE I (bis nouveau) : DE LA REPRESENTATIVITE DES SYNDICATS
+
+Article 192 bis nouveau : Le caractère représentatif d'un syndicat ou d'un groupement professionnel est déterminé par le Ministre du travail, qui réunira tous les éléments d'appréciation et prendra l'avis de l'Inspecteur du Travail et des lois sociales.
+
+Les éléments d'appréciation comprendront notamment:
+
+- le résultat des élections des délégués du personnel
+- l'indépendance;
+- les effectifs;
+- les cotisations;
+- l'expérience du syndicat, l'étendue et la nature de son activité.
+
+La décision du Ministre du travail est susceptible de recours, dans un délai de trente (30) jours, devant la juridiction administrative.
+
+Les dispositions qui précèdent ne pourront être interprétées comme autorisant l'administration à prendre connaissance des registres d'inscription des adhérents et des livres de trésorerie du syndicat.
+
+## CHAPITRE VII : DE LA LIBERTE SYNDICALE
+
+Article 210-2 nouveau : Dans toutes les entreprises installées au Congo, le libre exercice du droit syndical est reconnu aux salariés, dans le respect des droits et libertés garantis par la Constitution.
+
+De même les syndicats professionnels ont le droit de s'organiser librement au sein des dites entreprises.
+
+Article 210-3 : Dans les entreprises d'au moins 30 travailleurs, chacun des syndicats représentatifs ayant au moins un délégué du personnel en fonction peut constituer des sections syndicales chargées d'assurer la représentation des intérêts professionnels de leurs adhérents auprès de l'employeur.
+
+Article 210-4 : La section syndicale a pour missions essentielles:
+
+- l'affichage des communications syndicales;
+- la publication et la diffusion des documents d'informations syndicales ou professionnelles auprès des travailleurs;
+
+11
+[[MIBEKO_PAGE:25]]
+- 25 -
+
+- la collecte des cotisations syndicales à l'intérieur de l'entreprise;
+- la tenue des réunions périodiques avec ses adhérents dans l'enceinte de l'entreprise;
+- la négociation des accords d'établissement ou d'entreprise.
+
+Article 210-5 : Dans les entreprises où sont occupés au moins 50 salariés, les sections syndicales doivent disposer d'un local commun mis à leur disposition par l'employeur pour l'exercice de leurs missions. Les conditions d'utilisation de ce local sont déterminées d'accord parties avec le chef d'entreprise.
+
+Article 210-6 : Les membres du bureau de la section syndicale bénéficient de la même protection que les délégués du personnel en matière de licenciement.
+
+Article 210-7 : Un arrêté du Ministre du travail, pris après avis de la Commission Nationale Consultative du Travail, détermine les conditions d'exercice de l'activité syndicale au sein des entreprises et fixe notamment :
+
+- la répartition du nombre des membres du bureau de la section syndicale en fonction de l'effectif de l'entreprise;
+- le mode de désignation des membres du bureau de la section syndicale et les conditions que ceux-ci doivent remplir pour être choisis.
+
+## TITRE VIII :
+DU REGLEMENT DES DIFFERENDS DU TRAVAIL
+
+### CHAPITRE Ier : DU DIFFEREND INDIVIDUEL
+
+#### Section 4 : du jugement
+
+Article 232 nouveau : Le jugement peut ordonner l'exécution immédiate, nonobstant opposition ou appel et par prévision avec dispense de caution. Cette exécution ne pourra porter que sur les droits légaux ou conventionnels qui ne se heurtent à aucune contestation. Pour le surplus l'exécution provisoire peut être ordonnée à charge de fournir caution. Copie du jugement, signée par le Président et le Greffier doit être remise aux parties sur demande. Mention de cette délivrance, des dates et de son heure est faite par le greffier en marge du jugement.
+
+#### Section 6 : De la conciliation préalable devant l'inspecteur de travail et des lois sociales
+
+Article 240 nouveau : Tout travailleur ou tout employeur pourra demander aux services de l'inspection du travail de régler le différend à l'amiable.
+
+Dès réception de cette demande, l'inspecteur du travail convoque les parties aux fins de conciliation. De ce fait le délai de prescription prévu à l'article 99 est interrompu jusqu'à la date du procès-verbal qui clôt la tentative de conciliation;
+
+Les parties sont tenues de se présenter devant l'inspecteur du travail aux dates et heures fixées dans la convocation. En cas de refus d'obtempérer, l'inspecteur du travail constate l'infraction par procès-verbal.
+
+...//...
+[[MIBEKO_PAGE:26]]
+- 26 -
+
+L'inspecteur du travail vérifie si les parties sont disposées à se concilier immédiatement sur la base des normes fixées par la loi, la réglementation ou les conventions collectives et le contrat individuel.
+
+En cas de conciliation, la formule exécutoire est apposée par ordonnance du Président du Tribunal du travail prise à la requête de la partie la plus diligente sur le procès-verbal de conciliation établi par l'inspecteur du travail.
+
+L'exécution est poursuivie comme un jugement du Tribunal du Travail.
+
+Le Président du Tribunal du Travail compétent est celui dans le ressort duquel le procès-verbal de conciliation a été signé.
+
+## CHAPITRE II: DU DIFFEREND COLLECTIF
+
+**Article 242 nouveau :** Toutes revendications professionnelles et collectives doivent être formulées dans le cahier de revendications et soumises à l'employeur en vue de négociations. Celles-ci doivent s'ouvrir au plus tard dans les sept jours suivant la date de dépôt des revendications, sauf empêchement de l'une des parties dûment signalé et justifié à l'autre partie au moins 24 heures avant l'ouverture prévue des négociations.
+
+Dans ce cas les parties s'accordent sur une seconde date d'ouverture des négociations. Dans tous les cas les négociations doivent s'ouvrir au plus tard dans les 7 jours suivant la date de dépôt des revendications.
+
+En cas d'échec des négociations internes, l'Inspecteur du Travail territorialement compétent est saisi par écrit par la partie la plus diligente pour conciliation.
+
+Les parties sont convoquées par l'Inspecteur du Travail ou par le fonctionnaire responsable du bureau de contrôle du travail du ressort qui procède à la conciliation. Elles peuvent se substituer un représentant ayant qualité pour se concilier.
+
+Si l'une des parties ne comparaît pas ou ne se fait pas valablement représenter, l'Inspecteur du Travail ou le fonctionnaire responsable du bureau de contrôle du travail du ressort la convoque à nouveau dans un délai qui ne peut excéder deux (2) jours francs sans préjudice de sa condamnation à une sanction prononcée par la juridiction pénale sur procès-verbal dressé par l'autorité compétente ci-dessus désignée conformément à l'article 255 nouveau du présent Code.
+
+Les accords de conciliation sont consignés dans un procès-verbal établi séance tenante signé par les parties qui en reçoivent ampliation. Ils sont obligatoires et deviennent exécutoires au jour du dépôt prévu à l'article 247.
+
+**Article 242-2 :** En cas de désaccord, l'Inspecteur du Travail établit un procès-verbal de non conciliation, signé par les parties et faisant ressortir les points de désaccord. La négociation se poursuit suivant la procédure prévue aux articles 243 à 248 du présent Code, relative à la commission de recommandation.
+
+...//...
+[[MIBEKO_PAGE:27]]
+- 27 -
+
+Article 242-3 : En cas de refus de négocier opposé notamment par l'employeur et dûment constaté par l'Inspecteur du travail au sein de l'entreprise, les travailleurs peuvent user immédiatement de leur droit de grève.
+
+Article 245 nouveau : La commission de recommandation a les plus larges pouvoirs pour s'informer de la situation économique des entreprises et de la situation sociale des travailleurs concernés par le conflit.
+
+Dans ce but elle peut, notamment, enquêter auprès des entreprises et des syndicats, réclamer aux parties tous documents ou renseignements d'ordre comptable et financier susceptibles de lui être utiles. Elles peut recourir aux offices de toute personne qualifiée susceptible de l'éclairer tels que les experts-comptables agréés.
+
+Les experts sont tenus au secret professionnel quant aux documents à eux communiqués.
+
+Sur leur demande les parties sont entendues par la commission de recommandation. Elles peuvent déposer tous mémoires qu'elles estiment de nature à éclairer la commission.
+
+Dans un délai de sept (7) jours, la commission dresse un rapport motivé de ses investigations. Les conclusions de ce rapport établissent, sous forme de recommandation, un projet de règlement des points en litige.
+
+Article 248-2 nouveau : Est considérée comme grève, tout arrêt concerté et collectif de travail en vue de faire aboutir des revendications professionnelles déjà déterminées dans un cahier de revendications et non satisfaites par l'employeur soit par échec de procédure de négociation, de conciliation, d'arbitrage et de recommandation, soit par refus de négocier opposé par l'employeur.
+
+Article 248-3 : Sont réputées licites, toutes grèves déclenchées suite à une ou plusieurs revendications professionnelles et collectives non satisfaites soit par échec des négociations, d'arbitrage, de conciliation et de recommandation, soit par refus de négocier opposé par l'employeur.
+
+Article 248-4 : Sont notamment réputées illicites ou abusives.
+
+- la grève déclenchée au mépris des dispositions des articles 242 nouveau, 242-2, 242-3, 248-15, 248-16.
+- la grève pour motif politique.
+- la grève de solidarité lorsque les salariés solidaires ne sont concernés d'aucune manière par le motif.
+
+Article 248-5 : Sauf faute lourde du salarié, la grève suspend le contrat de travail.
+
+Article 248-6 : L'employeur est ainsi dispensé du paiement de salaire aux grévistes pendant la durée de la grève. Toutefois, celui-ci est intégralement concerné si un accord de fin de grève porte que les journées de grève seront payées, ou si la grève a été provoquée par une faute manifeste de l'employeur.
+
+...//...
+[[MIBEKO_PAGE:28]]
+- 28 -
+
+Article 248-7 : L'employeur est autorisé à déduire les jours de grève lorsqu'il s'agit de déterminer les jours de congé annuel auxquels peut prétendre le salarié.
+
+Il est également autorisé à supprimer ou à réduire proportionnellement à la durée de la grève toutes les primes et indemnités directement liées à la prestation de travail.
+
+Article 248-8 : L'employeur est tenu de garantir aux travailleurs présents dans l'entreprise pendant la grève les moyens d'effectuer leur prestation de travail.
+
+Article 248-9 : Les heures perdues du fait de la grève ne peuvent être récupérées sauf accord entre les parties.
+
+Article 248-10 : Pendant les jours de grève, les salariés conservent le bénéfice des prestations sociales définies par la législation et la réglementation en vigueur, les conventions et accords collectifs.
+
+Article 248-11 : Les faits suivants sont constitutifs de faute lourde pendant la grève sans que cette énumération soit limitative et sous réserve de l'appréciation de la juridiction compétente:
+
+- l'occupation des locaux,
+- les coups et blessures volontaires sur la personne de l'employeur,
+- la séquestration de l'employeur,
+- l'entrave à la liberté de travail,
+- le sabotage, le vol ou la destruction de marchandise ou de matériel de l'entreprise,
+- la participation à une grève illicite.
+
+Dans ces cas, la rupture du contrat de travail s'effectue dans les formes prévues par les dispositions des articles 41 nouveau et 176 nouveau du présent Code.
+
+Article 248-12 : Outre leur incidence sur le contrat de travail, les faits signalés plus haut sont susceptibles de poursuite pénale.
+
+Article 248-13 : Les dispositions du présent titre s'appliquent au personnel des entreprises, des organismes et des établissements publics ou privés lorsque ces entreprises, organismes et établissements sont chargés de la gestion d'un service public employant des salariés régis par le présent Code de Travail.
+
+Article 248-14 : Lorsque les personnels mentionnés à l'article 248-13 font usage du droit de grève, la cessation concertée du travail doit être précédée d'un préavis.
+
+Le préavis émane de la décision de l'assemblée générale des travailleurs de l'entreprise, organisme ou service intéressé, il précise les motifs du recours à la grève.
+
+Le préavis doit parvenir sept (7) jours francs avant le déclenchement de la grève à la Direction de l'établissement, de l'entreprise ou de l'organisme intéressé, il fixe le lieu, la date et l'heure du début ainsi que la durée, limitée ou non de la grève envisagée.
+[[MIBEKO_PAGE:29]]
+- 29 -
+
+Pendant la durée de préavis, les parties intéressées peuvent continuer à négocier. L'inobservation du préavis entraîne illicite de la grève.
+
+Article 248-15 : Le droit de grève dans le service public sera limité par l'institution d'un service minimum indispensable pour la sauvegarde de l'intérêt général et organisé par l'employeur. Le refus pour les salariés désignés par l'employeur d'assurer le service minimum est constitutif de faute lourde.
+
+Article 249 nouveau : Le Lock-Out est une mesure de fermeture temporaire de l'établissement ou de l'entreprise décidée par l'employeur du fait de la détérioration du climat social en son sein.
+
+Article 249-2 : Il est réputé licite lorsque :
+
+- le chef d'entreprise peut faire la preuve de l'impossibilité d'assurer le fonctionnement de l'entreprise;
+- le Lock-Out peut être présenté comme une réponse à une exécution défectueuse de travail ne pouvant être assimilée à l'exercice normal du droit de grève,
+- l'ordre et la sécurité dans l'entreprise sont suffisamment compromis.
+
+Article 249-3 : L'employeur est dispensé du paiement des heures ou des journées non travaillées lorsque le Lock-Out intervient dans les cas visés à l'article précité.
+
+Article 249-4 : La grève et le Lock-Out ne peuvent intervenir qu'après épuisement des procédures définies ci-dessus. Le caractère licite ou illicite de la grève ou du Lock-Out sera apprécié par la juridiction compétente
+
+## TITRE IX
+PENALITES
+
+### CHAPITRE I : DES CONTRAVENTIONS
+
+Article 251 nouveau : Seront punis d'une amende de 10.000 francs à 20.000 francs et en cas de récidive de 20.000 francs à 36.000 francs CFA,
+
+a) les auteurs d'infractions aux dispositions des articles 71, 72, 74, 85, 87 (3), 88, 182 (avant dernier paragraphe);
+b) les auteurs d'infractions aux dispositions des arrêtés et décrets prévus par les articles 25, 75, 105, 181 et 182 (1er);
+c) les employeurs fondés de pouvoirs ou leurs préposés responsables du défaut d'affichage conforme aux dispositions de l'article 103.
+
+En ce qui concerne les infractions à l'arrêté prévu à l'article 182 (1er), l'amende sera prononcée autant de fois qu'il yaura d'inscriptions omises ou erronées.
+
+Article 252 nouveau : Seront punis d'une amende de 15.000 francs à 25.000 francs CFA et en cas de récidive d'une amende de 25.000 francs à 100.000 francs CFA :
+
+...//...
+[[MIBEKO_PAGE:30]]
+- 30 -
+
+a) - Les auteurs d'infractions aux dispositions des arrêtés et décrets prévus par l'article 118
+b) - les auteurs d'infractions aux dispositions des articles 9, 117 (2), 134;
+c) - les auteurs d'infractions aux dispositions de l'article 141 alinéa 1 et 4, les employeurs ne tenant pas de registre de sécurité, de visites médicales des accidents de travail et des maladies professionnelles et à caractère non professionnel.
+
+Article 253 nouveau : Les infractions des articles 184 à 187 inclus, 199 et 206 seront poursuivies contre les Directeurs administrateurs des syndicats et punies d'une amende de 25.000 à 30.000 francs CFA.
+
+En cas de fausse déclaration relative aux statuts et aux noms et qualités des administrateurs et Directeurs, l'amende pourra être portée à 36.000 francs CFA.
+
+Les peines prévues par la législation commerciale en vigueur contre les auteurs de contrefaçon, apposition, imitation ou usages frauduleux des marques de commerce sont applicables en matière de contrefaçon, apposition, imitation, ou usage frauduleux des marques syndicales ou labels.
+
+## CHAPITRE II : DES DELITS
+
+Article 254 nouveau : Seront punis d'une amende de 36.000 francs à 100.000 francs CFA et en cas de récidive de 60.000 francs à 200.000 francs CFA :
+
+a) - les auteurs d'infractions aux dispositions des articles 76, 77, 108, 109, 110 (2), 113, 114, 142, 143, 155, (e-4);
+
+b) - les auteurs d'infractions aux décrets et arrêtés prévus aux articles 28, 112, 116, 137 et 173 (nouveau);
+
+c) - toute personne qui aura envoyé à la Direction Régionale du Travail ou à l'Office National de l'Emploi et de la Main d'Oeuvre un relevé de contrats non conformes aux prescriptions légales;
+
+d) - toute personne qui n'est pas en possession de l'attestation de garantie financière ou ne l'a pas envoyée à la Direction Régionale, à la Caisse Nationale de Sécurité Sociale;
+
+e) - toute personne n'ayant pas indiqué sur les documents de l'entreprise ou d'affichage le nom et l'adresse du garant.
+
+En cas de double récidive, l'emprisonnement de 12 à 20 jours est prononcé.
+
+Dans le cas d'infraction, à l'article 76, s'il ya double récidive l'emprisonnement est obligatoirement prononcé au maximum de sa peine.
+
+Dans le cas d'infraction à l'article 116, les pénalités ne seront pas encourues si l'infraction a été l'effet d'une erreur portant sur l'âge des enfants, commis lors de l'établissement du carnet du travailleur.
+
+.../...
+[[MIBEKO_PAGE:31]]
+- 31 -
+
+**Article 255 nouveau :** Seront punis d'une amende de 40.000 francs à 150.000 francs CFA et en cas de récidive d'une amende de 100.000 francs à 250.000 francs CFA,
+
+a) - les auteurs d'infractions aux dispositions des articles 10, 47-16, 58 (en matière de salaires, primes et indemnités de toute nature), 100, 122, 134 135, 164 et 242 nouveau;
+
+b) - les auteurs d'infractions aux dispositions des décrets et arrêtés prévues par les articles 60, 83 et 101;
+
+c) - toute personne qui aura employé un travailleur de nationalité étrangère démuni de carte de séjour ou d'autorisation d'emploi pour une profession autre que celle de l'emploi réellement tenu;
+
+d) - toute personne qui aura embauché un travailleur étranger dont le contrat avec le précédent employeur n'était pas, soit expiré, soit résilié par décision judiciaire, à moins que le travailleur n'ait été autorisé par le ministre chargé du travail; cette autorisation réservant les droits du précédent employeur vis à vis du travailleur et du nouvel employeur;
+
+e) - toute personne n'ayant pas envoyé les relevés des contrats de mission en matière de travail temporaire à la Direction Régionale du Travail ou à l'Office National de l'Emploi et de la Main d'Oeuvre;
+
+La double récidive est punie d'un emprisonnement de 12 à 20 jours.
+
+**Article 255-2 :** Sera punie d'une amende de 100.000 francs à 250.000 francs CFA en cas de récidive d'une amende de 200.000 francs à 500.000 francs CFA toute personne qui n'aura pas respecté le principe d'égalité de rémunération (au sens de l'article 73-3).
+
+La double récidive est punie d'un emprisonnement de 15 à 20 jours.
+
+**Article 255-3 :** Outre les sanctions prévues en cas d'inobservation des dispositions limitant les cas de rupture anticipée ou du délai de prévenance, les infractions constatées en matière de contrat de travail à durée déterminée sont punies d'une amende de 100.000 francs à 300.000 francs CFA et en cas de récidive de 150.000 francs à 500.000 francs CFA prononcée autant de fois qu'il ya de recrutements opérés dans des conditions irrégulières. En cas de double récidive, l'emprisonnement de 15 jours au plus est prononcé.
+
+**Article 256 nouveau :** Seront punis d'une amende de 150.000 francs à 400.000 francs CFA et en cas de récidive d'une amende de 300.000 francs à 600.000 francs CFA quiconque aura porté ou tenté de porter atteinte soit à la libre désignation des membres du bureau syndical, soit à l'exercice régulier de leurs fonctions.
+
+En cas de double récidive l'emprisonnement de 20 jours est prononcé.
+
+**Article 256-2 :** Sera punie d'une amende de 200.000 francs à 500.000 francs CFA en cas de récidive d'une amende de 500.000 francs à 1.000.000 francs CFA, toute personne qui n'aura pas respecté le principe de l'égalité d'accès aux avantages collectifs en matière de travail temporaire.
+
+En cas de double récidive, l'emprisonnement d'un mois est prononcé.
+
+.../...
+[[MIBEKO_PAGE:32]]
+- 32 -
+
+Article 257 nouveau : Seront punis d'une amende de 600.000 francs à 900.000 francs CFA et en cas de récidive d'une amende de 900.000 francs à 1.100.000 francs CFA :
+
+a) - les auteurs d'infractions aux dispositions des articles 4 sur l'interdiction du travail forcé, 87 (2) sur le paiement du salaire en alcool ou boisson alcoolisée, 103, sauf en matière d'affichage, 104 et 166;
+
+b) - les personnes qui auront fait volontairement une fausse déclaration d'accident du travail ou de maladie professionnelle;
+
+c) - toute personne qui, par violence, menace ou tout autre moyen de pression aura contraint ou tenté de contraindre un travailleur à s'embaucher contre son gré ou qui, par les mêmes moyens, aura tenté de l'empêcher ou l'aura empêché de s'embaucher ou de remplir les obligations imposées par son contrat;
+
+d) - toute personne qui en faisant usage d'un contrat fictif ou d'un carnet de travailleur contenant des indications inexactes, se sera fait embaucher ou se sera substitué volontairement à un autre travailleur;
+
+e) - tout employeur, fondé de pouvoirs ou préposé qui aura porté volontairement sur le carnet du travailleur, le registre d'employeur ou tout autre document, des attestations mensongères relatives à la durée et aux conditions du travail accompli par le travailleur, ainsi que tout travailleur qui aura sciemment fait usage de ces attestations;
+
+f) - tout employeur, fondé de pouvoirs ou préposé, qui aura volontairement engagé, tenté d'engager ou conservé à son service un travailleur encore lié à un autre employeur par contrat de travail, un apprenti encore lié par un contrat d'apprentissage ou un stagiaire en cours de formation dans un centre de formation professionnelle, indépendamment du droit à dommages intérêts qui pourra être reconnu à la partie lésée;
+
+g) - toute personne qui aura exigé ou accepté du travailleur une rémunération quel conque à titre d'intermédiaire dans le règlement ou le paiement des salaires, indemnités, allocations et frais de toute autre nature;
+
+h) - toute personne exerçant l'activité d'entrepreneur de travail temporaire malgré une interdiction.
+
+En cas de double récidive, l'emprisonnement d'un mois est prononcé.
+
+Article 257-2 : Sera punie d'une amende de 300.000 francs à 1.000.000 francs CFA et en cas de récidive de 600.000 francs à 1.500.000 francs CFA, tout utilisateur :
+
+a) - ayant fait recours à un intermédiaire pour un motif non autorisé par la loi pour une durée supérieure à la durée maximale ou en méconnaissance des dispositions sur la fixation du terme ou le renouvellement ;
+
+...//...
+[[MIBEKO_PAGE:33]]
+- 33 -
+
+b) - ayant fait recours à un intérimaire en méconnaissance des dispositions sur les interdictions de recourir au travail temporaire (grève, travaux dangereux) ;
+
+c) - qui n'aura pas respecté les dispositions sur le recours au travail temporaire après un licenciement économique;
+
+d) - qui n'aura pas respecté le délai de carence entre deux contrats;
+
+e) - qui aura fait recours à un intermédiaire sans avoir conclu dans le délai prévu un contrat de mise à disposition conforme aux prescriptions légales ou en ayant fourni dans le contrat de mise à disposition des indications volontairement inexactes.
+
+En cas de double récidive, l'emprisonnement de deux à quatre mois est prononcé.
+
+**Article 257-3 :** Sera puni d'une amende de 500.000 francs à 1.100.000 francs CFA et en cas de récidive d'une amende de 1.000.000 francs à 3.000.000 francs CFA, toute entrepreneur de travail temporaire
+
+a) - qui aura mis à la disposition d'un intérimaire sans conclusion dans le délai prévu d'un contrat de mise à disposition avec l'utilisateur;
+
+b) - qui aura embauché un intérimaire sans lui avoir adressé dans le délai prévu un contrat écrit ou en ayant conclu un contrat ne comportant pas certaines mentions (mentions du contrat de mise à disposition, rémunération), ou encore en ayant conclu un contrat comportant des mentions volontairement inexactes;
+
+c) - exerçant l'activité d'entrepreneur de travail temporaire à titre exclusif ou sans déclaration à l'autorité administrative ou sans obstention d'une garantie financière. En cas de double récidive, l'emprisonnement de 2 à 6 mois est prononcé.
+
+**Article 257-4 :** Dans tous les cas cités aux articles 254 nouveau (c, d, e), 255 nouveau (e, f), 255-2, 256-1, 257 nouveau (h), 257-2 et 257-3, le tribunal peut ordonner, aux frais de l'entrepreneur de travail temporaire ou de l'utilisateur condamné, l'affichage du jugement aux portes de l'entreprise et sa publication dans les journaux qu'il désigne.
+
+Le tribunal peut, en ce qui concerne les dispositions prévues à l'article 73-14, procéder soit à l'interdiction d'exercer pour une durée de deux à dix ans pour l'entrepreneur de travail temporaire soit à la fermeture de l'entreprise pour une durée n'excédant pas deux mois.
+
+**Article 257-5 :** Seront punis d'une amende de 900.000Frs à 1.500.000Frs CFA et en cas de récidive de 1.500.000Frs à 2.000.000Frs CFA,
+
+a) - les auteurs d'infractions aux dispositions des articles 132, 133, 135, 140, 141, 146 et 147;
+
+b) - les auteurs d'infractions aux dispositions des décrets et arrêtés prévus aux articles 137, 142, et 148.
+
+En cas de double récidive, l'emprisonnement de 40 jours est prononcé
+
+H
+
+.../...
+[[MIBEKO_PAGE:34]]
+- 34 -
+
+Article 258 nouveau : Sera punie d'une amende de 500.000 francs à 1.000.000 francs CFA et en cas de récidive d'une amende de 1.000.000 francs à 2.000.000 francs CFA, toute personne qui s'est opposée ou a tenté de s'opposer à l'exécution des obligations ou à l'exercice des pouvoirs qui incombent aux fonctionnaires du corps de l'inspection du travail et aux chefs des circonscriptions administratives agissant comme suppléants de l'inspecteur du travail.
+
+En cas de récidive, l'emprisonnement de 2 à 6 mois est obligatoirement prononcé.
+
+Les dispositions du Code Pénal qui prévoient et répriment les actes de résistance, les outrages et les violences contre les Officiers de police judiciaire sont en outre, applicables à ceux qui se rendent coupables des faits de même nature à l'égard des inspecteurs du travail et des lois sociales ou de leurs suppléants.
+
+Article 259-2 nouveau : Le paiement des sommes dues aux titres des sanctions pécunières prévues à l'article 154 de la présente loi est exigible dans un délai maximum de 15 jours à compter de la notification du montant de ces sommes.
+
+Article 259-3 : Les dispositions du Code Pénal en matière de défaillance du délinquant sont applicables à toute personne qui ne s'est pas acquitée dans les délais requis, des amendes fixées au présent titre.
+
+Article 260 nouveau : Les dispositions du Code Pénal en matière de sursis sont applicables à tout employeur pour les infractions prévues et réprimées au présent titre.
+
+Lorsqu'une amende est prononcée en vertu du présent titre, elle est encourue autant de fois qu'il y a eu d'infractions, sans que cependant le montant total des amendes infligées puisse excéder cinquante fois les taux maxima prévus ci-dessus.
+
+Cette règle s'applique notamment au cas ou plusieurs travailleurs auraient été employés dans des conditions contraires à la présente loi.
+
+Pour l'application des articles 251 à 253 nouveaux il ya récidive lorsque dans les 12 mois antérieurs au fait poursuivi, le contrevenant a déjà subi une condamnation pour un fait identique.
+
+Quant à l'application des articles 254 nouveau et suivants, il y a récidive lorsque dans les trois ans antérieurs au fait poursuivi, le contrevenant a déjà subi une condamnation pour un fait identique.
+
+Il y a double récidive lorsque le contrevenant pour un fait identique s'est déjà trouvé dans une situation de récidive. Toutefois, la double récidive ne s'applique qu'en cas de délit.
+
+## TITRE X :
+DISPOSITIONS TRANSITOIRES
+
+Article 262 nouveau : Les syndicats et les associations professionnelles existants à la date d'entrée en vigueur de la présente loi doivent, dans les six (6) mois qui suivent sa promulgation s'y conformer.
+
+.../...
+[[MIBEKO_PAGE:35]]
+- 35 -
+
+Article 262-2 : Les entrepreneurs de travail temporaire exerçant leur activité à la date d'entrée en vigueur de la présente loi sont tenus aux déclarations prévues à l'article 73-2.
+
+Article 263 nouveau : Les dispositions de la présente loi sont de plein droit applicables aux contrats individuels en cours.
+
+Elles ne peuvent constituer une cause de rupture de ces contrats.
+
+Toute clause d'un contrat en cours qui ne serait pas conforme aux dispositions de la présente loi, d'un décret ou arrêté pris pour son application, sera modifié dans un délai de six (6) mois à compter de la publication de la présente loi, du décret ou arrêté en cause. En cas de refus de l'une des parties, la juridiction compétente pourra ordonner, sous peine d'astreinte, de procéder aux modifications qui seront jugées nécessaires.
+
+Article 263-2 : Pour les dispositions qui ne sont pas contraires à la présente loi, la réglementation existante prise en application des lois du 15 décembre 1952, 10/64 du 25 juin 1964 et 45/75 du 15 mars 1975 demeurera en vigueur jusqu'à la mise en place des textes prévus par le présent Code.
+
+Article 264 nouveau : Les articles 55 alinéas 4, 5, 6, 7 et 172 de la loi n° 45/75 du 15 mars sont abrogés.
+
+Article 2 : Sont abrogés toutes dispositions contraires à la présente loi.
+
+Article 3 : La présente loi qui prend effet à compter de la date de signature, sera publiée au journal officiel de la République du Congo et exécutée comme loi de l'Etat.
+
+Brazzaville, le 6 Mars 1996
+
+Professeur Pascal LISSOUBA
+
+Par le Président de la République,
+
+Le Premier Ministre,
+Chef de Gouvernement
+
+Général Jacques Joachim YHOMBY OPANGO
+
+Le Ministre du Travail, de la Fonction Publique
+et de la Sécurité Sociale
+
+Professeur Anaclet TSOMAMBET
+
+Le Ministre de l'Economie et des
+Finances, Chargé du Plan et la
+Prospective
+
+Nguila MOUNGOUNGA NKOMBO
