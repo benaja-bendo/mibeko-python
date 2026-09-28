@@ -4,6 +4,8 @@
 
 Cette documentation décrit le service FastAPI d'ingestion et de structuration des textes juridiques congolais (`mibeko-python`, domaine `python.mibeko.fr`), brique interne consommée par le backend Laravel et le front éditeur.
 
+**Décisions propres à ce dépôt** : [`decisions.md`](./decisions.md) (identifiants `PY-`). Les décisions transverses sont dans le registre `docs/decisions.md` du monorepo (dépôt `mibeko-docs`).
+
 ## Documents
 
 | Document | Description |
