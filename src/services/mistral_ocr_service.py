@@ -102,6 +102,24 @@ class MistralOcrService:
         except ValueError:
             return None
 
+    @staticmethod
+    def _raise_for_status(response: httpx.Response) -> None:
+        """`raise_for_status()` de httpx, mais avec le corps de la réponse dans
+        le message : celui de httpx (« Client error '422 Unprocessable Entity'
+        for url … ») ne dit jamais ce que Mistral reproche, et c'est lui seul
+        qui finit dans `ingestion_jobs.last_error`. mibeko-python#42 : quatorze
+        jobs en « 422 » avant qu'on lise « Received file with mimetype
+        application/x-empty ». Même type d'exception, même `.response` : le
+        classement (`src/parsing/batch.py::_classe_echec_ocr`) n'en dépend pas.
+        """
+        if response.status_code < 400:
+            return
+        message = f"Mistral OCR : HTTP {response.status_code} sur {response.request.method} {response.request.url}"
+        corps = response.text.strip()[:500]
+        if corps:
+            message = f"{message} — {corps}"
+        raise httpx.HTTPStatusError(message, request=response.request, response=response)
+
     async def _request_with_backoff(
         self, client: httpx.AsyncClient, method: str, url: str, **kwargs: Any
     ) -> httpx.Response:
@@ -121,9 +139,9 @@ class MistralOcrService:
             response = await client.request(method, url, **kwargs)
             if response.status_code == 429 or response.status_code >= 500:
                 continue
-            response.raise_for_status()
+            self._raise_for_status(response)
             return response
-        response.raise_for_status()
+        self._raise_for_status(response)
         return response
 
     # -- API publique ---------------------------------------------------
