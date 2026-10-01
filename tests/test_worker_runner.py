@@ -449,6 +449,107 @@ def test_process_job_echec_transitoire_definitif_apres_epuisement_des_tentatives
         _cleanup(job.id)
 
 
+def test_process_job_source_illisible_echoue_en_definitive_des_la_premiere_tentative(db, tmp_path):
+    """mibeko-python#42 : un échec que `process_entry` classe `definitive`
+    (source vide, HTTP 4xx de l'OCR) ne repasse pas `pending` — avant, le
+    PDF de 0 octet de congo-jo-2026-17 consommait trois tentatives et deux
+    paliers de backoff chaque nuit."""
+    entry = _entry(entry_id="sgg-jo/source-vide")
+    _write_manifest_entry(tmp_path, "sgg-jo", entry)
+    job = _make_job(db, manifest_id=entry.id, max_attempts=3, attempts=0)
+    try:
+        reserved = reserve_job(db)
+
+        def fake_process_entry(data_dir, e, force=False):
+            return {
+                "id": e.id, "skipped": False, "methode": "erreur",
+                "erreur": "PDF source vide (0 octet) : rien à extraire, la source est à resourcer",
+                "erreur_classe": IngestionJob.ERROR_DEFINITIVE,
+            }
+
+        ok = process_job(
+            db, tmp_path, reserved,
+            process_entry_fn=fake_process_entry, structure_document_fn=lambda *a, **k: {},
+        )
+
+        assert ok is True
+        relu = db.query(IngestionJob).filter(IngestionJob.id == job.id).first()
+        assert relu.status == IngestionJob.STATUS_FAILED
+        assert relu.error_class == IngestionJob.ERROR_DEFINITIVE
+        assert relu.attempts == 1
+        assert "0 octet" in relu.last_error
+        assert Manifest(tmp_path / "manifests" / "sgg-jo.jsonl").get(entry.id).statut == "erreur"
+    finally:
+        _cleanup(job.id)
+
+
+def test_process_job_echec_ocr_sans_classe_reste_transitoire(db, tmp_path):
+    """Résultat sans `erreur_classe` (ou valeur inconnue) : comportement
+    d'avant #42, l'échec OCR est retenté."""
+    entry = _entry(entry_id="sgg-jo/ocr-sans-classe")
+    _write_manifest_entry(tmp_path, "sgg-jo", entry)
+    job = _make_job(db, manifest_id=entry.id, max_attempts=3, attempts=0)
+    try:
+        reserved = reserve_job(db)
+
+        def fake_process_entry(data_dir, e, force=False):
+            return {"id": e.id, "skipped": False, "methode": "erreur", "erreur": "panne OCR", "erreur_classe": "inconnue"}
+
+        process_job(
+            db, tmp_path, reserved,
+            process_entry_fn=fake_process_entry, structure_document_fn=lambda *a, **k: {},
+        )
+
+        relu = db.query(IngestionJob).filter(IngestionJob.id == job.id).first()
+        assert relu.status == IngestionJob.STATUS_PENDING
+        assert relu.error_class == IngestionJob.ERROR_TRANSITOIRE
+    finally:
+        _cleanup(job.id)
+
+
+def test_process_job_pdf_source_vide_bout_en_bout_sans_appel_ocr(db, tmp_path, monkeypatch):
+    """Chaîne réelle `process_job` → `process_entry` → refus, sur un fichier de
+    0 octet comme celui de la production : aucun appel OCR, `failed`
+    `definitive` au premier passage."""
+    import src.parsing.batch as batch_module
+    from src.parsing.batch import process_entry
+
+    async def ocr_interdit(pdf_path):
+        raise AssertionError("aucun appel OCR ne doit partir pour une source vide")
+
+    monkeypatch.setattr(batch_module, "OCR_BACKEND", "mistral")
+    monkeypatch.setattr(batch_module, "run_mistral_ocr", ocr_interdit)
+    fichier = "sources/sgg/JO/congo-jo-2026-17.pdf"
+    (tmp_path / fichier).parent.mkdir(parents=True, exist_ok=True)
+    (tmp_path / fichier).write_bytes(b"")
+    entry = _entry(
+        entry_id="sgg-jo/congo-jo-2026-17-test", fichier=fichier, statut="erreur", size_bytes=0,
+        sha256="e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    )
+    _write_manifest_entry(tmp_path, "sgg-jo", entry)
+    job = _make_job(db, manifest_id=entry.id, max_attempts=3, attempts=0)
+    try:
+        reserved = reserve_job(db)
+
+        def structure_interdite(*a, **k):
+            raise AssertionError("la structuration ne doit pas être atteinte")
+
+        ok = process_job(
+            db, tmp_path, reserved,
+            process_entry_fn=process_entry, structure_document_fn=structure_interdite,
+        )
+
+        assert ok is True
+        relu = db.query(IngestionJob).filter(IngestionJob.id == job.id).first()
+        assert relu.status == IngestionJob.STATUS_FAILED
+        assert relu.error_class == IngestionJob.ERROR_DEFINITIVE
+        assert relu.attempts == 1
+        assert relu.step == IngestionJob.STEP_RECU
+        assert "0 octet" in relu.last_error
+    finally:
+        _cleanup(job.id)
+
+
 def test_process_job_echec_validation_llm_classe_information_manquante(db, tmp_path):
     entry = _entry(entry_id="sgg-jo/info-manquante", statut="parse")
     _write_manifest_entry(tmp_path, "sgg-jo", entry)

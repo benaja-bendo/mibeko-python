@@ -146,6 +146,54 @@ def test_4xx_hors_429_leve_immediatement_sans_retry(monkeypatch, tmp_path):
     assert len(appels) == 1
 
 
+def test_4xx_met_le_corps_de_la_reponse_dans_le_message(monkeypatch, tmp_path):
+    """mibeko-python#42 : le message est tout ce qui reste dans
+    `ingestion_jobs.last_error` ; sans le corps, « 422 » ne disait pas que
+    Mistral refusait un fichier vide. Toujours un seul appel, même type
+    d'exception, même `.response` (le classement en dépend)."""
+    monkeypatch.setattr(mistral_ocr_service_module, "MISTRAL_OCR_API_KEY", "cle-de-test")
+    pdf_path = _make_pdf(tmp_path)
+    appels: list = []
+    corps_mistral = {
+        "detail": "Invalid file format.",
+        "message": "Received file with mimetype application/x-empty, only application/pdf … are currently supported",
+    }
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        appels.append(request)
+        return httpx.Response(422, json=corps_mistral)
+
+    monkeypatch.setattr(httpx, "AsyncClient", _client_factory(handler))
+
+    service = MistralOcrService(sleep=_sleep_recorder([]))
+    with pytest.raises(httpx.HTTPStatusError) as excinfo:
+        asyncio.run(service.extract(pdf_path))
+
+    message = str(excinfo.value)
+    assert "HTTP 422" in message
+    assert "/v1/files" in message
+    assert "application/x-empty" in message
+    assert excinfo.value.response.status_code == 422
+    assert len(appels) == 1
+
+
+def test_5xx_epuise_met_aussi_le_corps_dans_le_message(monkeypatch, tmp_path):
+    monkeypatch.setattr(mistral_ocr_service_module, "MISTRAL_OCR_API_KEY", "cle-de-test")
+    pdf_path = _make_pdf(tmp_path)
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(503, text="upstream overloaded")
+
+    monkeypatch.setattr(httpx, "AsyncClient", _client_factory(handler))
+
+    service = MistralOcrService(max_retries=1, sleep=_sleep_recorder([]))
+    with pytest.raises(httpx.HTTPStatusError) as excinfo:
+        asyncio.run(service.extract(pdf_path))
+
+    assert "HTTP 503" in str(excinfo.value)
+    assert "upstream overloaded" in str(excinfo.value)
+
+
 def test_repli_sur_mistral_api_key_si_ocr_key_absente(monkeypatch, tmp_path):
     """MISTRAL_OCR_API_KEY vide : repli sur MISTRAL_API_KEY (dev, une seule
     clé disponible) — cf. le calcul au chargement du module."""

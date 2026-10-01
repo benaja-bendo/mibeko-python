@@ -109,7 +109,10 @@ def extract_native_text_by_page(pdf_path: Path) -> List[str]:
     fait 0 octet à la source, congo-jo-2025-45.pdf 822 octets), et sans ce
     garde-fou un seul d'entre eux interrompait tout un lot de plusieurs
     centaines de documents. L'appelant voit alors 0 page / 0 car. et route le
-    document vers MinerU, qui échouera proprement et sera signalé.
+    document vers l'OCR. `process_entry` (`src/parsing/batch.py`) écarte
+    désormais en amont les fichiers vides ou sans en-tête `%PDF-`
+    (mibeko-python#42 : Mistral OCR les refuse en 422, chaque nuit) ; ce repli
+    reste le filet des PDF tronqués et des appels directs au triage.
     """
     import fitz  # PyMuPDF — import différé (convention déjà suivie par parser.py)
 
