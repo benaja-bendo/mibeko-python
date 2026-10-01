@@ -300,10 +300,16 @@ def _do_parse_step(
         entry.add_event("erreur_parsing", "MibekoBot/worker", detail=message)
         manifest.save()
         # process_entry avale l'exception d'origine dans une chaîne (cf. son
-        # propre bloc except dans src/parsing/batch.py) : impossible de la
-        # reclassifier précisément depuis ce point. Le module la documente
-        # déjà comme presque toujours réseau/quota (moteur OCR distant).
-        raise _StepFailure(message, IngestionJob.ERROR_TRANSITOIRE)
+        # propre bloc except dans src/parsing/batch.py) : c'est lui qui la
+        # classe, dans `erreur_classe` — source vide/non PDF ou HTTP 4xx de
+        # l'OCR → definitive, sans les trois tentatives qui ne pouvaient rien
+        # changer (mibeko-python#42 : un PDF de 0 octet refusé en 422 chaque
+        # nuit, classé transitoire). Absente ou inconnue → transitoire, le
+        # comportement d'avant.
+        error_class = result.get("erreur_classe")
+        if error_class not in (IngestionJob.ERROR_TRANSITOIRE, IngestionJob.ERROR_DEFINITIVE):
+            error_class = IngestionJob.ERROR_TRANSITOIRE
+        raise _StepFailure(message, error_class)
 
     # Resynchronise le manifeste même sur une entrée "sautée" (déjà traitée) :
     # même logique que src/parsing/batch.py::run_batch, pour qu'un statut

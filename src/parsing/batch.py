@@ -48,6 +48,61 @@ class ParsingError(RuntimeError):
     """Échec de traitement d'un document (PDF manquant, MinerU en erreur…)."""
 
 
+# Classe d'un échec encodé dans le résultat (`erreur_classe`), lue par le
+# worker (`src/worker/runner.py::_do_parse_step`). Mêmes valeurs que
+# `IngestionJob.ERROR_*`, recopiées plutôt qu'importées : ce module ne dépend
+# pas de la couche base de données.
+ERREUR_TRANSITOIRE = "transitoire"
+ERREUR_DEFINITIVE = "definitive"
+
+
+def _source_illisible(pdf_path: Path) -> Optional[str]:
+    """Motif de refus si le fichier source ne peut pas être un PDF : vide, ou
+    sans en-tête `%PDF-` dans son premier kilo-octet (tolérance des lecteurs
+    PDF). `None` sinon.
+
+    Ni le triage natif ni un OCR n'en tireraient quoi que ce soit, et sgg.cg
+    sert réellement de tels fichiers : congo-jo-2026-17.pdf fait 0 octet à la
+    source, ses variantes -2/-3 portent le vrai JO. Avant ce contrôle, il
+    partait chaque nuit à Mistral OCR, refusé en 422 (« mimetype
+    application/x-empty »), retenté trois fois puis redéposé par la veille
+    (mibeko-python#42). Mesuré le 01/10/2026 sur les 1 740 PDF de
+    `data/sources/` : ce contrôle n'en refuse qu'un, celui-là.
+    """
+    size = pdf_path.stat().st_size
+    if size == 0:
+        return "PDF source vide (0 octet) : rien à extraire, la source est à resourcer"
+    with open(pdf_path, "rb") as fh:
+        head = fh.read(1024)
+    if b"%PDF-" not in head:
+        return f"fichier source sans en-tête %PDF- ({size} octets) : pas un PDF, la source est à resourcer"
+    return None
+
+
+def _classe_echec_ocr(exc: BaseException) -> str:
+    """`definitive` quand le moteur OCR a refusé la requête elle-même (HTTP 4xx
+    hors 408/429 : fichier refusé, clé invalide…) — la rejouer à l'identique
+    une minute plus tard ne change rien ; `transitoire` pour tout le reste
+    (réseau, quota, 5xx, MinerU en échec), comme avant mibeko-python#42.
+
+    Remonte `__cause__`/`__context__` : une erreur HTTP peut arriver
+    enveloppée (`ParsingError`, client tiers). Lecture par attribut
+    (`response.status_code`) plutôt que `isinstance(httpx.HTTPStatusError)`,
+    même parti pris que `src.worker.runner.classify_error`.
+    """
+    vus = set()
+    courant: Optional[BaseException] = exc
+    while courant is not None and id(courant) not in vus:
+        vus.add(id(courant))
+        status = getattr(getattr(courant, "response", None), "status_code", None)
+        if isinstance(status, int):
+            if 400 <= status < 500 and status not in (408, 429):
+                return ERREUR_DEFINITIVE
+            return ERREUR_TRANSITOIRE
+        courant = courant.__cause__ or courant.__context__
+    return ERREUR_TRANSITOIRE
+
+
 def artefact_paths(data_dir: Path, entry_id: str) -> Dict[str, Path]:
     """Chemins des artefacts d'une entrée. `entry_id` contient déjà un `/`
     (ex. "sgg-jo/congo-jo-2026-13") : pathlib le résout en sous-dossier.
@@ -154,6 +209,23 @@ def process_entry(
         raise ParsingError(f"PDF introuvable : {pdf_path}")
 
     started = time.monotonic()
+    # Encodé dans le résultat plutôt que levé, comme un échec OCR : un fichier
+    # vide ne doit pas interrompre tout un lot `process-batch`.
+    motif = _source_illisible(pdf_path)
+    if motif:
+        metrics_refus: Dict[str, Any] = {
+            "manifest_id": entry.id,
+            "source_sha256": entry.sha256,
+            "traite_le": utc_now_iso(),
+            "methode": "erreur",
+            "erreur": motif,
+            "erreur_classe": ERREUR_DEFINITIVE,
+            "duree_secondes": round(time.monotonic() - started, 2),
+        }
+        paths["metrics"].parent.mkdir(parents=True, exist_ok=True)
+        paths["metrics"].write_text(json.dumps(metrics_refus, ensure_ascii=False, indent=2), encoding="utf-8")
+        return {"id": entry.id, "skipped": False, **metrics_refus}
+
     triage = triage_pdf(pdf_path)
 
     metrics: Dict[str, Any] = {
@@ -197,6 +269,7 @@ def process_entry(
         # httpx.ReadTimeout()) — vérifié en pratique (04/07/2026) : ne jamais
         # écrire une erreur illisible dans les métriques/logs.
         metrics["erreur"] = str(exc) or f"{type(exc).__name__} (sans message)"
+        metrics["erreur_classe"] = _classe_echec_ocr(exc)
         metrics["duree_secondes"] = round(time.monotonic() - started, 2)
         paths["metrics"].parent.mkdir(parents=True, exist_ok=True)
         paths["metrics"].write_text(json.dumps(metrics, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -247,6 +320,10 @@ def dry_run_report(
             pdf_path = data_dir / entry.fichier
             if not pdf_path.is_file():
                 report.append({"id": entry.id, "erreur": "PDF introuvable"})
+                continue
+            motif = _source_illisible(pdf_path)
+            if motif:
+                report.append({"id": entry.id, "erreur": motif})
                 continue
             triage = triage_pdf(pdf_path)
             report.append(

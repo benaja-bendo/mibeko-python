@@ -10,10 +10,13 @@ import json
 from pathlib import Path
 
 import fitz
+import httpx
 import pytest
 
 from src.acquisition.manifest import Manifest, ManifestEntry, sha256_file
 from src.parsing.batch import (
+    ERREUR_DEFINITIVE,
+    ERREUR_TRANSITOIRE,
     ParsingError,
     artefact_paths,
     dry_run_report,
@@ -407,3 +410,179 @@ def test_dry_run_ne_touche_a_rien(tmp_path: Path):
     assert not (data_dir / "pipeline").exists()
     manifest = Manifest(data_dir / "manifests" / "sgg-jo.jsonl")
     assert manifest.get("sgg-jo/congo-jo-2026-18").statut == "telecharge"  # inchangé
+
+
+# ---------------------------------------------------------------------------
+# mibeko-python#42 : source vide ou non PDF refusée avant l'OCR, et classe
+# d'échec (`erreur_classe`) lue par le worker pour ne pas retenter en vain.
+# ---------------------------------------------------------------------------
+
+def _seed_raw_entry(data_dir: Path, entry_id: str, rel_path: str, contenu: bytes) -> ManifestEntry:
+    """Comme `_seed_entry`, mais avec des octets bruts : sgg.cg sert réellement
+    des fichiers qui ne sont pas des PDF lisibles (congo-jo-2026-17.pdf, 0 octet)."""
+    pdf_path = data_dir / rel_path
+    pdf_path.parent.mkdir(parents=True, exist_ok=True)
+    pdf_path.write_bytes(contenu)
+    entry = ManifestEntry(
+        id=entry_id,
+        fichier=rel_path,
+        sha256=sha256_file(pdf_path),
+        size_bytes=len(contenu),
+        type_source="journal_officiel",
+        statut="erreur",
+    )
+    manifest = Manifest(data_dir / "manifests" / "sgg-jo.jsonl")
+    manifest.upsert(entry)
+    manifest.save()
+    return entry
+
+
+async def _ocr_interdit(pdf_path: Path):
+    raise AssertionError("aucun appel OCR ne doit partir pour une source illisible")
+
+
+def _http_status_error(status: int, corps: str = "") -> httpx.HTTPStatusError:
+    request = httpx.Request("POST", "https://api.mistral.ai/v1/files")
+    response = httpx.Response(status, text=corps, request=request)
+    return httpx.HTTPStatusError(f"HTTP {status} {corps}".strip(), request=request, response=response)
+
+
+def test_pdf_source_vide_refuse_sans_appel_ocr(tmp_path: Path):
+    data_dir = tmp_path / "data"
+    entry = _seed_raw_entry(data_dir, "sgg-jo/congo-jo-2026-17", "sources/sgg/JO/congo-jo-2026-17.pdf", b"")
+    assert entry.sha256 == "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"  # celui de la prod
+
+    result = process_entry(data_dir, entry, mistral_ocr_runner=_ocr_interdit)
+
+    assert result["methode"] == "erreur"
+    assert result["erreur_classe"] == ERREUR_DEFINITIVE
+    assert "0 octet" in result["erreur"]
+    paths = artefact_paths(data_dir, entry.id)
+    assert not paths["md"].is_file()
+    metrics = json.loads(paths["metrics"].read_text(encoding="utf-8"))
+    assert metrics["erreur_classe"] == ERREUR_DEFINITIVE  # trace sur disque, comme tout échec
+    assert is_already_processed(data_dir, entry) is False
+
+
+def test_pdf_source_vide_refuse_aussi_par_le_moteur_par_defaut(tmp_path: Path, monkeypatch):
+    """Sans injection (chemin du worker en production, OCR_BACKEND=mistral) :
+    le refus a lieu avant le choix du moteur."""
+    import src.parsing.batch as batch_module
+
+    monkeypatch.setattr(batch_module, "OCR_BACKEND", "mistral")
+    monkeypatch.setattr(batch_module, "run_mistral_ocr", _ocr_interdit)
+    data_dir = tmp_path / "data"
+    entry = _seed_raw_entry(data_dir, "sgg-jo/vide-defaut", "sources/sgg/JO/vide-defaut.pdf", b"")
+
+    result = process_entry(data_dir, entry)
+
+    assert result["methode"] == "erreur"
+    assert result["erreur_classe"] == ERREUR_DEFINITIVE
+
+
+def test_fichier_sans_entete_pdf_refuse_sans_appel_ocr(tmp_path: Path):
+    """Une page d'erreur HTML servie à la place du PDF n'est pas un PDF."""
+    data_dir = tmp_path / "data"
+    entry = _seed_raw_entry(
+        data_dir, "sgg-jo/page-html", "sources/sgg/JO/page-html.pdf",
+        b"<!DOCTYPE html><html><body>404 Not Found</body></html>",
+    )
+
+    result = process_entry(data_dir, entry, mistral_ocr_runner=_ocr_interdit)
+
+    assert result["methode"] == "erreur"
+    assert result["erreur_classe"] == ERREUR_DEFINITIVE
+    assert "%PDF-" in result["erreur"]
+
+
+def test_entete_pdf_apres_quelques_octets_parasites_reste_accepte(tmp_path: Path):
+    """Les lecteurs PDF tolèrent des octets avant `%PDF-` dans le premier
+    kilo-octet : le contrôle ne doit pas être plus strict qu'eux."""
+    data_dir = tmp_path / "data"
+    pdf_path = _make_pdf(data_dir, "sources/sgg/JO/decale.pdf", text=None)
+    pdf_path.write_bytes(b"\r\n" + pdf_path.read_bytes())
+    entry = ManifestEntry(
+        id="sgg-jo/decale", fichier="sources/sgg/JO/decale.pdf", sha256=sha256_file(pdf_path),
+        size_bytes=pdf_path.stat().st_size, type_source="journal_officiel", statut="telecharge",
+    )
+
+    result = process_entry(data_dir, entry, mistral_ocr_runner=_fake_mistral_ocr_ok)
+
+    assert result["methode"] == "mistral_ocr"
+
+
+def test_pdf_vide_dans_un_lot_ninterrompt_pas_les_autres(tmp_path: Path):
+    data_dir = tmp_path / "data"
+    _seed_raw_entry(data_dir, "sgg-jo/congo-jo-2026-17", "sources/sgg/JO/congo-jo-2026-17.pdf", b"")
+    _seed_entry(data_dir, "sgg-jo", "sgg-jo/congo-jo-2026-17-2", "sources/sgg/JO/congo-jo-2026-17-2.pdf", CLEAN_TEXT)
+
+    summary = run_batch(data_dir, mistral_ocr_runner=_ocr_interdit)
+
+    assert summary["traites"] == 1
+    assert [e["id"] for e in summary["erreurs"]] == ["sgg-jo/congo-jo-2026-17"]
+    manifest = Manifest(data_dir / "manifests" / "sgg-jo.jsonl")
+    assert manifest.get("sgg-jo/congo-jo-2026-17").statut == "erreur"
+    assert manifest.get("sgg-jo/congo-jo-2026-17-2").statut == "parse"
+
+
+def test_echec_ocr_http_4xx_est_classe_definitif(tmp_path: Path):
+    data_dir = tmp_path / "data"
+    entry = _seed_entry(data_dir, "sgg-jo", "sgg-jo/scan-422", "sources/sgg/JO/scan-422.pdf", text=None)
+
+    async def refus_422(pdf_path: Path):
+        raise _http_status_error(422, '{"detail": "Invalid file format."}')
+
+    result = process_entry(data_dir, entry, mistral_ocr_runner=refus_422)
+
+    assert result["methode"] == "erreur"
+    assert result["erreur_classe"] == ERREUR_DEFINITIVE
+    assert "Invalid file format" in result["erreur"]
+
+
+@pytest.mark.parametrize("exception", [
+    _http_status_error(429, "rate limited"),
+    _http_status_error(503, "service unavailable"),
+    _http_status_error(408, "request timeout"),
+    TimeoutError(),
+    ParsingError("panne simulée du serveur MinerU"),
+])
+def test_echec_ocr_quota_serveur_reseau_reste_transitoire(tmp_path: Path, exception):
+    data_dir = tmp_path / "data"
+    entry = _seed_entry(data_dir, "sgg-jo", "sgg-jo/scan-transitoire", "sources/sgg/JO/scan-transitoire.pdf", text=None)
+
+    async def echec(pdf_path: Path):
+        raise exception
+
+    result = process_entry(data_dir, entry, mistral_ocr_runner=echec)
+
+    assert result["methode"] == "erreur"
+    assert result["erreur_classe"] == ERREUR_TRANSITOIRE
+
+
+def test_erreur_http_enveloppee_est_reconnue(tmp_path: Path):
+    """Une erreur HTTP enveloppée dans une `ParsingError` (`raise … from`)
+    garde sa classe : c'est le statut HTTP qui décide, pas l'enveloppe."""
+    data_dir = tmp_path / "data"
+    entry = _seed_entry(data_dir, "sgg-jo", "sgg-jo/scan-401", "sources/sgg/JO/scan-401.pdf", text=None)
+
+    async def cle_invalide(pdf_path: Path):
+        try:
+            raise _http_status_error(401, "clé invalide")
+        except httpx.HTTPStatusError as exc:
+            raise ParsingError("dépôt refusé") from exc
+
+    result = process_entry(data_dir, entry, mistral_ocr_runner=cle_invalide)
+
+    assert result["erreur_classe"] == ERREUR_DEFINITIVE
+
+
+def test_dry_run_signale_une_source_illisible(tmp_path: Path):
+    data_dir = tmp_path / "data"
+    _seed_raw_entry(data_dir, "sgg-jo/congo-jo-2026-17", "sources/sgg/JO/congo-jo-2026-17.pdf", b"")
+
+    report = dry_run_report(data_dir)
+
+    assert len(report) == 1
+    assert report[0]["id"] == "sgg-jo/congo-jo-2026-17"
+    assert "0 octet" in report[0]["erreur"]
+    assert not (data_dir / "pipeline").exists()
