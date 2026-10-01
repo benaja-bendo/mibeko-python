@@ -14,7 +14,7 @@ en un seul batch final — un crash à mi-lot ne perd que le document en cours.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import AbstractSet, Any, Dict, List, Optional
 
 from sqlalchemy.orm import Session
 
@@ -37,12 +37,35 @@ def _iter_manifests(data_dir: Path, source_key: Optional[str] = None):
         yield manifest_path
 
 
+def _eligible(entry: ManifestEntry, ids: Optional[AbstractSet[str]]) -> bool:
+    """Une entrée se structure si elle attend de l'être (`parse`, `erreur`).
+
+    Nommée par `--id`, elle se structure aussi au statut `structure` : c'est
+    un choix humain explicite, pour recharger un texte dont le document n'est
+    plus en base (mibeko-python#39 : la base de dev avait été vidée). Ce n'est
+    pas un retraitement forcé : si le document existe encore, l'idempotence
+    par `document_key` le rend « déjà existant », sans doublon.
+    """
+    if ids is not None:
+        return entry.id in ids and entry.statut in ("parse", "erreur", "structure")
+    return entry.statut in ("parse", "erreur")
+
+
+def ids_inconnus(data_dir: Path, ids, source_key: Optional[str] = None) -> List[str]:
+    """Les identifiants demandés qui n'existent dans aucun manifeste parcouru."""
+    connus = set()
+    for manifest_path in _iter_manifests(data_dir, source_key):
+        connus.update(Manifest(manifest_path).entries)
+    return sorted(set(ids) - connus)
+
+
 def dry_run_report(
     db: Session,
     data_dir: Path,
     source_key: Optional[str] = None,
     limit: Optional[int] = None,
     include_hors_perimetre: bool = False,
+    ids: Optional[AbstractSet[str]] = None,
 ) -> List[Dict[str, Any]]:
     """Parsing + appel LLM + validation pour chaque document éligible du carnet,
     sans AUCUNE écriture (DB ou fichier) : mesure le taux de validation réel.
@@ -51,7 +74,7 @@ def dry_run_report(
     for manifest_path in _iter_manifests(data_dir, source_key):
         manifest = Manifest(manifest_path)
         for entry in manifest.iter_entries():
-            if entry.statut not in ("parse", "erreur"):
+            if not _eligible(entry, ids):
                 continue
             if not include_hors_perimetre and entry.type_source in DEFAULT_EXCLUDED_TYPE_SOURCES:
                 continue
@@ -68,6 +91,7 @@ def run_batch(
     source_key: Optional[str] = None,
     limit: Optional[int] = None,
     include_hors_perimetre: bool = False,
+    ids: Optional[AbstractSet[str]] = None,
 ) -> Dict[str, Any]:
     """Structure les entrées éligibles de tous les manifestes (ou d'un seul).
     Séquentiel, idempotent et reprenable : chaque manifeste est sauvegardé dès
@@ -92,7 +116,7 @@ def run_batch(
     for manifest_path in _iter_manifests(data_dir, source_key):
         manifest = Manifest(manifest_path)
         for entry in manifest.iter_entries():
-            if entry.statut not in ("parse", "erreur"):
+            if not _eligible(entry, ids):
                 continue
             if not include_hors_perimetre and entry.type_source in DEFAULT_EXCLUDED_TYPE_SOURCES:
                 summary["hors_perimetre"] += 1
@@ -100,6 +124,7 @@ def run_batch(
             if limit is not None and processed >= limit:
                 break
 
+            relance = entry.statut == "structure"
             result = structure_document(db, data_dir, entry, dry_run=False)
             processed += 1
 
@@ -117,7 +142,10 @@ def run_batch(
                 summary["erreurs"].append({"id": entry.id, "erreur": result["motif"]})
             else:
                 entry.statut = "structure"
-                entry.add_event("structure", "MibekoBot/structure-batch", detail=str(result["document_id"]))
+                detail = str(result["document_id"])
+                if relance:
+                    detail += " — restructuré sur demande (--id)"
+                entry.add_event("structure", "MibekoBot/structure-batch", detail=detail)
                 summary["traites"] += 1
 
             # Sauvegarde APRÈS CHAQUE document (pas seulement en fin de

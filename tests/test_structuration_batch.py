@@ -175,3 +175,85 @@ def test_manifeste_sauvegarde_apres_chaque_document_pas_a_la_fin(tmp_path: Path,
     reloaded = Manifest(data_dir / "manifests" / "sgg-jo.jsonl")
     assert reloaded.get("sgg-jo/a").statut == "structure"  # traité avant le crash : persisté
     assert reloaded.get("sgg-jo/c").statut == "parse"      # jamais atteint
+
+
+# ---------------------------------------------------------------------------
+# --id : recharger des entrées nommées (mibeko-python#39)
+# ---------------------------------------------------------------------------
+
+
+def _espion_structure_document(appels: list):
+    def fake(db, data_dir, entry, mistral_client=None, dry_run=False):
+        appels.append(entry.id)
+        return {"statut": "structure", "document_id": uuid.uuid4(), "motif": None}
+
+    return fake
+
+
+def test_id_ne_traite_que_les_entrees_nommees(tmp_path: Path, monkeypatch):
+    appels: list = []
+    monkeypatch.setattr(batch_module, "structure_document", _espion_structure_document(appels))
+    data_dir = tmp_path / "data"
+    for nom, statut in (("a", "parse"), ("b", "parse"), ("c", "erreur")):
+        _seed_entry(data_dir, "sgg-jo", f"sgg-jo/{nom}", f"sources/sgg/JO/{nom}.pdf", statut=statut)
+
+    summary = run_batch(FakeSession(), data_dir, ids={"sgg-jo/b"})
+
+    assert appels == ["sgg-jo/b"]
+    assert summary["traites"] == 1
+    manifest = Manifest(data_dir / "manifests" / "sgg-jo.jsonl")
+    assert manifest.get("sgg-jo/a").statut == "parse"
+    assert manifest.get("sgg-jo/c").statut == "erreur"
+
+
+def test_id_restructure_une_entree_dont_le_document_n_est_plus_en_base(tmp_path: Path, monkeypatch):
+    """La base de dev a été vidée : le manifeste dit « structure », mais le
+    document n'existe plus. Nommée, l'entrée est retraitée, et l'événement le dit."""
+    appels: list = []
+    monkeypatch.setattr(batch_module, "structure_document", _espion_structure_document(appels))
+    data_dir = tmp_path / "data"
+    _seed_entry(data_dir, "sgg-jo", "sgg-jo/congo-jo-2026-6-7", "sources/sgg/JO/congo-jo-2026-6-7.pdf",
+                statut="structure")
+
+    assert run_batch(FakeSession(), data_dir)["traites"] == 0  # sans --id : rien ne bouge
+    summary = run_batch(FakeSession(), data_dir, ids={"sgg-jo/congo-jo-2026-6-7"})
+
+    assert summary["traites"] == 1
+    entry = Manifest(data_dir / "manifests" / "sgg-jo.jsonl").get("sgg-jo/congo-jo-2026-6-7")
+    assert entry.statut == "structure"
+    assert "restructuré sur demande (--id)" in entry.evenements[-1].detail
+
+
+def test_id_sur_un_document_encore_en_base_ne_cree_rien(tmp_path: Path, monkeypatch):
+    """Pas de retraitement forcé : l'idempotence par document_key l'emporte."""
+    monkeypatch.setattr(batch_module, "structure_document", _fake_structure_document_deja_existant)
+    data_dir = tmp_path / "data"
+    _seed_entry(data_dir, "sgg-jo", "sgg-jo/x", "sources/sgg/JO/x.pdf", statut="structure")
+
+    summary = run_batch(FakeSession(), data_dir, ids={"sgg-jo/x"})
+
+    assert summary["traites"] == 0
+    assert summary["deja_existants"] == 1
+    entry = Manifest(data_dir / "manifests" / "sgg-jo.jsonl").get("sgg-jo/x")
+    assert entry.statut == "structure"
+    assert entry.evenements == []
+
+
+def test_dry_run_report_respecte_id(tmp_path: Path, monkeypatch):
+    appels: list = []
+    monkeypatch.setattr(batch_module, "structure_document", _espion_structure_document(appels))
+    data_dir = tmp_path / "data"
+    _seed_entry(data_dir, "sgg-jo", "sgg-jo/a", "sources/sgg/JO/a.pdf")
+    _seed_entry(data_dir, "sgg-jo", "sgg-jo/b", "sources/sgg/JO/b.pdf", statut="structure")
+
+    rapport = dry_run_report(FakeSession(), data_dir, ids={"sgg-jo/b"})
+
+    assert [r["id"] for r in rapport] == ["sgg-jo/b"]
+    assert Manifest(data_dir / "manifests" / "sgg-jo.jsonl").get("sgg-jo/b").evenements == []
+
+
+def test_ids_inconnus_signale_les_entrees_absentes(tmp_path: Path):
+    data_dir = tmp_path / "data"
+    _seed_entry(data_dir, "sgg-jo", "sgg-jo/a", "sources/sgg/JO/a.pdf")
+
+    assert batch_module.ids_inconnus(data_dir, {"sgg-jo/a", "sgg-jo/faute"}) == ["sgg-jo/faute"]
