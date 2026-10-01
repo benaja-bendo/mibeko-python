@@ -1,6 +1,6 @@
 # Registre des décisions — service Python (ingestion)
 
-> Statut : à jour au 28 septembre 2026 · **Fait autorité sur** : les décisions en vigueur qui ne changent que le code de ce dépôt. Les décisions qui touchent plusieurs dépôts (sources, périmètre du corpus, tableaux, LaTeX, historique des textes…) sont dans le registre transverse (`docs/decisions.md` du monorepo, dépôt `mibeko-docs`), qui donne aussi le gabarit et les règles (D-001).
+> Statut : à jour au 1er octobre 2026 · **Fait autorité sur** : les décisions en vigueur qui ne changent que le code de ce dépôt. Les décisions qui touchent plusieurs dépôts (sources, périmètre du corpus, tableaux, LaTeX, historique des textes…) sont dans le registre transverse (`docs/decisions.md` du monorepo, dépôt `mibeko-docs`), qui donne aussi le gabarit et les règles (D-001).
 
 Identifiants `PY-NNN`, jamais réutilisés ; une nouvelle décision s'ajoute à la fin. Les décisions reprises le 28/09/2026 ne portent « Écarté » et « On rouvre si » que si l'original les donnait ; texte d'origine : `docs/_archive/2026-09-28-journal-decisions-2026-07-a-09.md` (dépôt `mibeko-docs`).
 
@@ -61,3 +61,12 @@ Identifiants `PY-NNN`, jamais réutilisés ; une nouvelle décision s'ajoute à 
 
 **Décision** : le nettoyage se fait module par module, jamais par un `--fix` global. Les faux positifs `B008` de FastAPI sont neutralisés par configuration. On liste explicitement les règles (`select`). Il ne doit y avoir qu'une source de vérité pour les dépendances, que le `Dockerfile` doit réellement utiliser, et `.python-version` doit correspondre à l'image.
 **Conséquences** : la PR #16 a été fermée sans fusion ; rien n'est intégré à ce jour.
+
+### PY-010 · 2026-10-01 · Une fiche de JO créée par le pipeline naît publiée ; le push ne crée que celles de ses documents
+**Statut** : en vigueur · **Réf.** : mibeko-python#38, D-056, dashboard#218
+
+**Contexte** : le push du 07/08/2026 (`--limit 100`) a créé les 39 fiches de JO du plan entier pour 100 documents, et 24 numéros sont restés publiés sans texte (mesure du 30/09). `ensure_official_journal` crée les fiches `is_published=True`, en dev (puis poussées) comme en production (veille, PY-007). L'upload manuel de l'API, lui, les crée non publiées.
+**Décision** : `--limit` coupe aussi les journaux (`limiter_plan`) : une fiche n'arrive qu'avec au moins un de ses textes. La fiche reste créée publiée : D-056 fait d'un numéro publié un PDF officiel lisible, et ce PDF est le PDF source du document qui l'accompagne.
+**Écarté** : faire naître la fiche non publiée, comme les documents en `draft`. Cela ajoutait une publication manuelle par numéro sans protéger le lecteur, puisque le PDF officiel est public par nature.
+**Conséquences** : un numéro peut apparaître au kiosque avant que ses textes soient publiés ; il s'affiche alors « Texte intégral (PDF) » (front#60).
+**On rouvre si** : une fiche poussée ou créée par la veille est publiée sans que son PDF soit servi (404), ou annonce un numéro que son PDF ne porte pas.
