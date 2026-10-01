@@ -867,6 +867,7 @@ def push_corpus(executer, limite, document_keys, rapport_chemin):
         creer_engine_source,
         executer_push,
         filtrer_par_document_keys,
+        limiter_plan,
     )
 
     click.secho("\n  ███  PUSH CORPUS → PRODUCTION  ███\n", fg="red", bold=True)
@@ -898,15 +899,19 @@ def push_corpus(executer, limite, document_keys, rapport_chemin):
         limite = None  # --document-key cible une liste exacte, --limit n'a plus de sens
 
     institutions_source = charger_institutions_par_sigle(engine_source)
-    plan = construire_plan(
+    plan_complet = construire_plan(
         documents, journaux, charger_etat_cible(engine_ro), institutions_source
     )
+    # Le plan affiché est celui qui sera exécuté : avec --limit, les journaux
+    # à créer se limitent à ceux des documents poussés (mibeko-python#38).
+    plan = limiter_plan(plan_complet, limite)
 
     click.secho(f"\n  Source : {total_source} documents vivants"
                 + (f" ({len(documents)} sélectionnés par --document-key)" if document_keys else ""),
                 fg="cyan")
-    click.secho(f"  À pousser : {len(plan.a_pousser)}"
-                + (f" (limité à {limite})" if limite else ""), fg="cyan")
+    click.secho(f"  À pousser : {len(plan_complet.a_pousser)}"
+                + (f" (limité à {len(plan.a_pousser)} pour ce passage)" if limite else ""),
+                fg="cyan")
     click.secho(f"  Écartés : {len(plan.ecartes)}", fg="cyan")
     for doc, motif in plan.ecartes:
         click.echo(f"    − {doc.libelle()} : {motif}")
@@ -958,7 +963,7 @@ def push_corpus(executer, limite, document_keys, rapport_chemin):
                         "les deux profils ne visent pas la même base.", fg="red")
             raise SystemExit(1)
 
-    click.secho(f"\n  {len(plan.a_pousser[:limite] if limite else plan.a_pousser)} "
+    click.secho(f"\n  {len(plan.a_pousser)} "
                 "documents vont être ÉCRITS en production (staging, draft).", fg="red")
     saisie = click.prompt("Taper PRODUCTION pour confirmer", default="", show_default=False)
     if saisie != "PRODUCTION":

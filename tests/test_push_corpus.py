@@ -21,6 +21,7 @@ from src.promotion.push_corpus import (
     creer_client_minio_source,
     creer_engine_source,
     filtrer_par_document_keys,
+    limiter_plan,
 )
 
 
@@ -191,6 +192,80 @@ def test_journal_d_un_document_ecarte_n_est_pas_cree():
 
     assert plan.a_pousser == []
     assert plan.journaux_a_creer == []
+
+
+# ---------------------------------------------------------------------------
+# --limit : les journaux suivent les documents (mibeko-python#38)
+# ---------------------------------------------------------------------------
+
+
+def _deux_documents_sur_deux_journaux():
+    jo_1 = JournalSource(id="jo-1", publication_date="2026-01-15", number="1")
+    jo_2 = JournalSource(id="jo-2", publication_date="2026-02-15", number="2")
+    docs = [
+        _doc(id=f"00000000-0000-0000-0000-00000000000{i}",
+             checksums_sources=frozenset({f"beef{i}" * 12 + "beef"}),
+             official_journal_id=f"jo-{i}")
+        for i in (1, 2)
+    ]
+    return docs, [jo_1, jo_2]
+
+
+def test_limite_ne_cree_que_les_journaux_des_documents_pousses():
+    """Constat du 07/08/2026 : `--limit 100` a créé les 39 fiches du plan entier,
+    dont 24 sont restées publiées sans aucun texte."""
+    docs, journaux = _deux_documents_sur_deux_journaux()
+    plan = limiter_plan(construire_plan(docs, journaux, _cible()), 1)
+
+    assert [d.id for d in plan.a_pousser] == [docs[0].id]
+    assert plan.journaux_a_creer == [journaux[0]]
+
+
+def test_limite_restreint_le_rattachement_aux_documents_pousses():
+    docs, journaux = _deux_documents_sur_deux_journaux()
+    cible = _cible(journaux_par_date_numero={
+        ("2026-01-15", "1"): "jo-cible-1",
+        ("2026-02-15", "2"): "jo-cible-2",
+    })
+    plan = limiter_plan(construire_plan(docs, journaux, cible), 1)
+
+    assert plan.journaux_a_creer == []
+    assert plan.remap_journaux == {"jo-1": "jo-cible-1"}
+
+
+@pytest.mark.parametrize("limite", [None, 0])
+def test_sans_limite_le_plan_est_rendu_tel_quel(limite):
+    docs, journaux = _deux_documents_sur_deux_journaux()
+    plan = construire_plan(docs, journaux, _cible())
+
+    assert limiter_plan(plan, limite) is plan
+
+
+def test_executer_push_avec_limite_ne_copie_que_le_journal_requis(monkeypatch):
+    """Le chemin d'écriture lui-même, sans réseau : connexions factices,
+    copie de table interceptée."""
+    from unittest.mock import MagicMock
+
+    import src.promotion.push_corpus as push_corpus
+
+    copies = []
+
+    def copier_table_espion(cnx_src, cnx_cbl, table, where, params, *remaps):
+        copies.append((table, params))
+        return 0
+
+    monkeypatch.setattr(push_corpus, "copier_table", copier_table_espion)
+    docs, journaux = _deux_documents_sur_deux_journaux()
+    plan = construire_plan(docs, journaux, _cible())
+
+    rapport = push_corpus.executer_push(
+        MagicMock(), MagicMock(), plan, dry_run=False, limite=1
+    )
+
+    journaux_copies = [p["ids"] for table, p in copies if table == "official_journals"]
+    assert journaux_copies == [["jo-1"]]
+    assert rapport["journaux_a_creer"] == 1
+    assert [d["id"] for d in rapport["documents"]] == [docs[0].id]
 
 
 # ---------------------------------------------------------------------------
