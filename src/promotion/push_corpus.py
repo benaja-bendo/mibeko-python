@@ -31,7 +31,7 @@ import io
 import json
 import logging
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime
 
 from src.db.prod_readonly import CibleProdAmbigue, ConfigurationProdManquante
@@ -254,6 +254,31 @@ def construire_plan(
             plan.journaux_a_creer.append(journal)
 
     return plan
+
+
+def limiter_plan(plan: PlanPush, limite: int | None) -> PlanPush:
+    """Restreint le plan aux `limite` premiers documents ET aux seuls journaux
+    officiels qu'ils requièrent.
+
+    Couper les documents sans couper les journaux crée en production des fiches
+    de JO dont aucun texte n'arrive : le push du 07/08/2026 (`--limit 100`) a
+    créé les 39 fiches du plan entier pour 100 documents, et laissé 24 numéros
+    publiés sans aucun texte (mibeko-python#38, dashboard#218). Les journaux
+    écartés ici ne sont pas perdus : la relance recalcule le plan, et ils
+    reviennent avec leurs documents. Sans limite, le plan est rendu tel quel.
+    """
+    if not limite:
+        return plan
+    gardes = plan.a_pousser[:limite]
+    requis = {doc.official_journal_id for doc in gardes if doc.official_journal_id}
+    return replace(
+        plan,
+        a_pousser=gardes,
+        journaux_a_creer=[j for j in plan.journaux_a_creer if j.id in requis],
+        remap_journaux={
+            src: dst for src, dst in plan.remap_journaux.items() if src in requis
+        },
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -701,7 +726,10 @@ def executer_push(engine_source, engine_cible, plan: PlanPush,
     """
     from sqlalchemy import text
 
-    a_pousser = plan.a_pousser[:limite] if limite else plan.a_pousser
+    # La limite coupe aussi les journaux : seuls ceux des documents réellement
+    # poussés sont créés (mibeko-python#38, cf. limiter_plan).
+    plan = limiter_plan(plan, limite)
+    a_pousser = plan.a_pousser
     rapport = {
         "horodatage": datetime.now().isoformat(timespec="seconds"),
         "dry_run": dry_run,
