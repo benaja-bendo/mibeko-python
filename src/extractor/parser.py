@@ -455,6 +455,68 @@ def _strip_invisible_characters(texte: str) -> str:
     return texte.translate(_INVISIBLE_CHARACTERS)
 
 
+# Un intitulé de division (TITRE, CHAPITRE, SECTION…) imprimé sur plusieurs
+# lignes : « Chapitre 1 : De l'objet, du champ » puis « d'application et des
+# définitions ». Seule la première ligne ouvrait la division ; les suivantes
+# devenaient une feuille DISPOSITION_N, comptée comme un article (67 faux articles
+# dans le code minier, 130 signalements bloquants). Une ligne ne prolonge
+# l'intitulé que si elle ressemble à une suite, jamais à un corps de texte :
+# courte, et soit commençant par une minuscule, soit en capitales comme
+# l'intitulé qu'elle prolonge.
+_HEADING_MAX_CONTINUATION_LINES = 4
+_HEADING_CONTINUATION_MAX_LINE = 100
+_HEADING_TITLE_MAX = 160
+_SOFT_HYPHEN = "­"
+
+
+def _is_uppercase_dominant(texte: str) -> bool:
+    lettres = [c for c in texte if c.isalpha()]
+    if not lettres:
+        return False
+    return sum(1 for c in lettres if c.isupper()) / len(lettres) >= 0.8
+
+
+def _is_heading_continuation(titre: str, ligne: str) -> bool:
+    """La ligne prolonge-t-elle l'intitulé `titre` d'une division ?"""
+    if not ligne or len(ligne) > _HEADING_CONTINUATION_MAX_LINE:
+        return False
+    if len(titre) + len(ligne) > _HEADING_TITLE_MAX:
+        return False
+    premier = ligne[0]
+    if premier.islower():
+        return True
+    return premier.isupper() and _is_uppercase_dominant(titre) and _is_uppercase_dominant(ligne)
+
+
+def _is_prose_mistaken_for_heading(ligne: str, numero: str, titre: str) -> bool:
+    """Une ligne de prose lue comme un intitulé de division.
+
+    Le motif des intitulés est insensible à la casse et les chiffres romains
+    comptent les lettres i, v, x, l, c, d, m : un mot de prose replié en début de
+    ligne (« partiel » lu « PARTIE L », « titre d'exploitation » lu « TITRE D »)
+    ouvrait une fausse division et coupait l'article en plein paragraphe (code
+    minier, 02/10/2026). Un vrai intitulé commence par une majuscule. On ne
+    rejette pourtant que les cas sans ambiguïté, parmi les lignes dont le mot-clé
+    est en minuscules : un « numéro » d'une seule lettre romaine, ou un intitulé
+    qui poursuit la phrase (minuscule ou ponctuation). Un intitulé en capitales
+    (« section 1 OPERATION PREVOL ET DEPART ») ou à numéro chiffré reste accepté.
+    """
+    if not ligne[:1].islower():
+        return False
+    if re.fullmatch(r"[ivxlcdm]", numero or ""):
+        return True
+    debut = (titre or "").lstrip()
+    return bool(debut) and not (debut[0].isupper() or debut[0].isdigit())
+
+
+def _join_heading_title(titre: str, ligne: str) -> str:
+    """Recolle une suite d'intitulé ; un mot coupé par un tiret conditionnel en
+    fin de ligne est reconstitué (« PRIN\\xad » + « CIPES » donne « PRINCIPES »)."""
+    if titre.endswith(_SOFT_HYPHEN):
+        return titre[:-1] + ligne
+    return f"{titre} {ligne}"
+
+
 class LegalDocumentParser:
     """
     Parseur de structure hiérarchique d'un texte juridique (code, loi, décret)
@@ -576,6 +638,12 @@ class LegalDocumentParser:
         # du signataire et du dispositif tout en restant citables.
         current_note: Optional[Dict[str, Any]] = None
         note_buffer: List[str] = []
+        # Division dont l'intitulé peut encore se prolonger sur la ligne suivante
+        # (cf. `_is_heading_continuation`). Posée à l'ouverture d'une division,
+        # levée dès qu'un élément de contenu s'ouvre ou qu'une ligne ne prolonge
+        # rien.
+        heading_tail: Optional[Dict[str, Any]] = None
+        heading_tail_lines = 0
 
         def close_article() -> None:
             """Finalise l'article courant — ou le retire silencieusement de
@@ -676,7 +744,8 @@ class LegalDocumentParser:
             current_note = None
 
         def open_note(number: str, first_line: str) -> None:
-            nonlocal current_note
+            nonlocal current_note, heading_tail
+            heading_tail = None
             close_note()
             node = {
                 "type": "NOTE",
@@ -692,7 +761,8 @@ class LegalDocumentParser:
                 note_buffer.append(first_line)
 
         def open_signature(first_line: str) -> None:
-            nonlocal current_signature
+            nonlocal current_signature, heading_tail
+            heading_tail = None
             # Une signature (« Fait à … ») marque la fin du dispositif : le texte
             # qui précède (qualité du signataire, visas « Vu … », considérants) est
             # un vrai préambule, même si AUCUN article/structure n'a été détecté
@@ -719,7 +789,7 @@ class LegalDocumentParser:
             signature_buffer.append(first_line)
 
         def open_structure(level: str, number: str, title: str) -> None:
-            nonlocal current_article
+            nonlocal current_article, heading_tail, heading_tail_lines
             flush_preamble()
             close_note()
             close_signature()
@@ -741,9 +811,12 @@ class LegalDocumentParser:
             }
             attach_to_parent(node)
             open_nodes.append((level_index, node))
+            heading_tail = node
+            heading_tail_lines = 0
 
         def open_article(number: str, inline_content: str) -> None:
-            nonlocal current_article, current_article_end_page
+            nonlocal current_article, current_article_end_page, heading_tail
+            heading_tail = None
             flush_preamble()
             close_note()
             close_signature()
@@ -764,6 +837,8 @@ class LegalDocumentParser:
         def open_table(html: str) -> None:
             # Feuille autonome rattachée à la section courante (sœur des articles),
             # pas au contenu de l'article précédent.
+            nonlocal heading_tail
+            heading_tail = None
             flush_preamble()
             close_note()
             close_signature()
@@ -853,9 +928,31 @@ class LegalDocumentParser:
                             attached.group("title"),
                         )
 
+            if structure_match and _is_prose_mistaken_for_heading(match_line, structure_match[1], structure_match[2]):
+                structure_match = None
+
             if structure_match:
                 open_structure(*structure_match)
                 continue
+
+            if (
+                heading_tail is not None
+                and heading_tail["title"]
+                and current_note is None
+                and current_signature is None
+                and current_article is None
+                and not disposition_buffer
+                and open_nodes
+                and open_nodes[-1][1] is heading_tail
+            ):
+                if (
+                    heading_tail_lines < _HEADING_MAX_CONTINUATION_LINES
+                    and _is_heading_continuation(heading_tail["title"], match_line)
+                ):
+                    heading_tail["title"] = _join_heading_title(heading_tail["title"], match_line)
+                    heading_tail_lines += 1
+                    continue
+                heading_tail = None
 
             if current_note is not None:
                 if _SECTION_NOISE_PATTERN.match(match_line):
