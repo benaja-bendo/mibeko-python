@@ -144,7 +144,7 @@ def run_batch(
                 entry.statut = "structure"
                 detail = str(result["document_id"])
                 if relance:
-                    detail += " — restructuré sur demande (--id)"
+                    detail += ", restructuré sur demande (--id)"
                 entry.add_event("structure", "MibekoBot/structure-batch", detail=detail)
                 summary["traites"] += 1
 
