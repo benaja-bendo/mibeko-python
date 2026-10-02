@@ -23,6 +23,7 @@ import datetime
 import os
 import re
 import tempfile
+import unicodedata
 import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -462,6 +463,47 @@ def split_and_persist_journal_acts(
     return created
 
 
+_MOIS = {
+    "janvier": 1, "fevrier": 2, "mars": 3, "avril": 4, "mai": 5, "juin": 6,
+    "juillet": 7, "aout": 8, "septembre": 9, "octobre": 10, "novembre": 11, "decembre": 12,
+}
+
+# « 68e ANNEE - N° 23 … Jeudi 4 juin 2026 », « 66e ANNEE - EDITION SPECIALE
+# N° 6 Du jeudi 11 avril 2024 », « 64e ANNEE … N° 12 Du 26 décembre 2022 ».
+_OURS = re.compile(
+    r"(\d{2})\s*(?:e|è|ème|eme)\s*ANN[ÉE]E\b.{0,80}?\b(\d{1,2})(?:er)?\s+([a-zéèêûô]+)\s+(\d{4})",
+    re.IGNORECASE,
+)
+
+
+def date_parution_depuis_ours(markdown_text: str) -> Optional[datetime.date]:
+    """Date de parution d'un Journal officiel, lue dans son ours.
+
+    Mistral, qui lit l'en-tête de l'acte, donne souvent la date de signature
+    et pas celle du journal : le 01/10/2026, 16 numéros spéciaux sur 24 sont
+    sortis sans date de parution, donc sans fiche (mibeko-python#39). L'ours,
+    lui, la porte en toutes lettres, au même endroit à chaque numéro.
+
+    Garde-fou : le rang de l'année doit correspondre à l'année lue (la 68e
+    année est 2026 ; le rang change en début d'année, d'où un an de
+    tolérance). Rien de plausible → None : une date ne s'invente jamais.
+    """
+    debut = re.sub(r"\[\[MIBEKO_PAGE:\d+\]\]", " ", markdown_text[:8000])
+    debut = re.sub(r"\s+", " ", debut)
+    for m in _OURS.finditer(debut):
+        rang, jour, annee = int(m.group(1)), int(m.group(2)), int(m.group(4))
+        mois = _MOIS.get(
+            "".join(c for c in unicodedata.normalize("NFKD", m.group(3).lower()) if not unicodedata.combining(c))
+        )
+        if mois is None or annee - rang not in (1958, 1959):
+            continue
+        try:
+            return datetime.date(annee, mois, jour)
+        except ValueError:
+            continue
+    return None
+
+
 def backfill_journals(db: Session, data_dir: Path, dry_run: bool = False) -> Dict[str, Any]:
     """Rattrape les JO déjà ingérés sans fiche. Apparie par SHA-256 (metadata),
     jamais par titre (le LLM titre souvent le JO d'après son premier acte)."""
@@ -472,6 +514,7 @@ def backfill_journals(db: Session, data_dir: Path, dry_run: bool = False) -> Dic
         "sans_date_ou_numero": [],
         "sans_pdf_minio": [],
         "introuvables_en_base": 0,
+        "dates_depuis_ours": 0,
     }
     manifests_dir = data_dir / "manifests"
     for manifest_path in sorted(manifests_dir.glob("*.jsonl")):
@@ -504,7 +547,19 @@ def backfill_journals(db: Session, data_dir: Path, dry_run: bool = False) -> Dic
             if document.official_journal_id is not None:
                 summary["deja_rattaches"] += 1
                 continue
-            if not (entry.jo_numero and entry.jo_annee and document.date_publication):
+            date_effective = document.date_publication
+            if entry.jo_numero and entry.jo_annee and date_effective is None:
+                # Repli déterministe sur l'ours du numéro (mibeko-python#39).
+                # L'année doit être celle du manifeste : un fichier rangé sous
+                # un autre numéro (cas « 34-2008 », dashboard#218) n'est pas daté.
+                from src.structuration.structurer import _resolve_artefact
+
+                md_path = _resolve_artefact(data_dir, "md", entry.id)
+                date_ours = date_parution_depuis_ours(md_path.read_text(encoding="utf-8")) if md_path else None
+                if date_ours is not None and date_ours.year == entry.jo_annee:
+                    date_effective = date_ours
+                    summary["dates_depuis_ours"] += 1
+            if not (entry.jo_numero and entry.jo_annee and date_effective):
                 summary["sans_date_ou_numero"].append(entry.id)
                 continue
             pdf_media = (
@@ -519,6 +574,10 @@ def backfill_journals(db: Session, data_dir: Path, dry_run: bool = False) -> Dic
                 summary["sans_pdf_minio"].append(entry.id)
                 continue
             if not dry_run:
+                # La date de publication d'un acte de JO est la date de
+                # parution du numéro : celle de l'ours, si Mistral n'en a pas.
+                if document.date_publication is None:
+                    document.date_publication = date_effective
                 ensure_official_journal(db, entry, document, pdf_media.file_path)
             summary["rattaches"] += 1
     if not dry_run:

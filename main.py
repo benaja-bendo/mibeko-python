@@ -608,19 +608,32 @@ def process_batch(source_key, limit, dry_run, force, include_hors_perimetre):
     '--include-hors-perimetre', is_flag=True,
     help="Inclure aussi les traités internationaux/CEMAC et lots privés (exclus du périmètre v1 par défaut)",
 )
-def structure_batch(source_key, limit, dry_run, include_hors_perimetre):
+@click.option(
+    '--id', 'ids', multiple=True,
+    help="Ne traiter que cette entrée de manifeste (ex. sgg-jo/congo-jo-2026-6-7), répétable. "
+         "Une entrée nommée se structure aussi au statut « structure » si son document n'est plus en base.",
+)
+def structure_batch(source_key, limit, dry_run, include_hors_perimetre, ids):
     """Structuration (parseur + Mistral) du carnet, piloté par le manifeste. Idempotent."""
     import json as _json
     from src.acquisition.config import data_dir
     from src.db.database import SessionLocal
-    from src.structuration.batch import dry_run_report, run_batch
+    from src.structuration.batch import dry_run_report, ids_inconnus, run_batch
 
     target = data_dir()
+    selection = set(ids) or None
+    if selection:
+        inconnus = ids_inconnus(target, selection, source_key=source_key)
+        if inconnus:
+            # Une faute de frappe ne doit pas passer pour « rien à faire ».
+            click.secho(f"Refus : entrée(s) absente(s) des manifestes : {', '.join(inconnus)}", fg="red")
+            raise SystemExit(1)
     db = SessionLocal()
     try:
         if dry_run:
             report = dry_run_report(
-                db, target, source_key=source_key, limit=limit, include_hors_perimetre=include_hors_perimetre
+                db, target, source_key=source_key, limit=limit, include_hors_perimetre=include_hors_perimetre,
+                ids=selection,
             )
             click.echo(_json.dumps(report, ensure_ascii=False, indent=2))
             valides = sum(1 for r in report if r.get("statut_prevu") == "structure")
@@ -630,7 +643,8 @@ def structure_batch(source_key, limit, dry_run, include_hors_perimetre):
 
         click.secho("Structuration du carnet (parseur + Mistral) …", fg="cyan")
         summary = run_batch(
-            db, target, source_key=source_key, limit=limit, include_hors_perimetre=include_hors_perimetre
+            db, target, source_key=source_key, limit=limit, include_hors_perimetre=include_hors_perimetre,
+            ids=selection,
         )
         click.secho(
             f"Traités : {summary['traites']} · déjà existants : {summary['deja_existants']} · "
