@@ -982,10 +982,17 @@ class LegalDocumentParser:
                 if preamble_page is None:
                     preamble_page = current_page
                 preamble_buffer.append(match_line)
-            elif open_nodes:
+            else:
                 # Corps d'une division sans en-tête « Article ». `match_line`
                 # retire seulement les décorations Markdown de MinerU ; le texte
                 # juridique et ses retours à la ligne restent intacts.
+                # Sans division ouverte (texte à articles sans titres, ou texte
+                # revenu après un tableau), la feuille se range à la racine :
+                # `close_disposition` s'attache au parent ouvert, sinon aux
+                # racines. Ce chemin ne conservait pas la ligne, il la jetait en
+                # silence (mesuré le 02/10/2026 : 6 545 lignes d'une annexe du
+                # JO n° 5-2025 volume XII), et seuls de faux intitulés ouverts
+                # par erreur, plus loin, sauvaient le texte par accident.
                 if disposition_page is None:
                     disposition_page = current_page
                 disposition_end_page = current_page

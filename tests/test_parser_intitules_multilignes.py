@@ -233,3 +233,24 @@ def test_un_renvoi_en_minuscules_n_ouvre_pas_de_division():
     )
 
     assert [n for n in nodes if n["type"] == "SECTION"] == []
+
+
+# ---------------------------------------------------------------------------
+# Aucune ligne n'est jetée en silence
+# ---------------------------------------------------------------------------
+
+
+def test_un_texte_revenu_apres_un_tableau_sans_division_n_est_pas_perdu():
+    """Sans division ouverte, une ligne hors article n'avait aucune branche pour
+    la recevoir : elle disparaissait (6 545 lignes d'une annexe du JO 5-2025)."""
+    nodes = _parse(
+        "Article 1 : Premier texte.",
+        "<table><tr><td>x</td></tr></table>",
+        "Texte revenu après le tableau.",
+        "Article 2 : Suite.",
+    )
+
+    feuilles = [n for n in nodes if n["type"] == "DISPOSITION"]
+    assert len(feuilles) == 1
+    assert "Texte revenu après le tableau." in feuilles[0]["content"]
+    assert _numbers(nodes, "ARTICLE") == ["1", "2"]
