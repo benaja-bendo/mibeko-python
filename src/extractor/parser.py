@@ -441,6 +441,20 @@ def _is_page_banner_noise(text: str) -> bool:
     return True
 
 
+# Caractères invisibles que les PDF du Journal officiel glissent en tête de ligne.
+# `str.strip()` ne les retire pas (U+200B n'est pas un espace pour Python), donc
+# ARTICLE_PATTERN, ancré en début de ligne, ne reconnaît pas « Article 114 » dès
+# qu'un espace de largeur nulle le précède. Constaté le 02/10/2026 sur la loi
+# n° 1-2026 (code minier) : les articles 114 et 116 n'existaient pas en base, leur
+# texte restait collé à l'article précédent. Aucun de ces caractères ne porte de
+# sens dans un texte juridique français.
+_INVISIBLE_CHARACTERS = dict.fromkeys(map(ord, "​‌‍⁠﻿"))
+
+
+def _strip_invisible_characters(texte: str) -> str:
+    return texte.translate(_INVISIBLE_CHARACTERS)
+
+
 class LegalDocumentParser:
     """
     Parseur de structure hiérarchique d'un texte juridique (code, loi, décret)
@@ -493,7 +507,7 @@ class LegalDocumentParser:
             return _rejoin_split_article_headings(
                 _strip_trailing_table_of_contents(
                     _strip_leading_table_of_contents(
-                        strip_page_furniture(strip_latex_artifacts(self.text_content))
+                        strip_page_furniture(strip_latex_artifacts(_strip_invisible_characters(self.text_content)))
                     )
                 )
             )
@@ -520,7 +534,7 @@ class LegalDocumentParser:
         return _rejoin_split_article_headings(
             _strip_trailing_table_of_contents(
                 _strip_leading_table_of_contents(
-                    strip_page_furniture(strip_latex_artifacts("\n".join(full_text)))
+                    strip_page_furniture(strip_latex_artifacts(_strip_invisible_characters("\n".join(full_text))))
                 )
             )
         )
@@ -808,6 +822,15 @@ class LegalDocumentParser:
             article_match = ARTICLE_PATTERN.match(match_line)
             if article_match:
                 article_num, article_content = _article_match_groups(article_match)
+                if not article_num and match_line[:1].islower():
+                    # Le mot « article. » en fin de phrase, replié en début de
+                    # ligne par la mise en page (« …par le présent / article. »),
+                    # n'est pas un en-tête : un vrai en-tête sans numéro porte
+                    # une majuscule (« Article : Le titulaire… »). Pris à tort
+                    # pour un en-tête, il créait un faux article SANS_NUM_xxx et
+                    # arrachait la suite du texte à son article.
+                    article_match = None
+            if article_match:
                 open_article(article_num, article_content)
                 continue
 
