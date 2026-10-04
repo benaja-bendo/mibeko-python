@@ -281,6 +281,75 @@ def limiter_plan(plan: PlanPush, limite: int | None) -> PlanPush:
     )
 
 
+class PlanInattendu(Exception):
+    """Le plan ne pousse pas le nombre de documents que l'opération annonce."""
+
+
+# Au-delà, la liste des documents d'un plan n'est plus lisible : on en montre le début.
+LIGNES_MAX_PLAN = 30
+
+
+def verifier_attendu(plan: PlanPush, attendu: int | None, document_keys=()) -> None:
+    """Refuse un plan dont le nombre de documents à pousser n'est pas `attendu`.
+
+    `plan` est le plan DÉJÀ limité (`limiter_plan`) : c'est celui que
+    `executer_push` déroulera, donc le seul chiffre qui compte. `attendu` vient
+    de l'annonce de l'opération, écrite avant la simulation et jamais recopiée
+    depuis elle. `None` = aucune annonce, aucun contrôle (simulation seulement :
+    `--execute` exige l'option, cf. PY-011).
+
+    Le 01/10/2026 (mibeko-python#39), une liste de `--document-key` construite
+    par `$(sed …)` sur un fichier absent est restée vide : le push a tourné sans
+    filtre sur toute la base de dev, 24 documents au lieu des 23 annoncés, dont un
+    brouillon hors plan arrivé en production. La simulation affichait « À pousser :
+    24 » ; rien n'obligeait à le comparer à l'annonce.
+
+    Le message nomme ce que le code sait : avec `--document-key`, les clés
+    demandées mais absentes du plan (écartées, avec leur motif) et les documents
+    du plan hors liste ; sans, il n'a que le nombre et liste donc le plan, pour
+    qu'on y reconnaisse l'intrus.
+    """
+    if attendu is None:
+        return
+    reel = len(plan.a_pousser)
+    if reel == attendu:
+        return
+
+    ecart = reel - attendu
+    lignes = [
+        f"le plan pousserait {reel} documents, l'opération en annonce {attendu} "
+        f"({abs(ecart)} {'de trop' if ecart > 0 else 'de moins'}). Rien n'a été écrit."
+    ]
+
+    if document_keys:
+        voulues = set(document_keys)
+        poussees = {d.document_key for d in plan.a_pousser}
+        motifs = {d.document_key: motif for d, motif in plan.ecartes}
+        en_trop = [d for d in plan.a_pousser if d.document_key not in voulues]
+        manquantes = sorted(voulues - poussees)
+        for doc in en_trop:
+            lignes.append(f"  En trop (dans le plan, absent de --document-key) : "
+                          f"{doc.document_key or doc.libelle()}")
+        for cle in manquantes:
+            lignes.append(f"  Manquant (dans --document-key, absent du plan) : {cle} "
+                          f"({motifs.get(cle, 'ni poussé ni écarté')})")
+        if not en_trop and not manquantes:
+            lignes.append(f"  Les {len(voulues)} clés de --document-key sont toutes dans "
+                          "le plan, et lui seul : c'est --attendu qui ne correspond pas "
+                          "à la liste.")
+    else:
+        lignes.append("  Aucun --document-key : le plan n'est restreint à aucune liste de "
+                      "clés. Un fichier de clés absent ou vide (`sed` en échec) en est la "
+                      "cause la plus fréquente.")
+        lignes.append("  Documents du plan :")
+        for doc in plan.a_pousser[:LIGNES_MAX_PLAN]:
+            lignes.append(f"    − {doc.document_key or doc.libelle()}")
+        if reel > LIGNES_MAX_PLAN:
+            lignes.append(f"    … et {reel - LIGNES_MAX_PLAN} autres")
+
+    raise PlanInattendu("\n".join(lignes))
+
+
 # ---------------------------------------------------------------------------
 # Lecture des deux états
 # ---------------------------------------------------------------------------

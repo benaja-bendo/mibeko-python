@@ -852,15 +852,24 @@ def prod_preflight():
                    "--limit ; utile pour un document urgent sans attendre/pousser tout le "
                    "reste du plan (un corpus de dizaines de milliers de documents rend le "
                    "plan complet — même en dry-run — très long : ~7 requêtes par document).")
+@click.option("--attendu", "attendu", type=click.IntRange(min=0), default=None,
+              help="Nombre de documents que ce passage doit pousser, tel que l'opération "
+                   "l'annonce (à écrire avant la simulation, jamais à recopier depuis "
+                   "elle). Un plan (limité par --limit) qui en compte un autre est "
+                   "refusé avant toute écriture, simulation comprise, avec les clés en "
+                   "trop ou manquantes. Obligatoire avec --execute (PY-011).")
 @click.option("--rapport", "rapport_chemin", default=None,
               help="Chemin du rapport JSON (défaut : data/pipeline/meta/push-<horodatage>.json).")
-def push_corpus(executer, limite, document_keys, rapport_chemin):
+def push_corpus(executer, limite, document_keys, attendu, rapport_chemin):
     """Pousse le corpus validé du dev vers la PROD, de façon additive (staging only).
 
     Dry-run par défaut : le plan est calculé via le profil de lecture seule
     (PROD_RO_*), aucune écriture. Avec --execute, les identifiants d'écriture
     PROD_RW_DB_* et PROD_RW_MINIO_* doivent être exportés dans le shell — jamais
     dans un fichier — et une confirmation interactive est exigée.
+
+    Mettre le même --attendu N dans la simulation et dans l'exécution : l'écart
+    entre l'annonce et le plan saute alors aux yeux dès la simulation.
     """
     from src.db.prod_readonly import (
         SQLSTATE_LECTURE_SEULE,
@@ -871,6 +880,7 @@ def push_corpus(executer, limite, document_keys, rapport_chemin):
     from src.promotion.push_corpus import (
         CibleProdAmbigue,
         ConfigurationProdManquante,
+        PlanInattendu,
         charger_cible_ecriture,
         charger_documents_source,
         charger_etat_cible,
@@ -882,9 +892,18 @@ def push_corpus(executer, limite, document_keys, rapport_chemin):
         executer_push,
         filtrer_par_document_keys,
         limiter_plan,
+        verifier_attendu,
     )
 
     click.secho("\n  ███  PUSH CORPUS → PRODUCTION  ███\n", fg="red", bold=True)
+
+    # Avant toute connexion : une exécution sans annonce du nombre de documents
+    # n'a rien à quoi comparer son plan (PY-011, mibeko-python#39).
+    if executer and attendu is None:
+        click.secho("Refus : --execute exige --attendu N, le nombre de documents annoncé "
+                    "pour cette opération (PY-011). Le répéter dans la simulation "
+                    "précédente : l'écart avec le plan y saute aux yeux.", fg="red")
+        raise SystemExit(1)
 
     try:
         engine_source = creer_engine_source()
@@ -933,6 +952,16 @@ def push_corpus(executer, limite, document_keys, rapport_chemin):
         click.secho(f"  Journaux officiels à créer : {len(plan.journaux_a_creer)}", fg="cyan")
     if plan.remap_journaux:
         click.secho(f"  Journaux rattachés à une fiche existante : {len(plan.remap_journaux)}", fg="cyan")
+
+    # Le plan limité est celui qui sera déroulé : c'est son compte qu'on compare
+    # à l'annonce, avant le rapport de simulation comme avant toute écriture.
+    try:
+        verifier_attendu(plan, attendu, document_keys)
+    except PlanInattendu as exc:
+        click.secho(f"\nRefus : {exc}", fg="red")
+        raise SystemExit(1)
+    if attendu is not None:
+        click.secho(f"  Attendu : {attendu}, conforme au plan.", fg="green")
 
     if rapport_chemin is None:
         meta_dir = os.path.join(os.getenv("MIBEKO_DATA_DIR", "data/"), "pipeline", "meta")
