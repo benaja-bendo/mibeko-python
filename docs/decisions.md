@@ -1,6 +1,6 @@
 # Registre des décisions — service Python (ingestion)
 
-> Statut : à jour au 1er octobre 2026 · **Fait autorité sur** : les décisions en vigueur qui ne changent que le code de ce dépôt. Les décisions qui touchent plusieurs dépôts (sources, périmètre du corpus, tableaux, LaTeX, historique des textes…) sont dans le registre transverse (`docs/decisions.md` du monorepo, dépôt `mibeko-docs`), qui donne aussi le gabarit et les règles (D-001).
+> Statut : à jour au 2 octobre 2026 · **Fait autorité sur** : les décisions en vigueur qui ne changent que le code de ce dépôt. Les décisions qui touchent plusieurs dépôts (sources, périmètre du corpus, tableaux, LaTeX, historique des textes…) sont dans le registre transverse (`docs/decisions.md` du monorepo, dépôt `mibeko-docs`), qui donne aussi le gabarit et les règles (D-001).
 
 Identifiants `PY-NNN`, jamais réutilisés ; une nouvelle décision s'ajoute à la fin. Les décisions reprises le 28/09/2026 ne portent « Écarté » et « On rouvre si » que si l'original les donnait ; texte d'origine : `docs/_archive/2026-09-28-journal-decisions-2026-07-a-09.md` (dépôt `mibeko-docs`).
 
@@ -70,3 +70,15 @@ Identifiants `PY-NNN`, jamais réutilisés ; une nouvelle décision s'ajoute à 
 **Écarté** : faire naître la fiche non publiée, comme les documents en `draft`. Cela ajoutait une publication manuelle par numéro sans protéger le lecteur, puisque le PDF officiel est public par nature.
 **Conséquences** : un numéro peut apparaître au kiosque avant que ses textes soient publiés ; il s'affiche alors « Texte intégral (PDF) » (front#60).
 **On rouvre si** : une fiche poussée ou créée par la veille est publiée sans que son PDF soit servi (404), ou annonce un numéro que son PDF ne porte pas.
+
+### PY-011 · 2026-10-02 · `push-corpus --execute` exige `--attendu N` et refuse tout plan qui n'a pas ce nombre de documents
+**Statut** : en vigueur · **Réf.** : mibeko-python#39, `docs/pipeline/runbook.md` (monorepo) § 3.7
+
+**Contexte** : le 01/10/2026, une liste de `--document-key` construite par `$(sed …)` sur un fichier absent est restée vide, et le push a tourné sans filtre sur toute la base de dev : 24 documents et 5 260 lignes au lieu des 23 et 3 379 annoncés. Le Code des assurances CIMA, un brouillon hors plan, est arrivé en production. La simulation affichait « À pousser : 24 » ; le seul garde-fou était la lecture du résumé avant de taper `PRODUCTION`.
+**Décision** :
+- `--attendu N` compare N au nombre de documents du plan limité (`limiter_plan`), celui que `executer_push` déroulera. Un écart est refusé (code 1) avant toute écriture, simulation comprise, avec les clés en trop ou manquantes si `--document-key` est donné, ou la liste du plan sinon.
+- `--execute` sans `--attendu` est refusé avant toute connexion. En simulation l'option reste facultative : elle sert à découvrir le nombre la première fois.
+- N s'écrit dans l'annonce de l'opération avant la simulation, jamais recopié depuis elle ; la même valeur figure dans la simulation et dans l'exécution.
+**Écarté** : refuser `--execute` sans `--document-key` ni `--limit`. Cela ne protège ni d'une liste fausse mais non vide, ni d'un `--limit` mal calibré, et interdit la promotion complète légitime sauf à passer un `--limit` géant, qui apprend le contournement. Un seul invariant, le compte, couvre les trois cas.
+**Conséquences** : une commande d'exécution porte un argument de plus ; une annonce fausse bloque l'opération, et on corrige l'annonce ou le plan, jamais l'option sans comprendre. Si N est recopié de la simulation, le garde-fou ne vaut rien.
+**On rouvre si** : un écart passe malgré `--attendu` (même nombre, mauvais documents) : il faudrait alors comparer les clés et non leur seul nombre ; ou si un plan légitime bouge entre la simulation et l'exécution au point de bloquer l'opération.
