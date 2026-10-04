@@ -33,6 +33,14 @@ Garde-fous : mêmes profils/vérifications que scripts/reingest_flat_journals.py
 (dump frais requis avant tout --execute --target prod, saisie « PRODUCTION »
 exigée, aucune exception).
 
+Documents nommés (mibeko-python#45, 02/10/2026) : `--document <id>`, répétable,
+remplace le périmètre figé ci-dessus par les documents désignés, DANS LE DEV
+SEULEMENT (refus net avec `--target prod`). C'est la voie pour re-structurer, avec
+le parseur corrigé, un brouillon déjà poussé en production en gardant son
+identifiant : `mibeko:remplacer-articles-document` exige le même id des deux côtés.
+La garde « document publié » reste entière. Le marqueur posé dans les métadonnées
+est `restructuration_parseur_corrige`, distinct de celui de la campagne d'août.
+
 Procédure d'annulation : un dump pris juste avant restaure l'état antérieur
 intégralement. Sans dump, réversible manuellement — aucune donnée SOURCE
 n'est perdue (le markdown reste en MinIO, inchangé), mais recréer la
@@ -44,6 +52,7 @@ from __future__ import annotations
 import argparse
 import os
 import sys
+import uuid
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -159,7 +168,18 @@ def flatten_articles(nodes: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     return out
 
 
-def restructure_one(db, minio_client, bucket: str, document: LegalDocument, execute: bool) -> Dict[str, Any]:
+MARQUEUR_CAMPAGNE_AOUT = "restructuration_ocr_corrigee"
+MARQUEUR_DOCUMENTS_NOMMES = "restructuration_parseur_corrige"
+
+
+def restructure_one(
+    db,
+    minio_client,
+    bucket: str,
+    document: LegalDocument,
+    execute: bool,
+    marqueur: str = MARQUEUR_CAMPAGNE_AOUT,
+) -> Dict[str, Any]:
     base = {"document_id": str(document.id), "titre": document.titre_officiel}
 
     md_media = (
@@ -187,8 +207,17 @@ def restructure_one(db, minio_client, bucket: str, document: LegalDocument, exec
         .count()
     )
 
+    # Un seul caractère NUL fait échouer l'insertion de tout le document
+    # (« string literal cannot contain NUL ») : `structure_document` les retire
+    # déjà avant de parser, ce script fait de même.
+    markdown_text = markdown_text.replace("\x00", "")
+
     hierarchy = LegalDocumentParser(text_content=markdown_text).parse_hierarchy()
     articles_apres = len(flatten_articles(hierarchy))
+    if not hierarchy:
+        # Le structurer retombe alors sur un unique article « Texte intégral ».
+        # Ici, ne rien toucher vaut mieux que vider le document : décision humaine.
+        return {**base, "statut": "parse_vide_non_modifie", "articles_avant": articles_avant}
 
     resultat = {
         **base,
@@ -200,7 +229,7 @@ def restructure_one(db, minio_client, bucket: str, document: LegalDocument, exec
     if not execute:
         return resultat
 
-    document.metadata_ = {**(document.metadata_ or {}), "restructuration_ocr_corrigee": True}
+    document.metadata_ = {**(document.metadata_ or {}), marqueur: True}
     ingest_hierarchy(db, document, hierarchy, run_id=None, media_id=md_media.id, validation_status="pending")
 
     resultat["flags_apres"] = (
@@ -215,7 +244,27 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--execute", action="store_true", help="Écrit réellement (par défaut : dry-run, aucune écriture).")
     parser.add_argument("--target", choices=["dev", "prod"], default="dev", help="Cible (défaut : dev).")
+    parser.add_argument(
+        "--document",
+        action="append",
+        default=None,
+        metavar="ID",
+        help="Re-structure ce document (répétable) au lieu du périmètre figé. Dev seulement.",
+    )
     args = parser.parse_args()
+
+    perimetre_ids = PERIMETRE_IDS
+    marqueur = MARQUEUR_CAMPAGNE_AOUT
+    if args.document:
+        if args.target != "dev":
+            raise SystemExit("Refus : --document ne vaut que pour la cible dev (la production passe par mibeko:remplacer-articles-document).")
+        for identifiant in args.document:
+            try:
+                uuid.UUID(identifiant)
+            except ValueError:
+                raise SystemExit(f"Refus : « {identifiant} » n'est pas un UUID.")
+        perimetre_ids = list(dict.fromkeys(args.document))
+        marqueur = MARQUEUR_DOCUMENTS_NOMMES
 
     engine_ro = None
     if args.target == "dev":
@@ -229,13 +278,13 @@ def main() -> None:
 
     documents = (
         db.query(LegalDocument)
-        .filter(LegalDocument.id.in_(PERIMETRE_IDS), LegalDocument.deleted_at.is_(None))
+        .filter(LegalDocument.id.in_(perimetre_ids), LegalDocument.deleted_at.is_(None))
         .all()
     )
-    print(f"Cible : {args.target}. Périmètre : {len(documents)}/{len(PERIMETRE_IDS)} documents trouvés.")
-    if len(documents) != len(PERIMETRE_IDS):
+    print(f"Cible : {args.target}. Périmètre : {len(documents)}/{len(perimetre_ids)} documents trouvés.")
+    if len(documents) != len(perimetre_ids):
         trouves = {str(d.id) for d in documents}
-        manquants = [i for i in PERIMETRE_IDS if i not in trouves]
+        manquants = [i for i in perimetre_ids if i not in trouves]
         print(f"ATTENTION : {len(manquants)} id(s) du périmètre introuvable(s) ou supprimé(s) : {manquants}")
 
     publies = [d for d in documents if d.curation_status == "published"]
@@ -254,11 +303,14 @@ def main() -> None:
         db = _session_prod_ecriture(engine_ro)
         documents = (
             db.query(LegalDocument)
-            .filter(LegalDocument.id.in_(PERIMETRE_IDS), LegalDocument.deleted_at.is_(None))
+            .filter(LegalDocument.id.in_(perimetre_ids), LegalDocument.deleted_at.is_(None))
             .all()
         )
 
-    resultats = [restructure_one(db, minio_client, bucket, document, execute=args.execute) for document in documents]
+    resultats = [
+        restructure_one(db, minio_client, bucket, document, execute=args.execute, marqueur=marqueur)
+        for document in documents
+    ]
 
     if args.execute:
         db.commit()
