@@ -33,10 +33,48 @@ SOURCE_SERIE_CARNET = "jo-recents"
 SOURCE_MANIFESTE = "sgg-jo"
 
 
+def _echec_definitif_inchange(db, entry) -> bool:
+    """Vrai si redéposer cette entrée rejouerait à l'identique un échec que
+    rien n'a changé : elle est au statut `erreur`, son dernier travail a fini
+    `failed` en `definitive`, et le fichier est celui du premier dépôt (même
+    SHA-256 que la provenance). La veille la redéposait chaque nuit : un job
+    `failed` de plus par nuit pour `congo-jo-2026-17` (source vide, 0 octet),
+    du 02 au 06/10/2026 (mibeko-python#49).
+
+    Ne vaut que pour `erreur` : une entrée remise à la main à `telecharge`
+    pour forcer un nouveau traitement reste éligible. Sans provenance, rien
+    ne prouve que le fichier est inchangé : on redépose. Les échecs
+    `transitoire` (réseau, quota) et `information_manquante` gardent leur
+    réessai nocturne.
+    """
+    from src.db.models import IngestionJob, IngestionProvenance
+
+    if entry.statut != "erreur":
+        return False
+    dernier = (
+        db.query(IngestionJob)
+        .filter(IngestionJob.manifest_id == entry.id)
+        .order_by(IngestionJob.created_at.desc())
+        .first()
+    )
+    if (
+        dernier is None
+        or dernier.status != IngestionJob.STATUS_FAILED
+        or dernier.error_class != IngestionJob.ERROR_DEFINITIVE
+    ):
+        return False
+    provenance = (
+        db.query(IngestionProvenance).filter(IngestionProvenance.manifest_id == entry.id).first()
+    )
+    return provenance is not None and provenance.sha256 == entry.sha256
+
+
 def _deposer_jobs_veille(db, manifest: Manifest, dry_run: bool = False) -> Dict[str, List[str]]:
     """Dépose un job `kind=veille` pour chaque entrée éligible (`telecharge`
     ou `erreur`) du manifeste qui n'a pas déjà un travail `pending`/`running`
-    en file. Sans cette déduplication, deux passages successifs (ou un
+    en file, hors échec définitif à fichier inchangé (`_echec_definitif_inchange`,
+    listé dans `echecs_definitifs_ignores`). Sans la déduplication « déjà en
+    file », deux passages successifs (ou un
     passage relancé) avant que le worker n'ait traité le premier job
     fabriqueraient un doublon — incident (a) du plan « boîte de réception »,
     § L1. `dry_run` liste ce qui serait déposé sans rien écrire (et ne pose
@@ -74,6 +112,7 @@ def _deposer_jobs_veille(db, manifest: Manifest, dry_run: bool = False) -> Dict[
 
     deposes: List[str] = []
     deja_en_file: List[str] = []
+    echecs_definitifs_ignores: List[str] = []
     for entry in manifest.iter_entries():
         if entry.statut not in ("telecharge", "erreur"):
             continue
@@ -87,7 +126,12 @@ def _deposer_jobs_veille(db, manifest: Manifest, dry_run: bool = False) -> Dict[
                 )
                 .first()
             )
-            (deja_en_file if existant is not None else deposes).append(entry.id)
+            if existant is not None:
+                deja_en_file.append(entry.id)
+            elif _echec_definitif_inchange(db, entry):
+                echecs_definitifs_ignores.append(entry.id)
+            else:
+                deposes.append(entry.id)
             continue
 
         db.execute(text("SELECT pg_advisory_xact_lock(hashtext(:cle))"), {"cle": entry.id})
@@ -104,6 +148,11 @@ def _deposer_jobs_veille(db, manifest: Manifest, dry_run: bool = False) -> Dict[
             # Referme la transaction ouverte par le verrou avant l'entrée
             # suivante — sinon il resterait tenu jusqu'au prochain dépôt réel.
             db.commit()
+            continue
+
+        if _echec_definitif_inchange(db, entry):
+            echecs_definitifs_ignores.append(entry.id)
+            db.commit()  # relâche le verrou, comme ci-dessus
             continue
 
         # Provenance Postgres (§ 3.7 du plan « boîte de réception ») : avant
@@ -155,7 +204,11 @@ def _deposer_jobs_veille(db, manifest: Manifest, dry_run: bool = False) -> Dict[
         db.commit()  # relâche aussi le verrou (même transaction)
         deposes.append(entry.id)
 
-    return {"deposes": deposes, "deja_en_file": deja_en_file}
+    return {
+        "deposes": deposes,
+        "deja_en_file": deja_en_file,
+        "echecs_definitifs_ignores": echecs_definitifs_ignores,
+    }
 
 
 def run_once(dry_run: bool = False) -> Dict[str, Any]:
