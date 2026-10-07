@@ -69,7 +69,12 @@ else:
         DB_DATABASE,
     )
 
-engine = create_engine(DATABASE_URL, echo=False)
+# `pool_pre_ping` : le pool teste chaque connexion (un `SELECT 1`) avant de la
+# prêter et la remplace si elle est morte. Le conteneur `veille` n'ouvre la base
+# qu'une fois par nuit : la connexion gardée au repos peut avoir été coupée entre
+# deux passages, et sans ce test la première requête du passage échouait en
+# « server closed the connection unexpectedly » (mibeko-python#53).
+engine = create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
